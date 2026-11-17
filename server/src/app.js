@@ -82,16 +82,15 @@ async function ensureRentalMigration() {
     const Rental = require('./models/Rental');
     const r1002 = await Rental.findOne({ rentalNumber: 'TX-R-1002' });
     if (r1002) {
-      const s = new Date(r1002.startDate);
-      if (s.getUTCHours() === 1) {
-        r1002.startDate = new Date('2026-11-17T13:01:00.000Z');
-        r1002.expectedEndDate = new Date('2026-11-17T15:01:00.000Z');
-        r1002.rentalType = 'hourly';
-        r1002.totalHours = 2;
-        r1002.hourlyRate = 125;
-        await r1002.save();
-        console.log('[THROTTLEX] Synced TX-R-1002 hours to 13:01 - 15:01 (1:01 PM to 3:01 PM).');
-      }
+      // 1:01 PM IST is 07:31 UTC (2026-11-17T07:31:00.000Z)
+      // 3:01 PM IST is 09:31 UTC (2026-11-17T09:31:00.000Z)
+      r1002.startDate = new Date('2026-11-17T07:31:00.000Z');
+      r1002.expectedEndDate = new Date('2026-11-17T09:31:00.000Z');
+      r1002.rentalType = 'hourly';
+      r1002.totalHours = 2;
+      r1002.hourlyRate = 125;
+      await r1002.save();
+      console.log('[THROTTLEX] Synced TX-R-1002 hours to 1:01 PM - 3:01 PM IST (07:31Z - 09:31Z).');
     }
     rentalMigrated = true;
   } catch (err) {

@@ -43,6 +43,14 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
   useEffect(() => {
     if (isOpen) {
       setError('');
+      const n = new Date();
+      n.setSeconds(0, 0);
+      const s = toLocalISOString(n);
+      const e = toLocalISOString(new Date(n.getTime() + 3 * 60 * 60 * 1000));
+      setStartDate(s);
+      setExpectedEndDate(e);
+      setRentalType('hourly');
+      setManualTypeOverride(false);
       loadInitialData();
     }
   }, [isOpen]);
@@ -99,6 +107,23 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
     }
   };
 
+  // When user edits Start Date, shift Return Date to keep duration intact
+  const handleStartDateChange = (newStartStr) => {
+    setStartDate(newStartStr);
+    if (!newStartStr) return;
+    const oldStart = startDate ? new Date(startDate) : null;
+    const oldEnd = expectedEndDate ? new Date(expectedEndDate) : null;
+    const newStart = new Date(newStartStr);
+    if (!isNaN(newStart.getTime())) {
+      let durationMs = 3 * 60 * 60 * 1000;
+      if (oldStart && oldEnd && oldEnd > oldStart) {
+        durationMs = oldEnd.getTime() - oldStart.getTime();
+      }
+      const newEnd = new Date(newStart.getTime() + durationMs);
+      setExpectedEndDate(toLocalISOString(newEnd));
+    }
+  };
+
   // Auto-detect rental type when duration changes (unless manually overridden)
   useEffect(() => {
     if (!manualTypeOverride && startDate && expectedEndDate) {
@@ -134,17 +159,32 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
     }
   };
 
+  // Set absolute duration from start time
   const applyDurationPreset = (amount, unit) => {
     const start = startDate ? new Date(startDate) : new Date();
     let end;
     if (unit === 'hours') {
       end = new Date(start.getTime() + amount * 60 * 60 * 1000);
       setRentalType('hourly');
+      setManualTypeOverride(true);
     } else {
       end = new Date(start.getTime() + amount * 24 * 60 * 60 * 1000);
       setRentalType('daily');
+      setManualTypeOverride(true);
     }
     setExpectedEndDate(toLocalISOString(end));
+  };
+
+  // Adjust return time by adding or subtracting hours
+  const adjustReturnHours = (deltaHours) => {
+    const start = startDate ? new Date(startDate) : new Date();
+    const currentEnd = expectedEndDate ? new Date(expectedEndDate) : new Date(start.getTime() + 3 * 3600 * 1000);
+    const newEndMs = currentEnd.getTime() + deltaHours * 60 * 60 * 1000;
+    if (newEndMs > start.getTime()) {
+      setExpectedEndDate(toLocalISOString(new Date(newEndMs)));
+      setRentalType('hourly');
+      setManualTypeOverride(true);
+    }
   };
 
   // Date validity check
@@ -401,44 +441,69 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
             </div>
 
             {/* Quick Duration Presets */}
-            <div className="flex flex-wrap items-center gap-1.5 text-xs">
-              <span className="text-[11px] text-slate-400 mr-1 flex items-center gap-1">
-                <Zap className="w-3 h-3 text-amber-400" /> Quick Presets:
-              </span>
-              {isHourly ? (
-                <>
-                  {[1, 2, 3, 4, 6, 8, 12, 24].map((hrs) => (
-                    <button
-                      key={hrs}
-                      type="button"
-                      onClick={() => applyDurationPreset(hrs, 'hours')}
-                      className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all ${
-                        totalHours === hrs
-                          ? 'border-purple-500 bg-purple-500/20 text-purple-300'
-                          : 'border-brand-border bg-brand-surface text-slate-400 hover:text-white hover:border-slate-500'
-                      }`}
-                    >
-                      +{hrs} hr{hrs > 1 ? 's' : ''}
-                    </button>
-                  ))}
-                </>
-              ) : (
-                <>
-                  {[1, 2, 3, 5, 7].map((days) => (
-                    <button
-                      key={days}
-                      type="button"
-                      onClick={() => applyDurationPreset(days, 'days')}
-                      className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all ${
-                        totalDays === days
-                          ? 'border-brand-orange bg-brand-orange/20 text-brand-orange'
-                          : 'border-brand-border bg-brand-surface text-slate-400 hover:text-white hover:border-slate-500'
-                      }`}
-                    >
-                      {days === 7 ? '1 week' : `+${days} day${days > 1 ? 's' : ''}`}
-                    </button>
-                  ))}
-                </>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] text-slate-400 mr-1 flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-amber-400" /> Presets:
+                </span>
+                {isHourly ? (
+                  <>
+                    {[1, 2, 3, 4, 5, 6, 8, 12].map((hrs) => (
+                      <button
+                        key={hrs}
+                        type="button"
+                        onClick={() => applyDurationPreset(hrs, 'hours')}
+                        className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all ${
+                          totalHours === hrs
+                            ? 'border-purple-500 bg-purple-500/25 text-purple-200 shadow-glow-sm font-bold'
+                            : 'border-brand-border bg-brand-surface text-slate-400 hover:text-white hover:border-slate-500'
+                        }`}
+                      >
+                        {hrs} hr{hrs > 1 ? 's' : ''}
+                      </button>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    {[1, 2, 3, 5, 7].map((days) => (
+                      <button
+                        key={days}
+                        type="button"
+                        onClick={() => applyDurationPreset(days, 'days')}
+                        className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all ${
+                          totalDays === days
+                            ? 'border-brand-orange bg-brand-orange/25 text-brand-orange shadow-glow-sm font-bold'
+                            : 'border-brand-border bg-brand-surface text-slate-400 hover:text-white hover:border-slate-500'
+                        }`}
+                      >
+                        {days === 7 ? '1 week' : `${days} day${days > 1 ? 's' : ''}`}
+                      </button>
+                    ))}
+                  </>
+                )}
+              </div>
+
+              {/* Adjust buttons */}
+              {isHourly && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-slate-500">Adjust:</span>
+                  <button
+                    type="button"
+                    title="Subtract 1 hour"
+                    onClick={() => adjustReturnHours(-1)}
+                    className="px-2 py-0.5 rounded-lg border border-brand-border bg-brand-surface hover:bg-white/10 text-slate-300 text-[11px] font-bold transition-all"
+                  >
+                    -1 hr
+                  </button>
+                  <button
+                    type="button"
+                    title="Add 1 hour"
+                    onClick={() => adjustReturnHours(1)}
+                    className="px-2 py-0.5 rounded-lg border border-brand-border bg-brand-surface hover:bg-white/10 text-slate-300 text-[11px] font-bold transition-all"
+                  >
+                    +1 hr
+                  </button>
+                </div>
               )}
             </div>
 
@@ -450,7 +515,7 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
                 <input
                   type="datetime-local"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
                   required
                   className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface text-white"
                 />
