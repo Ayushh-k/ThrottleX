@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+server/node_modules/
+client/node_modules/
+
+# Local Database Files
+data/
+data/db/
+
+# Production build artifacts (built by Vercel on deploy)
+dist/
+client/dist/
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+server/.env
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,32 @@
+{
+  "name": "throttlex",
+  "version": "1.0.0",
+  "description": "THROTTLEX — Rental Business Manager | OWN THE ROAD.",
+  "main": "server/src/server.js",
+  "scripts": {
+    "server": "node server/src/server.js",
+    "client": "npm run dev --prefix client",
+    "build": "cd client && npm install && npm run build",
+    "clean-db": "node server/src/seed/clear-database.js",
+    "seed": "node server/src/seed/seed.js",
+    "start": "node server/src/server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "morgan": "^1.10.0"
+  },
+  "keywords": [
+    "throttlex",
+    "bike-rental",
+    "partner-settlement",
+    "splitwise",
+    "fleet-management",
+    "vercel"
+  ],
+  "author": "THROTTLEX Engineering"
+}

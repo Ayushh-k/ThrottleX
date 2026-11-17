@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-main: #F8FAFC;
+    --surface-main: #FFFFFF;
+    --card-main: #FFFFFF;
+    --border-main: #E2E8F0;
+    --text-primary: #0F172A;
+    --text-muted: #64748B;
+  }
+
+  .dark {
+    --bg-main: #080A0F;
+    --surface-main: #0E131F;
+    --card-main: #141B2D;
+    --border-main: #1F2942;
+    --text-primary: #F8FAFC;
+    --text-muted: #94A3B8;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    overflow-x: hidden;
+  }
+}
+
+/* Custom modern scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #FF5500;
+}
+
+.dark input, .dark select, .dark textarea {
+  background-color: #0E131F;
+  border-color: #1F2942;
+  color: #F8FAFC;
+}
+
+.dark input:focus, .dark select:focus, .dark textarea:focus {
+  border-color: #FF5500;
+  outline: none;
+  box-shadow: 0 0 0 1px #FF5500;
+}
+
+/* Subtle glowing line accent */
+.orange-glow-top {
+  box-shadow: 0 -2px 10px rgba(255, 85, 0, 0.4);
+}
