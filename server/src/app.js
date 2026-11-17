@@ -22,27 +22,52 @@ const settingsRoutes = require('./routes/settingsRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const searchRoutes = require('./routes/searchRoutes');
 const User = require('./models/User');
+const Partner = require('./models/Partner');
 
-const app = express();
+// Ensure default owner exists on any connected database (local or Atlas)
+let ownerEnsured = false;
+async function ensureOwnerAccount() {
+  if (ownerEnsured) return;
+  try {
+    const email = 'ayushkamboj9690@gmail.com';
+    let user = await User.findOne({ email });
+    let partner = await Partner.findOne({ email });
 
-// Middlewares
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+    if (!partner) {
+      partner = await Partner.create({
+        name: 'Ayush kamboj',
+        email,
+        phone: '9690259628',
+        sharePercentage: 50,
+        status: 'active',
+        notes: 'Owner / Managing Partner'
+      });
+    }
 
-app.use(express.json({ limit: '15mb' }));
-app.use(express.urlencoded({ extended: true, limit: '15mb' }));
-
-if (process.env.NODE_ENV !== 'production') {
-  app.use(morgan('dev'));
+    if (!user) {
+      user = await User.create({
+        name: 'Ayush kamboj',
+        email,
+        password: 'ayush@tx123',
+        phone: '9690259628',
+        role: 'owner',
+        partnerId: partner._id
+      });
+      partner.userId = user._id;
+      await partner.save();
+      console.log('[THROTTLEX] Verified & initialized Owner Ayush kamboj.');
+    }
+    ownerEnsured = true;
+  } catch (err) {
+    console.error('Error ensuring owner account:', err.message);
+  }
 }
 
 // Middleware to ensure DB connection before handling request
 app.use(async (req, res, next) => {
   try {
     await connectDB();
+    await ensureOwnerAccount();
     next();
   } catch (err) {
     console.error('Database connection error in request:', err);
