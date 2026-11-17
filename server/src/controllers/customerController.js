@@ -52,7 +52,8 @@ exports.getCustomerById = async (req, res) => {
       .sort({ startDate: -1 })
       .lean();
 
-    const payments = await Payment.find({ customer: customer._id })
+    const validRentalIds = rentals.filter((r) => r.status !== 'cancelled').map((r) => r._id);
+    const payments = await Payment.find({ customer: customer._id, rental: { $in: validRentalIds } })
       .populate('rental', 'rentalNumber')
       .populate('receivedByPartner', 'name')
       .sort({ paymentDate: -1 })

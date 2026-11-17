@@ -24,7 +24,13 @@ exports.getPartnerById = async (req, res) => {
     const data = await settlementService.getPartnerBalances();
     const partnerStats = data.partners.find((p) => p.partnerId.toString() === partner._id.toString()) || {};
 
-    const paymentsCollected = await Payment.find({ receivedByPartner: partner._id })
+    const Rental = require('../models/Rental');
+    const validRentals = await Rental.find({ status: { $ne: 'cancelled' } }).distinct('_id');
+
+    const paymentsCollected = await Payment.find({
+      receivedByPartner: partner._id,
+      rental: { $in: validRentals }
+    })
       .populate('rental customer')
       .sort({ paymentDate: -1 })
       .lean();

@@ -3,6 +3,7 @@ const Payment = require('../models/Payment');
 const Expense = require('../models/Expense');
 const Settlement = require('../models/Settlement');
 const User = require('../models/User');
+const Rental = require('../models/Rental');
 const Transaction = require('../models/Transaction');
 const AuditLog = require('../models/AuditLog');
 const { getNextSettlementNumber, getNextTransactionNumber } = require('../utils/idGenerator');
@@ -84,8 +85,15 @@ class SettlementService {
       if (u.email) userPartnerMap[u.email.toLowerCase().trim()] = u;
     });
 
-    // 1. Total rent payments collected by each partner
-    const payments = await Payment.find().lean();
+    // Self-healing purge: void any payments belonging to cancelled rentals
+    const cancelledRentalIds = await Rental.find({ status: 'cancelled' }).distinct('_id');
+    if (cancelledRentalIds.length > 0) {
+      await Payment.deleteMany({ rental: { $in: cancelledRentalIds } });
+    }
+
+    // 1. Total rent payments collected by each partner (ONLY from valid non-cancelled rentals)
+    const validRentals = await Rental.find({ status: { $ne: 'cancelled' } }).distinct('_id');
+    const payments = await Payment.find({ rental: { $in: validRentals } }).lean();
     const rentCollections = {};
     let totalRevenueCollected = 0;
 

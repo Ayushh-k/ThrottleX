@@ -513,7 +513,20 @@ exports.cancelRental = async (req, res) => {
     }
 
     rental.status = 'cancelled';
+    rental.amountPaid = 0;
+    rental.remainingAmount = 0;
+    rental.paymentStatus = 'pending';
     await rental.save();
+
+    // Void / remove any payments and ledger transactions recorded for this cancelled rental
+    await Payment.deleteMany({ rental: rental._id });
+    const Transaction = require('../models/Transaction');
+    await Transaction.deleteMany({
+      $or: [
+        { relatedId: rental._id },
+        { description: { $regex: rental.rentalNumber, $options: 'i' } }
+      ]
+    });
 
     if (rental.bike) {
       await Bike.findByIdAndUpdate(rental.bike._id, { status: 'available' });
