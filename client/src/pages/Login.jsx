@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Flame, Lock, Mail, ArrowRight, AlertCircle, Shield } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
@@ -29,14 +29,18 @@ export default function Login() {
 
       <div className="relative w-full max-w-md bg-brand-card/90 backdrop-blur-xl border border-brand-border rounded-3xl p-8 sm:p-10 shadow-2xl space-y-6">
         {/* Brand Header */}
-        <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-orange to-amber-500 mx-auto flex items-center justify-center shadow-glow">
-            <Flame className="w-8 h-8 text-white" />
+        <div className="text-center space-y-3">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-b from-brand-surface to-brand-dark/90 border border-brand-orange/40 mx-auto flex items-center justify-center shadow-glow p-3.5 group hover:border-brand-orange transition-all">
+            <img
+              src="/logo-x.png"
+              alt="ThrottleX Logo"
+              className="w-full h-full object-contain filter drop-shadow-[0_0_14px_rgba(255,85,0,0.55)] transition-transform duration-300 group-hover:scale-105"
+            />
           </div>
           <h1 className="text-3xl font-black font-display tracking-wider text-white">
             THROTTLE<span className="text-brand-orange">X</span>
           </h1>
-          <p className="text-[10px] tracking-widest text-slate-400 font-bold uppercase">
+          <p className="text-[10px] tracking-[0.2em] text-slate-400 font-bold uppercase">
             OWN THE ROAD. • RENTAL BUSINESS MANAGER
           </p>
         </div>

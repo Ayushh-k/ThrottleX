@@ -13,7 +13,6 @@ import {
   Calendar,
   BarChart3,
   Settings,
-  Flame,
   X
 } from 'lucide-react';
 
@@ -38,18 +37,12 @@ export default function Sidebar({ currentTab, onSelectTab, isMobileOpen, onClose
     <div className="flex flex-col h-full bg-brand-surface dark:bg-brand-surface border-r border-brand-border">
       {/* Brand Header */}
       <div className="h-16 flex items-center justify-between px-5 border-b border-brand-border">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-orange to-amber-500 flex items-center justify-center shadow-glow-sm">
-            <Flame className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <span className="font-display font-extrabold text-base tracking-wider text-white">
-              THROTTLE<span className="text-brand-orange">X</span>
-            </span>
-            <p className="text-[9px] tracking-widest text-slate-400 font-semibold uppercase">
-              OWN THE ROAD.
-            </p>
-          </div>
+        <div className="flex items-center gap-3">
+          <img
+            src="/logo-full.png"
+            alt="THROTTLEX — OWN THE ROAD."
+            className="h-8 max-w-[185px] object-contain drop-shadow"
+          />
         </div>
 
         {isMobileOpen && (

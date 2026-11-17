@@ -172,8 +172,11 @@ export default function App() {
   if (loading) {
     return (
       <div className="min-h-screen bg-brand-dark flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-10 h-10 border-2 border-brand-orange border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <div className="text-center space-y-3">
+          <div className="w-16 h-16 mx-auto relative flex items-center justify-center">
+            <div className="absolute inset-0 border-2 border-brand-orange/30 border-t-brand-orange rounded-full animate-spin" />
+            <img src="/logo-x.png" alt="THROTTLEX" className="w-8 h-8 object-contain" />
+          </div>
           <h2 className="font-display font-bold text-white tracking-widest text-lg">
             THROTTLE<span className="text-brand-orange">X</span>
           </h2>
