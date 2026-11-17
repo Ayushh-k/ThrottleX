@@ -30,7 +30,12 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess, preselecte
       const [bikesRes, partnersRes] = await Promise.all([api.getBikes(), api.getPartners()]);
       setBikes(bikesRes.bikes || []);
       setPartners(partnersRes.partners || []);
-      if (partnersRes.partners?.length > 0) {
+      
+      const storedUser = localStorage.getItem('throttlex_user');
+      const currentUser = storedUser ? JSON.parse(storedUser) : null;
+      if (currentUser?.partnerId) {
+        setPaidByPartnerId(currentUser.partnerId);
+      } else if (partnersRes.partners?.length > 0) {
         setPaidByPartnerId(partnersRes.partners[0].partnerId || partnersRes.partners[0]._id);
       }
       if (preselectedBikeId) {
@@ -190,6 +195,9 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess, preselecte
               {partners.map((p) => {
                 const pId = p.partnerId || p._id;
                 const isSelected = paidByPartnerId === pId;
+                const storedUser = localStorage.getItem('throttlex_user');
+                const currentUser = storedUser ? JSON.parse(storedUser) : null;
+                const isCurrentPartner = currentUser?.partnerId === pId;
                 return (
                   <button
                     key={pId}
@@ -197,11 +205,11 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess, preselecte
                     onClick={() => setPaidByPartnerId(pId)}
                     className={`p-2.5 rounded-lg border text-xs font-semibold transition-all ${
                       isSelected
-                        ? 'border-brand-orange bg-brand-orange/15 text-white'
+                        ? 'border-brand-orange bg-brand-orange/15 text-white shadow-glow-sm'
                         : 'border-brand-border bg-brand-card text-slate-400 hover:text-white'
                     }`}
                   >
-                    {p.name}
+                    {p.name} {isCurrentPartner && <span className="text-emerald-400 font-bold ml-1">(You)</span>}
                   </button>
                 );
               })}

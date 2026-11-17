@@ -2,6 +2,7 @@ const Partner = require('../models/Partner');
 const Payment = require('../models/Payment');
 const Expense = require('../models/Expense');
 const Settlement = require('../models/Settlement');
+const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const AuditLog = require('../models/AuditLog');
 const { getNextSettlementNumber, getNextTransactionNumber } = require('../utils/idGenerator');
@@ -74,6 +75,14 @@ class SettlementService {
           ? ((p.sharePercentage || 100 / partners.length) / totalShareSpecified) * 100
           : 100 / partners.length
     }));
+
+    // Map user accounts to see which partners have login credentials
+    const users = await User.find().lean();
+    const userPartnerMap = {};
+    users.forEach((u) => {
+      if (u.partnerId) userPartnerMap[u.partnerId.toString()] = u;
+      if (u.email) userPartnerMap[u.email.toLowerCase().trim()] = u;
+    });
 
     // 1. Total rent payments collected by each partner
     const payments = await Payment.find().lean();
@@ -165,6 +174,8 @@ class SettlementService {
       const totalCashHeld = collected - paid - totalSent + totalRecv;
       const combinedBalance = Math.round((netEntitledProfit - totalCashHeld) * 100) / 100;
 
+      const userAccount = userPartnerMap[id] || (p.email ? userPartnerMap[p.email.toLowerCase().trim()] : null);
+
       return {
         partnerId: p._id,
         name: p.name,
@@ -172,6 +183,9 @@ class SettlementService {
         phone: p.phone,
         avatar: p.avatar,
         sharePercentage: p.effectiveShare,
+        hasLoginAccess: Boolean(userAccount),
+        loginEmail: userAccount?.email || p.email,
+        userRole: userAccount?.role || (p.email === 'ayushkamboj9690@gmail.com' ? 'owner' : 'partner'),
 
         // Independent Rent Breakdown
         rent: {

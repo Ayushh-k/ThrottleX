@@ -127,6 +127,7 @@ export const api = {
   getPartnerById: (id) => request(`/partners/${id}`),
   createPartner: (payload) => request('/partners', { method: 'POST', body: JSON.stringify(payload) }),
   updatePartner: (id, payload) => request(`/partners/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  setPartnerLoginAccess: (id, payload) => request(`/partners/${id}/login-access`, { method: 'POST', body: JSON.stringify(payload) }),
 
   getSettlements: () => request('/settlements'),
   recordSettlement: (payload) => request('/settlements', { method: 'POST', body: JSON.stringify(payload) }),

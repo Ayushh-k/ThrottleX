@@ -60,7 +60,11 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
       setCustomers(customersRes.customers || []);
       setPartners(partnersRes.partners || []);
 
-      if (partnersRes.partners?.length > 0) {
+      const storedUser = localStorage.getItem('throttlex_user');
+      const currentUser = storedUser ? JSON.parse(storedUser) : null;
+      if (currentUser?.partnerId) {
+        setReceivedByPartnerId(currentUser.partnerId);
+      } else if (partnersRes.partners?.length > 0) {
         setReceivedByPartnerId(partnersRes.partners[0].partnerId);
       }
 
@@ -588,11 +592,17 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
                   required
                   className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface text-white"
                 >
-                  {partners.map((p) => (
-                    <option key={p.partnerId || p._id} value={p.partnerId || p._id}>
-                      {p.name}
-                    </option>
-                  ))}
+                  {partners.map((p) => {
+                    const pId = p.partnerId || p._id;
+                    const storedUser = localStorage.getItem('throttlex_user');
+                    const currentUser = storedUser ? JSON.parse(storedUser) : null;
+                    const isYou = currentUser?.partnerId === pId;
+                    return (
+                      <option key={pId} value={pId}>
+                        {p.name} {isYou ? '(You)' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             </div>
