@@ -137,9 +137,14 @@ export default function RentalCalendar({ onNavigate, refreshKey }) {
                     <div
                       key={r._id}
                       onClick={() => onNavigate('rental-detail', r._id)}
-                      className="p-1 rounded bg-brand-card border border-brand-border/80 hover:border-brand-orange text-[10px] cursor-pointer transition-colors"
+                      className={`p-1 rounded bg-brand-card text-[10px] cursor-pointer transition-colors ${
+                        r.rentalType === 'hourly'
+                          ? 'border border-purple-500/50 hover:border-purple-400'
+                          : 'border border-brand-border/80 hover:border-brand-orange'
+                      }`}
                     >
-                      <p className="font-semibold text-white truncate leading-tight">
+                      <p className="font-semibold text-white truncate leading-tight flex items-center gap-1">
+                        {r.rentalType === 'hourly' && <span className="text-purple-400 text-[9px]">⏱️</span>}
                         {r.bike?.name?.split(' ')[2] || r.bike?.name}
                       </p>
                       <p className="text-[9px] text-slate-400 truncate">

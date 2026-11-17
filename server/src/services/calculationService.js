@@ -85,7 +85,8 @@ class CalculationService {
     const totalRevenue = rentals.reduce((acc, r) => acc + (r.totalAmount || 0), 0);
     const amountCollected = rentals.reduce((acc, r) => acc + (r.amountPaid || 0), 0);
     const outstanding = rentals.reduce((acc, r) => acc + (r.remainingAmount || 0), 0);
-    const totalRentalDays = rentals.reduce((acc, r) => acc + (r.totalDays || 0), 0);
+    const totalRentalDays = rentals.reduce((acc, r) => acc + (r.totalDays || (r.totalHours ? Number((r.totalHours / 24).toFixed(1)) : 0)), 0);
+    const totalRentalHours = rentals.reduce((acc, r) => acc + (r.totalHours || (r.totalDays ? r.totalDays * 24 : 0)), 0);
 
     const totalExpenses = expenses.reduce((acc, e) => acc + (e.amount || 0), 0);
     const netProfit = totalRevenue - totalExpenses;
@@ -106,6 +107,7 @@ class CalculationService {
       amountCollected,
       outstanding,
       totalRentalDays,
+      totalRentalHours,
       totalRentals: rentals.length,
       totalExpenses,
       netProfit,

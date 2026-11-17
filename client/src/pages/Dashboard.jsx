@@ -389,9 +389,14 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
                       {bike.registrationNumber}
                     </p>
                   </div>
-                  <span className="font-display font-extrabold text-brand-orange text-base bg-black/60 px-2 py-0.5 rounded-lg border border-brand-orange/30">
-                    {formatINR(bike.defaultDailyRate)}/day
-                  </span>
+                  <div className="text-right bg-black/75 px-2 py-0.5 rounded-lg border border-brand-orange/30 backdrop-blur-sm">
+                    <span className="font-display font-extrabold text-brand-orange text-sm block leading-tight">
+                      {formatINR(bike.defaultDailyRate)}/day
+                    </span>
+                    <span className="text-[10px] text-purple-300 font-mono block">
+                      {formatINR(bike.defaultHourlyRate || Math.round(bike.defaultDailyRate / 8))}/hr
+                    </span>
+                  </div>
                 </div>
               </div>
 

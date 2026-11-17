@@ -44,6 +44,7 @@ exports.getDashboardData = async (req, res) => {
           registrationNumber: bike.registrationNumber,
           status: bike.status,
           defaultDailyRate: bike.defaultDailyRate,
+          defaultHourlyRate: bike.defaultHourlyRate || Math.round(bike.defaultDailyRate / 8) || 120,
           imageUrl: bike.imageUrl,
           currentOdometer: bike.currentOdometer,
           thisMonthRentals: monthRentals.length,

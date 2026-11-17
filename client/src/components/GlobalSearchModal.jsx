@@ -120,7 +120,7 @@ export default function GlobalSearchModal({ isOpen, onClose, onNavigate }) {
                         {b.name}
                       </p>
                       <p className="text-xs text-slate-400">
-                        {b.registrationNumber} • {formatINR(b.defaultDailyRate)}/day
+                        {b.registrationNumber} • {formatINR(b.defaultDailyRate)}/day • {formatINR(b.defaultHourlyRate || Math.round(b.defaultDailyRate / 8))}/hr
                       </p>
                     </div>
                     <span className="text-xs text-slate-400 uppercase tracking-wider px-2 py-0.5 rounded bg-white/5 border border-white/10">

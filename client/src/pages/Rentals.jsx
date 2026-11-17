@@ -10,28 +10,31 @@ import {
   CreditCard,
   IndianRupee,
   RotateCcw,
-  ArrowRight
+  ArrowRight,
+  Calendar
 } from 'lucide-react';
 import { api } from '../services/api';
-import { formatINR, formatDate, formatDateTime } from '../utils/formatters';
+import { formatINR, formatDate, formatDateTime, calculateHours } from '../utils/formatters';
 import StatusBadge from '../components/StatusBadge';
 
 export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
   const [rentals, setRentals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [rentalTypeFilter, setRentalTypeFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [search, setSearch] = useState('');
 
   useEffect(() => {
     loadRentals();
-  }, [statusFilter, paymentFilter, search, refreshKey]);
+  }, [statusFilter, rentalTypeFilter, paymentFilter, search, refreshKey]);
 
   const loadRentals = async () => {
     try {
       setLoading(true);
       const res = await api.getRentals({
         status: statusFilter,
+        rentalType: rentalTypeFilter,
         paymentStatus: paymentFilter,
         search
       });
@@ -73,6 +76,27 @@ export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-brand-border bg-brand-card text-xs text-white placeholder-slate-400 focus:outline-none focus:border-brand-orange"
           />
+        </div>
+
+        {/* Plan Filter (All, Day-Wise, Hourly) */}
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-brand-card border border-brand-border text-xs overflow-x-auto">
+          {[
+            { id: 'all', label: 'All Plans' },
+            { id: 'daily', label: '📅 Daily' },
+            { id: 'hourly', label: '⏱️ Hourly' }
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setRentalTypeFilter(item.id)}
+              className={`px-3 py-1.5 rounded-lg font-semibold text-[11px] whitespace-nowrap transition-all ${
+                rentalTypeFilter === item.id
+                  ? 'bg-purple-600 text-white shadow-glow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
 
         {/* Status Filter */}
@@ -121,7 +145,7 @@ export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
                   <th className="py-3 px-3">Motorcycle</th>
                   <th className="py-3 px-3">Customer</th>
                   <th className="py-3 px-3">Rental Window</th>
-                  <th className="py-3 px-3">Days</th>
+                  <th className="py-3 px-3">Plan & Duration</th>
                   <th className="py-3 px-3">Total Amount</th>
                   <th className="py-3 px-3">Paid</th>
                   <th className="py-3 px-3">Balance</th>
@@ -145,12 +169,31 @@ export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
                       <p className="text-[10px] text-slate-400">{r.customer?.phone}</p>
                     </td>
                     <td className="py-3.5 px-3 text-slate-300">
-                      <span>{formatDate(r.startDate)}</span>
-                      <span className="text-slate-500 mx-1">→</span>
-                      <span>{formatDate(r.expectedEndDate)}</span>
+                      {r.rentalType === 'hourly' ? (
+                        <div className="space-y-0.5 text-[11px]">
+                          <p>{formatDateTime(r.startDate)}</p>
+                          <p className="text-slate-400">→ {formatDateTime(r.expectedEndDate)}</p>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <span>{formatDate(r.startDate)}</span>
+                          <span className="text-slate-500">→</span>
+                          <span>{formatDate(r.expectedEndDate)}</span>
+                        </div>
+                      )}
                     </td>
-                    <td className="py-3.5 px-3 font-semibold text-white">
-                      {r.totalDays} d
+                    <td className="py-3.5 px-3">
+                      {r.rentalType === 'hourly' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-300 border border-purple-500/20 font-bold font-mono text-[11px]">
+                          <Clock className="w-3 h-3 text-purple-400" />
+                          {r.totalHours || calculateHours(r.startDate, r.expectedEndDate)} hrs
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-300 border border-blue-500/20 font-bold font-mono text-[11px]">
+                          <Calendar className="w-3 h-3 text-blue-400" />
+                          {r.totalDays || 1} d
+                        </span>
+                      )}
                     </td>
                     <td className="py-3.5 px-3 font-bold font-display text-white">
                       {formatINR(r.totalAmount)}

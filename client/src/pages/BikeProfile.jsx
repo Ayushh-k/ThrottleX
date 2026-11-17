@@ -14,7 +14,7 @@ import {
   Gauge
 } from 'lucide-react';
 import { api } from '../services/api';
-import { formatINR, formatDate, formatDateTime, formatKm } from '../utils/formatters';
+import { formatINR, formatDate, formatDateTime, formatKm, calculateHours } from '../utils/formatters';
 import StatusBadge from '../components/StatusBadge';
 
 export default function BikeProfile({ bikeId, onBack, onTriggerAction, refreshKey }) {
@@ -129,10 +129,15 @@ export default function BikeProfile({ bikeId, onBack, onTriggerAction, refreshKe
                   </h1>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs text-slate-400 block">Default Rate</span>
-                  <span className="text-xl sm:text-2xl font-bold font-display text-brand-orange">
-                    {formatINR(bike.defaultDailyRate)}/day
-                  </span>
+                  <span className="text-xs text-slate-400 block">Default Rates</span>
+                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2 justify-end">
+                    <span className="text-xl sm:text-2xl font-bold font-display text-brand-orange">
+                      {formatINR(bike.defaultDailyRate)}/day
+                    </span>
+                    <span className="text-xs sm:text-sm font-semibold font-mono text-purple-300">
+                      • {formatINR(bike.defaultHourlyRate || Math.round(bike.defaultDailyRate / 8))}/hr
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -256,8 +261,8 @@ export default function BikeProfile({ bikeId, onBack, onTriggerAction, refreshKe
                     <th className="py-2.5 px-3">Customer</th>
                     <th className="py-2.5 px-3">Start Date</th>
                     <th className="py-2.5 px-3">End Date</th>
-                    <th className="py-2.5 px-3">Duration</th>
-                    <th className="py-2.5 px-3">Rate/Day</th>
+                    <th className="py-2.5 px-3">Plan / Duration</th>
+                    <th className="py-2.5 px-3">Rate</th>
                     <th className="py-2.5 px-3">Total Amount</th>
                     <th className="py-2.5 px-3">Status</th>
                   </tr>
@@ -270,10 +275,26 @@ export default function BikeProfile({ bikeId, onBack, onTriggerAction, refreshKe
                         {r.customer?.name}
                         <span className="block text-[10px] text-slate-400 font-normal">{r.customer?.phone}</span>
                       </td>
-                      <td className="py-3 px-3 text-slate-300">{formatDate(r.startDate)}</td>
-                      <td className="py-3 px-3 text-slate-300">{formatDate(r.expectedEndDate)}</td>
-                      <td className="py-3 px-3 text-slate-300">{r.totalDays} days</td>
-                      <td className="py-3 px-3 text-slate-300">{formatINR(r.dailyRate)}</td>
+                      <td className="py-3 px-3 text-slate-300">
+                        {r.rentalType === 'hourly' ? formatDateTime(r.startDate) : formatDate(r.startDate)}
+                      </td>
+                      <td className="py-3 px-3 text-slate-300">
+                        {r.rentalType === 'hourly' ? formatDateTime(r.expectedEndDate) : formatDate(r.expectedEndDate)}
+                      </td>
+                      <td className="py-3 px-3 text-slate-300">
+                        {r.rentalType === 'hourly' ? (
+                          <span className="font-semibold text-purple-400 font-mono text-[11px]">
+                            {r.totalHours || calculateHours(r.startDate, r.expectedEndDate)} hrs (Hourly)
+                          </span>
+                        ) : (
+                          <span className="font-semibold text-blue-400 font-mono text-[11px]">
+                            {r.totalDays || 1} days (Day)
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-slate-300 font-mono">
+                        {r.rentalType === 'hourly' ? `${formatINR(r.hourlyRate)}/hr` : `${formatINR(r.dailyRate)}/day`}
+                      </td>
                       <td className="py-3 px-3 font-bold text-brand-orange">{formatINR(r.totalAmount)}</td>
                       <td className="py-3 px-3">
                         <StatusBadge status={r.status} size="xs" />

@@ -77,6 +77,14 @@ export default function ReturnBikeModal({ isOpen, onClose, rental, onSuccess }) 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="p-3 rounded-xl bg-brand-surface border border-brand-border space-y-2 text-xs">
             <div className="flex justify-between">
+              <span className="text-slate-400">Rental Plan:</span>
+              <span className={`font-semibold ${rental.rentalType === 'hourly' ? 'text-purple-400' : 'text-brand-orange'}`}>
+                {rental.rentalType === 'hourly'
+                  ? `⏱️ Hourly (${rental.totalHours} hrs @ ${formatINR(rental.hourlyRate)}/hr)`
+                  : `📅 Day-Wise (${rental.totalDays} days @ ${formatINR(rental.dailyRate)}/day)`}
+              </span>
+            </div>
+            <div className="flex justify-between">
               <span className="text-slate-400">Scheduled Return:</span>
               <span className="font-semibold text-white">{formatDateTime(rental.expectedEndDate)}</span>
             </div>

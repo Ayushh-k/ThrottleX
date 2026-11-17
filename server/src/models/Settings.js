@@ -5,6 +5,7 @@ const settingsSchema = new mongoose.Schema({
   tagline: { type: String, default: 'OWN THE ROAD.' },
   currency: { type: String, default: '₹' },
   defaultDailyRate: { type: Number, default: 900 },
+  defaultHourlyRate: { type: Number, default: 120 },
   gracePeriodHours: { type: Number, default: 2 },
   hourlyLateFee: { type: Number, default: 100 },
   extraDayFee: { type: Number, default: 1000 },

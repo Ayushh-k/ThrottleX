@@ -15,6 +15,7 @@ export default function AddBikeModal({ isOpen, onClose, onSuccess }) {
   const [engineNumber, setEngineNumber] = useState('');
   const [purchasePrice, setPurchasePrice] = useState('');
   const [defaultDailyRate, setDefaultDailyRate] = useState(900);
+  const [defaultHourlyRate, setDefaultHourlyRate] = useState(120);
   const [currentOdometer, setCurrentOdometer] = useState(0);
   const [fuelType, setFuelType] = useState('Petrol');
   const [color, setColor] = useState('Black');
@@ -47,6 +48,7 @@ export default function AddBikeModal({ isOpen, onClose, onSuccess }) {
         engineNumber: engineNumber.trim(),
         purchasePrice: Number(purchasePrice) || 0,
         defaultDailyRate: Number(defaultDailyRate),
+        defaultHourlyRate: Number(defaultHourlyRate) || Math.round(Number(defaultDailyRate) / 8) || 120,
         currentOdometer: Number(currentOdometer) || 0,
         fuelType,
         color,
@@ -155,7 +157,7 @@ export default function AddBikeModal({ isOpen, onClose, onSuccess }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label className="text-xs font-semibold text-slate-300 block mb-1">
                 Default Daily Rate (₹) *
@@ -163,8 +165,24 @@ export default function AddBikeModal({ isOpen, onClose, onSuccess }) {
               <input
                 type="number"
                 value={defaultDailyRate}
-                onChange={(e) => setDefaultDailyRate(e.target.value)}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setDefaultDailyRate(e.target.value);
+                  if (val > 0) setDefaultHourlyRate(Math.round(val / 8));
+                }}
                 className="w-full px-3 py-2 rounded-lg text-sm font-bold border border-brand-border bg-brand-surface text-brand-orange"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-purple-400 block mb-1">
+                Default Hourly Rate (₹) *
+              </label>
+              <input
+                type="number"
+                value={defaultHourlyRate}
+                onChange={(e) => setDefaultHourlyRate(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg text-sm font-bold border border-purple-500/30 bg-purple-500/10 text-purple-300"
                 required
               />
             </div>

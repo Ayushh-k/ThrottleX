@@ -42,9 +42,13 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
     const r = data.rental;
     const payments = data.payments || [];
 
+    const planStr = r.rentalType === 'hourly'
+      ? `Hourly Plan (${r.totalHours} hrs @ ${formatINR(r.hourlyRate)}/hr)`
+      : `Day Plan (${r.totalDays} days @ ${formatINR(r.dailyRate)}/day)`;
+
     exportReportToPDF({
       title: `THROTTLEX RENTAL INVOICE #${r.rentalNumber}`,
-      subtitle: `Customer: ${r.customer?.name} | Bike: ${r.bike?.name} (${r.bike?.registrationNumber})`,
+      subtitle: `Customer: ${r.customer?.name} | Bike: ${r.bike?.name} (${r.bike?.registrationNumber}) | ${planStr}`,
       headers: ['Receipt #', 'Date', 'Method', 'Received By', 'Amount'],
       rows: payments.map((p) => [
         p.receiptNumber,
@@ -123,10 +127,19 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
         {/* Header Strip */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-brand-border">
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <h1 className="text-2xl font-bold font-display text-white">
                 Rental Invoice #{rental.rentalNumber}
               </h1>
+              {rental.rentalType === 'hourly' ? (
+                <span className="inline-flex items-center gap-1 font-bold text-[11px] px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                  <Clock className="w-3 h-3" /> Hourly Plan
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 font-bold text-[11px] px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <Calendar className="w-3 h-3" /> Day-Wise Plan
+                </span>
+              )}
               <StatusBadge status={rental.status} />
               <StatusBadge status={rental.paymentStatus} />
             </div>
@@ -193,8 +206,12 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
             <span className="font-semibold text-white mt-1 block">{formatDateTime(rental.expectedEndDate)}</span>
           </div>
           <div>
-            <span className="text-slate-400 block uppercase text-[10px]">Total Billed Days</span>
-            <span className="font-bold text-brand-orange text-sm mt-0.5 block">{rental.totalDays} Days</span>
+            <span className="text-slate-400 block uppercase text-[10px]">
+              {rental.rentalType === 'hourly' ? 'Total Billed Hours' : 'Total Billed Days'}
+            </span>
+            <span className={`text-sm font-bold mt-0.5 block ${rental.rentalType === 'hourly' ? 'text-purple-400' : 'text-brand-orange'}`}>
+              {rental.rentalType === 'hourly' ? `${rental.totalHours} Hours` : `${rental.totalDays} Days`}
+            </span>
           </div>
         </div>
 
@@ -204,10 +221,14 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
           <div className="p-4 rounded-xl bg-brand-surface border border-brand-border space-y-2 text-xs">
             <div className="flex justify-between py-1 border-b border-white/5">
               <span className="text-slate-300">
-                Base Rental Rate ({rental.totalDays} days × {formatINR(rental.dailyRate)}/day):
+                {rental.rentalType === 'hourly'
+                  ? `Base Rental Rate (${rental.totalHours} hours × ${formatINR(rental.hourlyRate)}/hr):`
+                  : `Base Rental Rate (${rental.totalDays} days × ${formatINR(rental.dailyRate)}/day):`}
               </span>
               <span className="font-semibold text-white">
-                {formatINR(rental.totalDays * rental.dailyRate)}
+                {rental.rentalType === 'hourly'
+                  ? formatINR(rental.totalHours * rental.hourlyRate)
+                  : formatINR(rental.totalDays * rental.dailyRate)}
               </span>
             </div>
 

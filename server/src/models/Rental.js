@@ -7,8 +7,16 @@ const rentalSchema = new mongoose.Schema({
   startDate: { type: Date, required: true },
   expectedEndDate: { type: Date, required: true },
   actualEndDate: { type: Date },
-  dailyRate: { type: Number, required: true, min: 0 },
-  totalDays: { type: Number, required: true, min: 1 },
+  rentalType: {
+    type: String,
+    enum: ['daily', 'hourly'],
+    default: 'daily',
+    index: true
+  },
+  dailyRate: { type: Number, default: 0, min: 0 },
+  hourlyRate: { type: Number, default: 0, min: 0 },
+  totalDays: { type: Number, default: 0, min: 0 },
+  totalHours: { type: Number, default: 0, min: 0 },
   securityDeposit: { type: Number, default: 0, min: 0 },
   extraCharges: { type: Number, default: 0, min: 0 },
   extraChargesReason: { type: String, default: '' },

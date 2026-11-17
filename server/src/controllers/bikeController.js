@@ -152,6 +152,7 @@ exports.createBike = async (req, res) => {
       purchaseDate,
       purchasePrice,
       defaultDailyRate,
+      defaultHourlyRate,
       currentOdometer,
       fuelType,
       color,
@@ -184,6 +185,7 @@ exports.createBike = async (req, res) => {
       purchaseDate: purchaseDate || new Date(),
       purchasePrice: Number(purchasePrice) || 0,
       defaultDailyRate: Number(defaultDailyRate),
+      defaultHourlyRate: Number(defaultHourlyRate) || Math.round(Number(defaultDailyRate) / 8) || 120,
       currentOdometer: Number(currentOdometer) || 0,
       fuelType: fuelType || 'Petrol',
       color: color || 'Black',
@@ -201,7 +203,7 @@ exports.createBike = async (req, res) => {
       entityId: bike._id,
       userId: req.user?._id,
       userName: req.user?.name || 'Owner',
-      details: `Added new bike: ${bike.name} (${bike.registrationNumber}) with default rate ₹${bike.defaultDailyRate}/day.`
+      details: `Added new bike: ${bike.name} (${bike.registrationNumber}) with default rate ₹${bike.defaultDailyRate}/day, ₹${bike.defaultHourlyRate}/hr.`
     });
 
     return res.status(201).json({ message: 'Bike added successfully.', bike });

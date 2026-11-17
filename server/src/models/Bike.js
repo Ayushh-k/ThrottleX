@@ -11,6 +11,7 @@ const bikeSchema = new mongoose.Schema({
   purchaseDate: { type: Date, default: Date.now },
   purchasePrice: { type: Number, default: 0 },
   defaultDailyRate: { type: Number, required: true, min: 0 },
+  defaultHourlyRate: { type: Number, default: 0, min: 0 },
   currentOdometer: { type: Number, default: 0, min: 0 },
   fuelType: { type: String, enum: ['Petrol', 'Electric', 'Diesel'], default: 'Petrol' },
   color: { type: String, default: 'Black' },

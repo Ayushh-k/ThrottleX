@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, AlertCircle, CheckCircle2, Clock, IndianRupee, Bike as BikeIcon, User, Plus } from 'lucide-react';
+import { X, Calendar, AlertCircle, CheckCircle2, Clock, IndianRupee, Bike as BikeIcon, User, Plus, Zap } from 'lucide-react';
 import { api } from '../../services/api';
-import { formatINR, calculateDays } from '../../utils/formatters';
+import { formatINR, calculateDays, calculateHours } from '../../utils/formatters';
 
 export default function NewRentalModal({ isOpen, onClose, onSuccess, preselectedBikeId = null }) {
   const [bikes, setBikes] = useState([]);
@@ -25,9 +25,11 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   const defaultEnd = tomorrow.toISOString().slice(0, 16);
 
+  const [rentalType, setRentalType] = useState('daily'); // 'daily' | 'hourly'
   const [startDate, setStartDate] = useState(defaultStart);
   const [expectedEndDate, setExpectedEndDate] = useState(defaultEnd);
   const [dailyRate, setDailyRate] = useState(900);
+  const [hourlyRate, setHourlyRate] = useState(120);
   const [securityDeposit, setSecurityDeposit] = useState(2000);
   const [extraCharges, setExtraCharges] = useState(0);
   const [extraReason, setExtraReason] = useState('');
@@ -67,11 +69,13 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
         const b = bikesRes.bikes?.find((x) => x._id === preselectedBikeId);
         if (b) {
           setDailyRate(b.defaultDailyRate);
+          setHourlyRate(b.defaultHourlyRate || Math.round(b.defaultDailyRate / 8) || 120);
           setStartOdometer(b.currentOdometer || 0);
         }
       } else if (bikesRes.bikes?.length > 0) {
         setSelectedBikeId(bikesRes.bikes[0]._id);
         setDailyRate(bikesRes.bikes[0].defaultDailyRate);
+        setHourlyRate(bikesRes.bikes[0].defaultHourlyRate || Math.round(bikesRes.bikes[0].defaultDailyRate / 8) || 120);
         setStartOdometer(bikesRes.bikes[0].currentOdometer || 0);
       }
     } catch (e) {
@@ -86,8 +90,34 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
     const b = bikes.find((x) => x._id === id);
     if (b) {
       setDailyRate(b.defaultDailyRate);
+      setHourlyRate(b.defaultHourlyRate || Math.round(b.defaultDailyRate / 8) || 120);
       setStartOdometer(b.currentOdometer || 0);
     }
+  };
+
+  const handleRentalTypeSwitch = (type) => {
+    setRentalType(type);
+    const start = startDate ? new Date(startDate) : new Date();
+    if (type === 'hourly') {
+      // Default to 4 hours from start
+      const end = new Date(start.getTime() + 4 * 60 * 60 * 1000);
+      setExpectedEndDate(end.toISOString().slice(0, 16));
+    } else {
+      // Default to 24 hours (1 day) from start
+      const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+      setExpectedEndDate(end.toISOString().slice(0, 16));
+    }
+  };
+
+  const applyDurationPreset = (amount, unit) => {
+    const start = startDate ? new Date(startDate) : new Date();
+    let end;
+    if (unit === 'hours') {
+      end = new Date(start.getTime() + amount * 60 * 60 * 1000);
+    } else {
+      end = new Date(start.getTime() + amount * 24 * 60 * 60 * 1000);
+    }
+    setExpectedEndDate(end.toISOString().slice(0, 16));
   };
 
   // Availability check
@@ -114,8 +144,12 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
   }, [selectedBikeId, startDate, expectedEndDate]);
 
   // Derived calculations
+  const isHourly = rentalType === 'hourly';
   const totalDays = calculateDays(startDate, expectedEndDate);
-  const subtotal = totalDays * Number(dailyRate || 0);
+  const totalHours = calculateHours(startDate, expectedEndDate);
+  const durationCount = isHourly ? totalHours : totalDays;
+  const activeRate = isHourly ? Number(hourlyRate || 0) : Number(dailyRate || 0);
+  const subtotal = durationCount * activeRate;
   const totalAmount = Math.max(0, subtotal + Number(extraCharges || 0) - Number(discount || 0));
   const remainingAmount = Math.max(0, totalAmount - Number(initialPayment || 0));
 
@@ -154,7 +188,9 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
         customerDlNumber: isNewCustomer ? customerDl : undefined,
         startDate,
         expectedEndDate,
+        rentalType,
         dailyRate: Number(dailyRate),
+        hourlyRate: Number(hourlyRate),
         securityDeposit: Number(securityDeposit),
         extraCharges: Number(extraCharges),
         extraChargesReason: extraReason,
@@ -219,7 +255,12 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
                   <p className="font-semibold text-sm truncate">{b.name}</p>
                   <p className="text-xs text-slate-400 mt-0.5">{b.registrationNumber}</p>
                   <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-xs">
-                    <span className="font-bold text-brand-orange">{formatINR(b.defaultDailyRate)}/day</span>
+                    <div>
+                      <span className="font-bold text-brand-orange">{formatINR(b.defaultDailyRate)}/day</span>
+                      <span className="text-[11px] text-slate-400 ml-1.5 font-mono">
+                        ({formatINR(b.defaultHourlyRate || Math.round(b.defaultDailyRate / 8))}/hr)
+                      </span>
+                    </div>
                     <span className="text-[10px] uppercase text-slate-400">{b.status}</span>
                   </div>
                 </div>
@@ -254,45 +295,130 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
             ) : null}
           </div>
 
-          {/* Section 2: Dates and Duration */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Start Date & Time
+          {/* Section 2: Rental Plan & Duration */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-purple-400" /> Rental Plan & Duration
               </label>
-              <input
-                type="datetime-local"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                required
-                className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Expected Return Date & Time
-              </label>
-              <input
-                type="datetime-local"
-                value={expectedEndDate}
-                onChange={(e) => setExpectedEndDate(e.target.value)}
-                required
-                className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface"
-              />
-            </div>
-          </div>
 
-          {/* Duration Banner */}
-          <div className="p-3 rounded-xl bg-brand-surface border border-brand-border flex items-center justify-between text-xs">
-            <span className="text-slate-400">
-              Calculated Duration: <strong className="text-white">{totalDays} Day{totalDays > 1 ? 's' : ''}</strong>
-            </span>
-            <span className="text-slate-400">
-              Rate per Day: <strong className="text-white">{formatINR(dailyRate)}</strong>
-            </span>
-            <span className="text-slate-400">
-              Subtotal: <strong className="text-brand-orange">{formatINR(subtotal)}</strong>
-            </span>
+              {/* Day / Hour Toggle */}
+              <div className="flex items-center gap-1 bg-brand-surface p-1 rounded-xl border border-brand-border">
+                <button
+                  type="button"
+                  onClick={() => handleRentalTypeSwitch('daily')}
+                  className={`py-1 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    rentalType === 'daily'
+                      ? 'bg-brand-orange text-white shadow-glow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5" /> Day-Wise
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRentalTypeSwitch('hourly')}
+                  className={`py-1 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    rentalType === 'hourly'
+                      ? 'bg-purple-600 text-white shadow-glow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5" /> Hourly
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Duration Presets */}
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
+              <span className="text-[11px] text-slate-400 mr-1 flex items-center gap-1">
+                <Zap className="w-3 h-3 text-amber-400" /> Quick Presets:
+              </span>
+              {isHourly ? (
+                <>
+                  {[2, 4, 6, 8, 12, 24].map((hrs) => (
+                    <button
+                      key={hrs}
+                      type="button"
+                      onClick={() => applyDurationPreset(hrs, 'hours')}
+                      className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all ${
+                        totalHours === hrs
+                          ? 'border-purple-500 bg-purple-500/20 text-purple-300'
+                          : 'border-brand-border bg-brand-surface text-slate-400 hover:text-white hover:border-slate-500'
+                      }`}
+                    >
+                      +{hrs} hrs
+                    </button>
+                  ))}
+                </>
+              ) : (
+                <>
+                  {[1, 2, 3, 5, 7].map((days) => (
+                    <button
+                      key={days}
+                      type="button"
+                      onClick={() => applyDurationPreset(days, 'days')}
+                      className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all ${
+                        totalDays === days
+                          ? 'border-brand-orange bg-brand-orange/20 text-brand-orange'
+                          : 'border-brand-border bg-brand-surface text-slate-400 hover:text-white hover:border-slate-500'
+                      }`}
+                    >
+                      {days === 7 ? '1 week' : `+${days} day${days > 1 ? 's' : ''}`}
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Start Date & Time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface text-white"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Expected Return Date & Time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={expectedEndDate}
+                  onChange={(e) => setExpectedEndDate(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface text-white"
+                />
+              </div>
+            </div>
+
+            {/* Duration Banner */}
+            <div className="p-3 rounded-xl bg-brand-surface border border-brand-border flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="text-slate-400">
+                Plan: <strong className={isHourly ? 'text-purple-400 font-bold' : 'text-brand-orange font-bold'}>
+                  {isHourly ? '⏱️ Hourly Rental' : '📅 Day-Wise Rental'}
+                </strong>
+              </span>
+              <span className="text-slate-400">
+                Duration: <strong className="text-white">
+                  {isHourly ? `${totalHours} Hour${totalHours > 1 ? 's' : ''}` : `${totalDays} Day${totalDays > 1 ? 's' : ''}`}
+                </strong>
+              </span>
+              <span className="text-slate-400">
+                Rate: <strong className="text-white">
+                  {isHourly ? `${formatINR(hourlyRate)}/hr` : `${formatINR(dailyRate)}/day`}
+                </strong>
+              </span>
+              <span className="text-slate-400">
+                Subtotal: <strong className="text-brand-orange text-sm font-bold">{formatINR(subtotal)}</strong>
+              </span>
+            </div>
           </div>
 
           {/* Section 3: Customer Information */}
@@ -359,15 +485,29 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
             </label>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Daily Rate (₹)</label>
-                <input
-                  type="number"
-                  value={dailyRate}
-                  onChange={(e) => setDailyRate(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg text-sm border border-brand-border bg-brand-surface font-semibold"
-                />
-              </div>
+              {isHourly ? (
+                <div>
+                  <label className="text-[11px] text-purple-400 font-semibold block mb-1">Hourly Rate (₹) *</label>
+                  <input
+                    type="number"
+                    value={hourlyRate}
+                    onChange={(e) => setHourlyRate(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-lg text-sm border border-purple-500/40 bg-purple-500/10 font-bold text-purple-300"
+                    required
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="text-[11px] text-brand-orange font-semibold block mb-1">Daily Rate (₹) *</label>
+                  <input
+                    type="number"
+                    value={dailyRate}
+                    onChange={(e) => setDailyRate(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-lg text-sm border border-brand-border bg-brand-surface font-bold text-brand-orange"
+                    required
+                  />
+                </div>
+              )}
               <div>
                 <label className="text-[11px] text-slate-400 block mb-1">Security Deposit (₹)</label>
                 <input

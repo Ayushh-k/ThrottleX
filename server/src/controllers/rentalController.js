@@ -50,6 +50,7 @@ exports.checkAvailability = async (req, res) => {
             brand: b.brand,
             model: b.model,
             defaultDailyRate: b.defaultDailyRate,
+            defaultHourlyRate: b.defaultHourlyRate || Math.round(b.defaultDailyRate / 8) || 120,
             imageUrl: b.imageUrl
           });
         }
@@ -77,11 +78,12 @@ exports.checkAvailability = async (req, res) => {
 // Get all rentals
 exports.getAllRentals = async (req, res) => {
   try {
-    const { status, paymentStatus, bikeId, customerId, search, startDate, endDate } = req.query;
+    const { status, paymentStatus, rentalType, bikeId, customerId, search, startDate, endDate } = req.query;
     const filter = {};
 
     if (status && status !== 'all') filter.status = status;
     if (paymentStatus && paymentStatus !== 'all') filter.paymentStatus = paymentStatus;
+    if (rentalType && rentalType !== 'all') filter.rentalType = rentalType;
     if (bikeId && bikeId !== 'all') filter.bike = bikeId;
     if (customerId && customerId !== 'all') filter.customer = customerId;
 
@@ -96,7 +98,7 @@ exports.getAllRentals = async (req, res) => {
     }
 
     const rentals = await Rental.find(filter)
-      .populate('bike', 'name brand model registrationNumber defaultDailyRate imageUrl')
+      .populate('bike', 'name brand model registrationNumber defaultDailyRate defaultHourlyRate imageUrl')
       .populate('customer', 'name phone email dlNumber')
       .sort({ createdAt: -1 })
       .lean();
@@ -160,7 +162,9 @@ exports.createRental = async (req, res) => {
       customerEmergencyContact,
       startDate,
       expectedEndDate,
+      rentalType = 'daily',
       dailyRate,
+      hourlyRate,
       securityDeposit = 0,
       extraCharges = 0,
       extraChargesReason = '',
@@ -218,12 +222,25 @@ exports.createRental = async (req, res) => {
       return res.status(400).json({ message: 'Valid customer information is required.' });
     }
 
-    // Calculate duration in days (minimum 1 day)
+    // Calculate duration and base price based on rentalType
     const diffMs = expectedEnd - start;
-    const diffDays = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    let diffDays = 0;
+    let diffHours = 0;
+    let subtotal = 0;
+    let appliedDailyRate = Number(dailyRate) || bike.defaultDailyRate || 900;
+    const defaultHr = bike.defaultHourlyRate > 0 ? bike.defaultHourlyRate : Math.round(appliedDailyRate / 8) || 120;
+    let appliedHourlyRate = Number(hourlyRate) > 0 ? Number(hourlyRate) : defaultHr;
 
-    const rate = Number(dailyRate) || bike.defaultDailyRate;
-    const subtotal = diffDays * rate;
+    if (rentalType === 'hourly') {
+      diffHours = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60)));
+      diffDays = Number((diffHours / 24).toFixed(1));
+      subtotal = diffHours * appliedHourlyRate;
+    } else {
+      diffDays = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      diffHours = diffDays * 24;
+      subtotal = diffDays * appliedDailyRate;
+    }
+
     const totalAmount = Math.max(0, subtotal + Number(extraCharges || 0) - Number(discount || 0));
 
     const initPay = Number(initialPayment) || 0;
@@ -246,8 +263,11 @@ exports.createRental = async (req, res) => {
       customer: customer._id,
       startDate: start,
       expectedEndDate: expectedEnd,
-      dailyRate: rate,
+      rentalType,
+      dailyRate: appliedDailyRate,
+      hourlyRate: appliedHourlyRate,
       totalDays: diffDays,
+      totalHours: diffHours,
       securityDeposit: Number(securityDeposit) || 0,
       extraCharges: Number(extraCharges) || 0,
       extraChargesReason,
@@ -303,13 +323,17 @@ exports.createRental = async (req, res) => {
       });
     }
 
+    const auditDurationStr = rentalType === 'hourly'
+      ? `${diffHours} hrs @ ₹${appliedHourlyRate}/hr`
+      : `${diffDays} days @ ₹${appliedDailyRate}/day`;
+
     await ledgerService.recordAudit({
       action: 'RENTAL_CREATED',
       entityType: 'Rental',
       entityId: rental._id,
       userId: req.user?._id,
       userName: req.user?.name || 'Partner',
-      details: `Created rental #${rental.rentalNumber} for ${customer.name} on ${bike.name} (${diffDays} days @ ₹${rate}/day). Total: ₹${totalAmount}.`
+      details: `Created ${rentalType} rental #${rental.rentalNumber} for ${customer.name} on ${bike.name} (${auditDurationStr}). Total: ₹${totalAmount}.`
     });
 
     return res.status(201).json({
@@ -358,14 +382,20 @@ exports.returnBike = async (req, res) => {
     let computedLateFee = Number(extraLateCharge) || 0;
     if (diffMs > graceMs && computedLateFee === 0) {
       const lateHours = Math.ceil((diffMs - graceMs) / (1000 * 60 * 60));
-      if (lateHours >= 12) {
-        // Charge extra day
-        const extraDays = Math.ceil(lateHours / 24);
-        computedLateFee = extraDays * (settings.extraDayFee || rental.dailyRate);
-        rental.extraChargesReason = (rental.extraChargesReason ? rental.extraChargesReason + '; ' : '') + `Late return by ${lateHours} hrs (${extraDays} day fee)`;
+      if (rental.rentalType === 'hourly') {
+        const ratePerLateHour = rental.hourlyRate || settings.hourlyLateFee || 100;
+        computedLateFee = lateHours * ratePerLateHour;
+        rental.extraChargesReason = (rental.extraChargesReason ? rental.extraChargesReason + '; ' : '') + `Late return by ${lateHours} hrs (@ ₹${ratePerLateHour}/hr)`;
       } else {
-        computedLateFee = lateHours * (settings.hourlyLateFee || 100);
-        rental.extraChargesReason = (rental.extraChargesReason ? rental.extraChargesReason + '; ' : '') + `Late return by ${lateHours} hrs`;
+        if (lateHours >= 12) {
+          // Charge extra day
+          const extraDays = Math.ceil(lateHours / 24);
+          computedLateFee = extraDays * (settings.extraDayFee || rental.dailyRate);
+          rental.extraChargesReason = (rental.extraChargesReason ? rental.extraChargesReason + '; ' : '') + `Late return by ${lateHours} hrs (${extraDays} day fee)`;
+        } else {
+          computedLateFee = lateHours * (settings.hourlyLateFee || 100);
+          rental.extraChargesReason = (rental.extraChargesReason ? rental.extraChargesReason + '; ' : '') + `Late return by ${lateHours} hrs`;
+        }
       }
     }
 
