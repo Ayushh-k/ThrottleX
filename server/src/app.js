@@ -21,6 +21,7 @@ const reportRoutes = require('./routes/reportRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const searchRoutes = require('./routes/searchRoutes');
+const User = require('./models/User');
 
 const app = express();
 
@@ -38,7 +39,7 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 
-// Middleware to ensure DB connection before handling request (crucial for Vercel Serverless)
+// Middleware to ensure DB connection before handling request
 app.use(async (req, res, next) => {
   try {
     await connectDB();
@@ -52,8 +53,11 @@ app.use(async (req, res, next) => {
   }
 });
 
+// Centralized API Router
+const apiRouter = express.Router();
+
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+apiRouter.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     brand: 'THROTTLEX',
@@ -63,9 +67,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// System check to see if database has an owner registered
-const User = require('./models/User');
-app.get('/api/auth/setup-status', async (req, res) => {
+// Setup status check
+apiRouter.get('/auth/setup-status', async (req, res) => {
   try {
     const ownerCount = await User.countDocuments({ role: 'owner' });
     const userCount = await User.countDocuments();
@@ -78,35 +81,39 @@ app.get('/api/auth/setup-status', async (req, res) => {
   }
 });
 
-// Mount API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/bikes', bikeRoutes);
-app.use('/api/rentals', rentalRoutes);
-app.use('/api/customers', customerRoutes);
-app.use('/api/expenses', expenseRoutes);
-app.use('/api/fuel', fuelRoutes);
-app.use('/api/maintenance', maintenanceRoutes);
-app.use('/api/partners', partnerRoutes);
-app.use('/api/settlements', settlementRoutes);
-app.use('/api/ledger', ledgerRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/settings', settingsRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/search', searchRoutes);
+// Mount routes on apiRouter
+apiRouter.use('/auth', authRoutes);
+apiRouter.use('/dashboard', dashboardRoutes);
+apiRouter.use('/bikes', bikeRoutes);
+apiRouter.use('/rentals', rentalRoutes);
+apiRouter.use('/customers', customerRoutes);
+apiRouter.use('/expenses', expenseRoutes);
+apiRouter.use('/fuel', fuelRoutes);
+apiRouter.use('/maintenance', maintenanceRoutes);
+apiRouter.use('/partners', partnerRoutes);
+apiRouter.use('/settlements', settlementRoutes);
+apiRouter.use('/ledger', ledgerRoutes);
+apiRouter.use('/reports', reportRoutes);
+apiRouter.use('/settings', settingsRoutes);
+apiRouter.use('/notifications', notificationRoutes);
+apiRouter.use('/search', searchRoutes);
 
-// Static frontend serving (for local and VPS production)
+// Mount at both /api and root so it handles both direct and rewritten requests
+app.use('/api', apiRouter);
+app.use(apiRouter);
+
+// Static frontend fallback for standalone local execution
 const clientDistPath = path.join(__dirname, '../../client/dist');
 app.use(express.static(clientDistPath));
 
 app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api')) {
+  if (req.path.startsWith('/api') || req.path.startsWith('/auth') || req.path.startsWith('/bikes')) {
     return next();
   }
   const indexFile = path.join(clientDistPath, 'index.html');
   res.sendFile(indexFile, (err) => {
     if (err) {
-      res.status(200).send('THROTTLEX API Server is running. Client build in progress.');
+      res.status(200).send('THROTTLEX API Server is running.');
     }
   });
 });
