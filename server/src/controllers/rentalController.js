@@ -394,39 +394,15 @@ exports.returnBike = async (req, res) => {
       await Bike.findByIdAndUpdate(rental.bike._id, { status: 'available' });
     }
 
-    // Calculate late fees if applicable
-    const settings = await Settings.findOne() || { gracePeriodHours: 2, hourlyLateFee: 100, extraDayFee: 1000 };
-    const expectedEnd = new Date(rental.expectedEndDate);
-    const diffMs = returnTime - expectedEnd;
-    const graceMs = (settings.gracePeriodHours || 2) * 60 * 60 * 1000;
+    // Only apply extra late charge / fees if explicitly entered by the user
+    const appliedLateCharge = Number(extraLateCharge) || 0;
 
-    let computedLateFee = Number(extraLateCharge) || 0;
-    if (diffMs > graceMs && computedLateFee === 0) {
-      const lateHours = Math.ceil((diffMs - graceMs) / (1000 * 60 * 60));
-      if (rental.rentalType === 'hourly') {
-        const ratePerLateHour = rental.hourlyRate || settings.hourlyLateFee || 100;
-        computedLateFee = lateHours * ratePerLateHour;
-        rental.extraChargesReason = (rental.extraChargesReason ? rental.extraChargesReason + '; ' : '') + `Late return by ${lateHours} hrs (@ ₹${ratePerLateHour}/hr)`;
-      } else {
-        if (lateHours >= 12) {
-          // Charge extra day
-          const extraDays = Math.ceil(lateHours / 24);
-          computedLateFee = extraDays * (settings.extraDayFee || rental.dailyRate);
-          rental.extraChargesReason = (rental.extraChargesReason ? rental.extraChargesReason + '; ' : '') + `Late return by ${lateHours} hrs (${extraDays} day fee)`;
-        } else {
-          computedLateFee = lateHours * (settings.hourlyLateFee || 100);
-          rental.extraChargesReason = (rental.extraChargesReason ? rental.extraChargesReason + '; ' : '') + `Late return by ${lateHours} hrs`;
-        }
-      }
-    }
-
-    if (computedLateFee > 0) {
-      rental.extraCharges += computedLateFee;
-      rental.totalAmount += computedLateFee;
-      rental.remainingAmount += computedLateFee;
-      if (lateReason) {
-        rental.extraChargesReason = (rental.extraChargesReason ? rental.extraChargesReason + '; ' : '') + lateReason;
-      }
+    if (appliedLateCharge > 0) {
+      rental.extraCharges = (rental.extraCharges || 0) + appliedLateCharge;
+      rental.totalAmount = (rental.totalAmount || 0) + appliedLateCharge;
+      rental.remainingAmount = (rental.remainingAmount || 0) + appliedLateCharge;
+      const reasonText = lateReason ? lateReason : `Extra charge / late fee: ₹${appliedLateCharge}`;
+      rental.extraChargesReason = rental.extraChargesReason ? `${rental.extraChargesReason}; ${reasonText}` : reasonText;
     }
 
     rental.status = 'returned';
@@ -446,7 +422,7 @@ exports.returnBike = async (req, res) => {
     return res.json({
       message: 'Bike returned successfully.',
       rental,
-      lateFeeApplied: computedLateFee
+      lateFeeApplied: appliedLateCharge
     });
   } catch (err) {
     console.error('returnBike error:', err);

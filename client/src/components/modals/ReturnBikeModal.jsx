@@ -98,13 +98,39 @@ export default function ReturnBikeModal({ isOpen, onClose, rental, onSuccess }) 
           </div>
 
           {isLate && (
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-              <div>
-                <strong>Return is late by ~{lateHours} hour{lateHours > 1 ? 's' : ''}!</strong>
-                <p className="text-[11px] text-slate-300 mt-0.5">
-                  You can specify an additional late fee below or let the system apply standard rates.
-                </p>
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong>Return is past scheduled time by ~{lateHours} hour{lateHours > 1 ? 's' : ''}!</strong>
+                  <p className="text-[11px] text-slate-300 mt-0.5">
+                    If you want to charge a late fee, enter the amount below. If waived, keep as ₹0.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rate = rental.rentalType === 'hourly' ? (rental.hourlyRate || 120) : Math.round((rental.dailyRate || 900) / 8);
+                    const suggested = lateHours * rate;
+                    setExtraLateCharge(suggested);
+                    setLateReason(`Late return by ${lateHours} hrs`);
+                  }}
+                  className="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 text-[11px] font-semibold transition-all"
+                >
+                  Suggest Fee
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExtraLateCharge(0);
+                    setLateReason('');
+                  }}
+                  className="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[11px] font-semibold transition-all"
+                >
+                  Waive (₹0)
+                </button>
               </div>
             </div>
           )}
