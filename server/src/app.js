@@ -77,7 +77,7 @@ async function ensureOwnerAccount() {
 // Middleware to ensure DB connection before handling request
 app.use(async (req, res, next) => {
   // Allow health check to pass without blocking on DB
-  if (req.path === '/api/health' || req.path === '/health') {
+  if (req.path.includes('/health')) {
     return next();
   }
 
@@ -97,13 +97,22 @@ app.use(async (req, res, next) => {
 // Centralized API Router
 const apiRouter = express.Router();
 
-// Health check endpoint
+// Health check endpoint with diagnostics
 apiRouter.get('/health', (req, res) => {
+  const mongoose = require('mongoose');
   res.json({
     status: 'ok',
     brand: 'THROTTLEX',
     tagline: 'OWN THE ROAD.',
     environment: process.env.NODE_ENV || 'development',
+    isVercel: Boolean(process.env.VERCEL),
+    hasMongoUri: Boolean(process.env.MONGODB_URI),
+    mongoStatus:
+      mongoose.connection.readyState === 1
+        ? 'connected'
+        : mongoose.connection.readyState === 2
+        ? 'connecting'
+        : 'disconnected',
     timestamp: new Date().toISOString()
   });
 });
