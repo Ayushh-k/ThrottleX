@@ -3,6 +3,7 @@ const Bike = require('../models/Bike');
 const Partner = require('../models/Partner');
 const Transaction = require('../models/Transaction');
 const ledgerService = require('../services/ledgerService');
+const { getNextExpenseNumber } = require('../utils/idGenerator');
 
 exports.getAllExpenses = async (req, res) => {
   try {
@@ -80,14 +81,25 @@ exports.createExpense = async (req, res) => {
     if (!partner) {
       partner = await Partner.findOne({ status: 'active' });
     }
+    if (!partner) {
+      partner = await Partner.findOne();
+    }
+    if (!partner) {
+      partner = await Partner.create({
+        name: req.user?.name || 'Managing Partner',
+        email: req.user?.email || 'owner@throttlex.com',
+        phone: req.user?.phone || '',
+        sharePercentage: 100,
+        status: 'active'
+      });
+    }
 
     let bike = null;
     if (bikeId && bikeId !== 'general') {
       bike = await Bike.findById(bikeId);
     }
 
-    const count = await Expense.countDocuments();
-    const expenseNumber = `TX-EXP-${1001 + count}`;
+    const expenseNumber = await getNextExpenseNumber();
 
     const expense = await Expense.create({
       expenseNumber,
@@ -116,7 +128,7 @@ exports.createExpense = async (req, res) => {
     return res.status(201).json({ message: 'Expense added successfully.', expense });
   } catch (err) {
     console.error('createExpense error:', err);
-    return res.status(500).json({ message: 'Error adding expense.' });
+    return res.status(500).json({ message: err.message || 'Error adding expense.' });
   }
 };
 
@@ -141,6 +153,7 @@ exports.deleteExpense = async (req, res) => {
 
     return res.json({ message: 'Expense deleted successfully.' });
   } catch (err) {
-    return res.status(500).json({ message: 'Error deleting expense.' });
+    console.error('deleteExpense error:', err);
+    return res.status(500).json({ message: err.message || 'Error deleting expense.' });
   }
 };

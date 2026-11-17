@@ -1,11 +1,12 @@
 const Transaction = require('../models/Transaction');
 const AuditLog = require('../models/AuditLog');
+const { getNextTransactionNumber } = require('../utils/idGenerator');
 
 class LedgerService {
   async recordPayment({ payment, rental, customer, partner, userId, userName }) {
-    const count = await Transaction.countDocuments();
+    const transactionNumber = await getNextTransactionNumber();
     const tx = await Transaction.create({
-      transactionNumber: `TXN-${10001 + count}`,
+      transactionNumber,
       date: payment.paymentDate || new Date(),
       type: 'customer_payment',
       amount: payment.amount,
@@ -32,9 +33,9 @@ class LedgerService {
   }
 
   async recordExpense({ expense, partner, bike, userId, userName }) {
-    const count = await Transaction.countDocuments();
+    const transactionNumber = await getNextTransactionNumber();
     const tx = await Transaction.create({
-      transactionNumber: `TXN-${10001 + count}`,
+      transactionNumber,
       date: expense.expenseDate || new Date(),
       type: 'expense',
       amount: expense.amount,

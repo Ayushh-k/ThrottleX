@@ -3,6 +3,7 @@ const Expense = require('../models/Expense');
 const Bike = require('../models/Bike');
 const Partner = require('../models/Partner');
 const ledgerService = require('../services/ledgerService');
+const { getNextExpenseNumber } = require('../utils/idGenerator');
 
 exports.getAllMaintenance = async (req, res) => {
   try {
@@ -50,7 +51,7 @@ exports.addMaintenanceRecord = async (req, res) => {
       partner = await Partner.findById(paidByPartnerId);
     }
     if (!partner) {
-      partner = await Partner.findOne({ status: 'active' });
+      partner = await Partner.findOne({ status: 'active' }) || await Partner.findOne();
     }
 
     // Determine expense category
@@ -60,9 +61,9 @@ exports.addMaintenanceRecord = async (req, res) => {
     else if (serviceType === 'tyre_replacement') expCategory = 'tyres';
 
     // Create Expense entry
-    const expCount = await Expense.countDocuments();
+    const expenseNumber = await getNextExpenseNumber();
     const expense = await Expense.create({
-      expenseNumber: `TX-EXP-${1001 + expCount}`,
+      expenseNumber,
       bike: bike._id,
       category: expCategory,
       amount: Number(cost),

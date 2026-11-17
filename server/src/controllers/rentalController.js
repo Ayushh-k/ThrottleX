@@ -5,6 +5,7 @@ const Payment = require('../models/Payment');
 const Partner = require('../models/Partner');
 const Settings = require('../models/Settings');
 const ledgerService = require('../services/ledgerService');
+const { getNextRentalNumber, getNextPaymentReceiptNumber } = require('../utils/idGenerator');
 
 // Helper to check if bike is available during requested dates
 async function checkBikeAvailability(bikeId, startDate, endDate, excludeRentalId = null) {
@@ -237,8 +238,7 @@ exports.createRental = async (req, res) => {
     const now = new Date();
     const status = start > new Date(now.getTime() + 2 * 60 * 60 * 1000) ? 'upcoming' : 'active';
 
-    const count = await Rental.countDocuments();
-    const rentalNumber = `TX-R-${1001 + count}`;
+    const rentalNumber = await getNextRentalNumber();
 
     const rental = await Rental.create({
       rentalNumber,
@@ -280,9 +280,9 @@ exports.createRental = async (req, res) => {
         partner = await Partner.findOne({ status: 'active' });
       }
 
-      const payCount = await Payment.countDocuments();
+      const receiptNumber = await getNextPaymentReceiptNumber();
       const payment = await Payment.create({
-        receiptNumber: `TX-PAY-${1001 + payCount}`,
+        receiptNumber,
         rental: rental._id,
         customer: customer._id,
         amount: initPay,
@@ -431,9 +431,9 @@ exports.recordRentalPayment = async (req, res) => {
       partner = await Partner.findOne({ status: 'active' });
     }
 
-    const count = await Payment.countDocuments();
+    const receiptNumber = await getNextPaymentReceiptNumber();
     const payment = await Payment.create({
-      receiptNumber: `TX-PAY-${1001 + count}`,
+      receiptNumber,
       rental: rental._id,
       customer: rental.customer._id,
       amount: payVal,

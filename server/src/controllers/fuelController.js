@@ -3,6 +3,7 @@ const Expense = require('../models/Expense');
 const Bike = require('../models/Bike');
 const Partner = require('../models/Partner');
 const ledgerService = require('../services/ledgerService');
+const { getNextExpenseNumber } = require('../utils/idGenerator');
 
 exports.getFuelEntries = async (req, res) => {
   try {
@@ -48,15 +49,15 @@ exports.addFuelEntry = async (req, res) => {
       partner = await Partner.findById(paidByPartnerId);
     }
     if (!partner) {
-      partner = await Partner.findOne({ status: 'active' });
+      partner = await Partner.findOne({ status: 'active' }) || await Partner.findOne();
     }
 
     const calculatedPricePerLitre = Number(pricePerLitre) || (Number(amount) / Number(litres));
 
     // Create Expense entry for this fuel refill
-    const expCount = await Expense.countDocuments();
+    const expenseNumber = await getNextExpenseNumber();
     const expense = await Expense.create({
-      expenseNumber: `TX-EXP-${1001 + expCount}`,
+      expenseNumber,
       bike: bike._id,
       category: 'petrol',
       amount: Number(amount),

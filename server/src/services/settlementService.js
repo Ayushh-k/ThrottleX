@@ -4,6 +4,7 @@ const Expense = require('../models/Expense');
 const Settlement = require('../models/Settlement');
 const Transaction = require('../models/Transaction');
 const AuditLog = require('../models/AuditLog');
+const { getNextSettlementNumber, getNextTransactionNumber } = require('../utils/idGenerator');
 
 class SettlementService {
   /**
@@ -169,8 +170,7 @@ class SettlementService {
       throw new Error('Settlement amount must be greater than ₹0.');
     }
 
-    const count = await Settlement.countDocuments();
-    const settlementNumber = `TX-SET-${1001 + count}`;
+    const settlementNumber = await getNextSettlementNumber();
 
     const settlement = await Settlement.create({
       settlementNumber,
@@ -188,9 +188,9 @@ class SettlementService {
     const receiver = await Partner.findById(receiverPartnerId);
 
     // Record into Ledger
-    const txCount = await Transaction.countDocuments();
+    const transactionNumber = await getNextTransactionNumber();
     await Transaction.create({
-      transactionNumber: `TXN-${10001 + txCount}`,
+      transactionNumber,
       date: new Date(),
       type: 'partner_settlement',
       amount,
