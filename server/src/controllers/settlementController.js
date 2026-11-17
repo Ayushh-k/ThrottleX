@@ -23,12 +23,21 @@ exports.getSettlementOverview = async (req, res) => {
 
 exports.recordSettlement = async (req, res) => {
   try {
-    const { senderPartnerId, receiverPartnerId, amount, paymentMethod = 'upi', reference = '', notes = '' } = req.body;
+    const {
+      senderPartnerId,
+      receiverPartnerId,
+      amount,
+      settlementType = 'rent',
+      paymentMethod = 'upi',
+      reference = '',
+      notes = ''
+    } = req.body;
 
     const settlement = await settlementService.recordSettlement({
       senderPartnerId,
       receiverPartnerId,
       amount: Number(amount),
+      settlementType,
       paymentMethod,
       reference,
       notes,

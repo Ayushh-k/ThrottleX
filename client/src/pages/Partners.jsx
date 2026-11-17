@@ -143,65 +143,73 @@ export default function Partners({ onNavigate, onTriggerAction, refreshKey }) {
                 <StatusBadge status={partner.status} />
               </div>
 
-              {/* Numbers Breakdown */}
-              <div className="p-4 rounded-xl bg-brand-surface border border-brand-border space-y-2 text-xs">
-                <div className="flex justify-between py-1 border-b border-white/5">
-                  <span className="text-slate-400">Total Rental Cash Received in Hand:</span>
-                  <span className="font-bold text-emerald-400 font-display text-sm">
-                    {formatINR(partner.totalCollected)}
-                  </span>
+              {/* Numbers Breakdown Separating Rent and Expenses */}
+              <div className="space-y-3">
+                {/* 1. Rent Section */}
+                <div className="p-3.5 rounded-xl bg-brand-surface border border-brand-border space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-brand-border/40">
+                    <span className="font-bold text-white flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" /> Rent Revenue Share
+                    </span>
+                    <span
+                      className={`font-bold font-display text-xs ${
+                        (partner.rent?.balance || 0) > 0.01
+                          ? 'text-emerald-400'
+                          : (partner.rent?.balance || 0) < -0.01
+                          ? 'text-orange-400'
+                          : 'text-slate-400'
+                      }`}
+                    >
+                      {(partner.rent?.balance || 0) > 0.01
+                        ? `+${formatINR(partner.rent?.balance)} (Receivable)`
+                        : (partner.rent?.balance || 0) < -0.01
+                        ? `${formatINR(partner.rent?.balance)} (Payable)`
+                        : 'Settled'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-[11px] text-slate-400">
+                    <span>Rent Collected: <strong className="text-white">{formatINR(partner.rent?.collected || 0)}</strong></span>
+                    <span>Entitled Share: <strong className="text-emerald-400">{formatINR(partner.rent?.entitled || 0)}</strong></span>
+                  </div>
                 </div>
 
-                <div className="flex justify-between py-1 border-b border-white/5">
-                  <span className="text-slate-400">Total Expenses Paid Out-of-Pocket:</span>
-                  <span className="font-bold text-rose-400 font-display text-sm">
-                    {formatINR(partner.totalExpensesPaid)}
-                  </span>
-                </div>
-
-                <div className="flex justify-between py-1 border-b border-white/5">
-                  <span className="text-slate-400">Net Physical Cash Currently Held:</span>
-                  <span className="font-bold text-white font-display text-sm">
-                    {formatINR(partner.netCashHeld)}
-                  </span>
-                </div>
-
-                <div className="flex justify-between py-1 border-b border-white/5">
-                  <span className="text-slate-400">Fair Profit Entitlement ({partner.sharePercentage}%):</span>
-                  <span className="font-bold text-sky-400 font-display text-sm">
-                    {formatINR(partner.entitledProfit)}
-                  </span>
-                </div>
-
-                <div className="flex justify-between pt-2 text-sm font-bold">
-                  <span className="text-white">Current Outstanding Position:</span>
-                  <span
-                    className={`font-display text-base ${
-                      isCreditor ? 'text-emerald-400' : isDebtor ? 'text-orange-400' : 'text-slate-300'
-                    }`}
-                  >
-                    {isCreditor ? `+${formatINR(partner.balance)}` : formatINR(partner.balance)}
-                  </span>
+                {/* 2. Expense Section */}
+                <div className="p-3.5 rounded-xl bg-brand-surface border border-brand-border space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-brand-border/40">
+                    <span className="font-bold text-white flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-rose-400" /> Expense Outlay Share
+                    </span>
+                    <span
+                      className={`font-bold font-display text-xs ${
+                        (partner.expense?.balance || 0) > 0.01
+                          ? 'text-emerald-400'
+                          : (partner.expense?.balance || 0) < -0.01
+                          ? 'text-rose-400'
+                          : 'text-slate-400'
+                      }`}
+                    >
+                      {(partner.expense?.balance || 0) > 0.01
+                        ? `+${formatINR(partner.expense?.balance)} (To Receive)`
+                        : (partner.expense?.balance || 0) < -0.01
+                        ? `${formatINR(partner.expense?.balance)} (To Reimburse)`
+                        : 'Settled'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-[11px] text-slate-400">
+                    <span>Out of Pocket Paid: <strong className="text-white">{formatINR(partner.expense?.paid || 0)}</strong></span>
+                    <span>Fair Share: <strong className="text-rose-400">{formatINR(partner.expense?.fairShare || 0)}</strong></span>
+                  </div>
                 </div>
               </div>
 
               {/* Status explanation */}
               <div className="text-xs text-slate-400">
-                {isCreditor && (
-                  <p className="text-emerald-400/90 font-medium">
-                    ✓ Holds less cash than entitled profit share. Owed {formatINR(partner.balance)} by business/partner.
-                  </p>
-                )}
-                {isDebtor && (
-                  <p className="text-orange-400/90 font-medium">
-                    ⚠️ Holds excess rental collections in pocket. Must pay {formatINR(Math.abs(partner.balance))} to partner.
-                  </p>
-                )}
-                {!isCreditor && !isDebtor && (
-                  <p className="text-blue-400 font-medium">
-                    ✓ Balances fully settled and equalized according to agreed ratio.
-                  </p>
-                )}
+                <button
+                  onClick={() => onNavigate('settlements')}
+                  className="w-full py-2 px-3 rounded-xl bg-brand-surface border border-brand-border hover:border-brand-orange/40 text-brand-orange text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
+                >
+                  <Scale className="w-3.5 h-3.5" /> View Independent Settlements
+                </button>
               </div>
             </div>
           );

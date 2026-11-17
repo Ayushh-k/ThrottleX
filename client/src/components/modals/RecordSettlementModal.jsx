@@ -12,6 +12,7 @@ export default function RecordSettlementModal({
   const [partners, setPartners] = useState([]);
   const [senderId, setSenderId] = useState('');
   const [receiverId, setReceiverId] = useState('');
+  const [settlementType, setSettlementType] = useState('rent');
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [reference, setReference] = useState('');
@@ -28,6 +29,9 @@ export default function RecordSettlementModal({
           setSenderId(prefilledRecommendation.senderPartnerId);
           setReceiverId(prefilledRecommendation.receiverPartnerId);
           setAmount(prefilledRecommendation.amount);
+          if (prefilledRecommendation.settlementType) {
+            setSettlementType(prefilledRecommendation.settlementType);
+          }
         } else if (res.partners?.length >= 2) {
           setSenderId(res.partners[0].partnerId || res.partners[0]._id);
           setReceiverId(res.partners[1].partnerId || res.partners[1]._id);
@@ -61,6 +65,7 @@ export default function RecordSettlementModal({
         senderPartnerId: senderId,
         receiverPartnerId: receiverId,
         amount: Number(amount),
+        settlementType,
         paymentMethod,
         reference: reference.trim(),
         notes: notes.trim()
@@ -114,6 +119,42 @@ export default function RecordSettlementModal({
         )}
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Settlement Category Selector */}
+          <div>
+            <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+              Settlement Category *
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setSettlementType('rent')}
+                className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 ${
+                  settlementType === 'rent'
+                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-sm'
+                    : 'bg-brand-surface border-brand-border text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>🟢</span> Rent Income Split
+              </button>
+              <button
+                type="button"
+                onClick={() => setSettlementType('expense')}
+                className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 ${
+                  settlementType === 'expense'
+                    ? 'bg-rose-500/20 border-rose-500 text-rose-400 shadow-sm'
+                    : 'bg-brand-surface border-brand-border text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>🔴</span> Expense Reimbursement
+              </button>
+            </div>
+            <p className="text-[10px] text-slate-400 mt-1">
+              {settlementType === 'rent'
+                ? 'Distribute rental revenue received from customers.'
+                : 'Reimburse partner for out-of-pocket bike repairs, fuel, or maintenance.'}
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-semibold text-slate-300 block mb-1">

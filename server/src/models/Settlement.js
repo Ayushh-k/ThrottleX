@@ -6,6 +6,12 @@ const settlementSchema = new mongoose.Schema({
   senderPartner: { type: mongoose.Schema.Types.ObjectId, ref: 'Partner', required: true, index: true },
   receiverPartner: { type: mongoose.Schema.Types.ObjectId, ref: 'Partner', required: true, index: true },
   amount: { type: Number, required: true, min: 1 },
+  settlementType: {
+    type: String,
+    enum: ['rent', 'expense', 'all'],
+    default: 'rent',
+    index: true
+  },
   paymentMethod: {
     type: String,
     enum: ['upi', 'cash', 'bank_transfer', 'other'],
