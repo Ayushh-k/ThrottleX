@@ -24,6 +24,17 @@ const searchRoutes = require('./routes/searchRoutes');
 const User = require('./models/User');
 const Partner = require('./models/Partner');
 
+const app = express();
+
+// Global Middlewares
+app.use(cors({
+  origin: '*',
+  credentials: true
+}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(morgan('dev'));
+
 // Ensure default owner exists on any connected database (local or Atlas)
 let ownerEnsured = false;
 async function ensureOwnerAccount() {
@@ -65,14 +76,19 @@ async function ensureOwnerAccount() {
 
 // Middleware to ensure DB connection before handling request
 app.use(async (req, res, next) => {
+  // Allow health check to pass without blocking on DB
+  if (req.path === '/api/health' || req.path === '/health') {
+    return next();
+  }
+
   try {
     await connectDB();
     await ensureOwnerAccount();
     next();
   } catch (err) {
-    console.error('Database connection error in request:', err);
-    res.status(500).json({
-      message: 'Failed to connect to database. Please check your MONGODB_URI environment variable.',
+    console.error('Database connection error in request:', err.message);
+    return res.status(500).json({
+      message: err.message || 'Failed to connect to database. Please check your MONGODB_URI environment variable and MongoDB Atlas IP access list (0.0.0.0/0).',
       error: err.message
     });
   }

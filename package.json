@@ -6,7 +6,7 @@
   "scripts": {
     "server": "node server/src/server.js",
     "client": "npm run dev --prefix client",
-    "build": "cd client && npm install && npm run build",
+    "build": "npm install --prefix client && npm run build --prefix client",
     "clean-db": "node server/src/seed/clear-database.js",
     "seed": "node server/src/seed/seed.js",
     "start": "node server/src/server.js"

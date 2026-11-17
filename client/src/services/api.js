@@ -13,11 +13,42 @@ async function request(endpoint, options = {}) {
     ...options.headers
   };
 
-  const response = await fetch(url, { ...options, headers });
-  const data = await response.json().catch(() => ({}));
+  let response;
+  try {
+    response = await fetch(url, { ...options, headers });
+  } catch (netErr) {
+    throw new Error('Unable to connect to the backend server. Please verify your connection.');
+  }
+
+  let data = {};
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    data = await response.json().catch(() => ({}));
+  } else {
+    const rawText = await response.text().catch(() => '');
+    if (rawText) {
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        // Plain text or HTML error
+        if (response.status === 500) {
+          data = {
+            message: 'Server error (500). If deployed on Vercel, please verify MONGODB_URI in Vercel Environment Variables and MongoDB Atlas IP access (0.0.0.0/0).'
+          };
+        } else {
+          data = { message: `Request failed (${response.status})` };
+        }
+      }
+    }
+  }
 
   if (!response.ok) {
-    throw new Error(data.message || `Request failed with status ${response.status}`);
+    const errorMsg =
+      data.message ||
+      (response.status === 500
+        ? 'Server error (500). Please check your database connection or MONGODB_URI.'
+        : `Request failed with status ${response.status}`);
+    throw new Error(errorMsg);
   }
 
   return data;

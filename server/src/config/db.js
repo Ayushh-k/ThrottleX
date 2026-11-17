@@ -11,6 +11,9 @@ if (!cached) {
 let mongodProcess = null;
 
 async function startLocalMongod() {
+  const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+  if (isVercel) return;
+
   const dbPath = path.resolve(__dirname, '../../../data/db');
   if (!fs.existsSync(dbPath)) {
     fs.mkdirSync(dbPath, { recursive: true });
@@ -45,16 +48,24 @@ async function startLocalMongod() {
 }
 
 async function connectDB() {
-  if (cached.conn) {
+  if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
   }
 
-  const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/throttlex';
+  const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+  const uri = process.env.MONGODB_URI || (!isVercel ? 'mongodb://127.0.0.1:27017/throttlex' : null);
+
+  if (!uri) {
+    throw new Error(
+      'MONGODB_URI environment variable is missing in Vercel. Please go to Vercel Project Settings > Environment Variables, add MONGODB_URI with your MongoDB Atlas connection string, and redeploy.'
+    );
+  }
+
   const isAtlas = uri.includes('mongodb+srv://') || uri.includes('@');
 
   const options = {
-    bufferCommands: false,
-    serverSelectionTimeoutMS: 8000
+    serverSelectionTimeoutMS: 8000,
+    connectTimeoutMS: 10000
   };
 
   if (!cached.promise) {
@@ -65,8 +76,8 @@ async function connectDB() {
         console.log('[DB] MongoDB connected successfully.');
         return mongooseInstance;
       } catch (err) {
-        // If not MongoDB Atlas and local connection failed, attempt local spawn
-        if (!isAtlas) {
+        // If not MongoDB Atlas, not Vercel, and local connection failed, attempt local spawn
+        if (!isAtlas && !isVercel) {
           console.log('[DB] Direct connection failed, starting local MongoDB server...');
           await startLocalMongod();
           const mongooseInstance = await mongoose.connect(uri, options);
@@ -74,6 +85,7 @@ async function connectDB() {
           return mongooseInstance;
         }
         cached.promise = null;
+        cached.conn = null;
         throw err;
       }
     })();
@@ -83,6 +95,7 @@ async function connectDB() {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
+    cached.conn = null;
     throw e;
   }
 
