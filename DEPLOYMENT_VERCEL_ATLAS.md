@@ -59,15 +59,25 @@ Vercel will automatically build the React Vite frontend and configure the Expres
 
 ---
 
-### Step 4: First Launch & Owner Account Creation
+### Step 4: First Launch & Owner Sign In
 
-Once your Vercel deployment finishes (approx 1 minute):
-1. Open your live URL: `https://your-project.vercel.app`
-2. You will be greeted by the THROTTLEX portal.
-3. Click **"Register Owner Account"**.
-4. Enter your real Name, Email, Phone, and Password.
-5. Hit **"Complete Setup & Launch Dashboard"**.
-6. You are now the official Owner & Admin of THROTTLEX! From there, you can:
-   - Add your motorcycles into the garage
-   - Add your business partner
-   - Start logging bookings and expenses.
+Once your Vercel deployment finishes:
+1. Open your live URL: `https://your-project.vercel.app` (or `http://localhost:3000` locally).
+2. Your Owner account is automatically initialized upon database connection:
+   - **Email:** `ayushkamboj9690@gmail.com`
+   - **Password:** `ayush@tx123`
+3. Click **"Sign In to Dashboard"**.
+4. You are now logged in as the official Owner & Managing Partner of THROTTLEX! From there, you can:
+   - Add your bikes to the fleet
+   - Invite your business partner
+   - Start recording rentals, expenses, and partner settlements!
+
+---
+
+### Troubleshooting Common Issues
+
+1. **"Server error (500)" on Vercel:**
+   - **Cause 1:** Missing `MONGODB_URI` environment variable. Go to your Vercel Project -> **Settings** -> **Environment Variables**, verify `MONGODB_URI` is added for **Production**, **Preview**, and **Development**.
+   - **Cause 2:** MongoDB Atlas IP access blocked. In [MongoDB Atlas](https://cloud.mongodb.com), go to **Network Access** -> click **Add IP Address** -> select **Allow Access From Anywhere (`0.0.0.0/0`)** -> Confirm.
+   - **Cause 3:** MongoDB Atlas password has special characters not URL-encoded (e.g. `@`, `#`, `%`). If your password contains `@`, encode it as `%40` or change your database user password to an alphanumeric string in Atlas.
+
