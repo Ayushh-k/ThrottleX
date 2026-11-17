@@ -12,6 +12,10 @@ async function checkBikeAvailability(bikeId, startDate, endDate, excludeRentalId
   const start = new Date(startDate);
   const end = new Date(endDate);
 
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
+    return null;
+  }
+
   const query = {
     bike: bikeId,
     status: { $in: ['active', 'upcoming'] },
@@ -35,14 +39,29 @@ exports.checkAvailability = async (req, res) => {
       return res.status(400).json({ message: 'Bike ID, start date, and end date are required.' });
     }
 
-    const conflicting = await checkBikeAvailability(bikeId, startDate, endDate);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ message: 'Invalid start date or end date format.' });
+    }
+
+    if (end <= start) {
+      return res.json({
+        available: false,
+        invalidDates: true,
+        message: 'Expected return date & time must be after start date & time.'
+      });
+    }
+
+    const conflicting = await checkBikeAvailability(bikeId, start, end);
     if (conflicting) {
       // Find other available bikes for these dates
       const allActiveBikes = await Bike.find({ _id: { $ne: bikeId }, status: { $ne: 'inactive' } }).lean();
       const alternatives = [];
 
       for (const b of allActiveBikes) {
-        const overlap = await checkBikeAvailability(b._id, startDate, endDate);
+        const overlap = await checkBikeAvailability(b._id, start, end);
         if (!overlap) {
           alternatives.push({
             id: b._id,
@@ -231,7 +250,9 @@ exports.createRental = async (req, res) => {
     const defaultHr = bike.defaultHourlyRate > 0 ? bike.defaultHourlyRate : Math.round(appliedDailyRate / 8) || 120;
     let appliedHourlyRate = Number(hourlyRate) > 0 ? Number(hourlyRate) : defaultHr;
 
-    if (rentalType === 'hourly') {
+    const effectiveRentalType = rentalType === 'hourly' || (!rentalType && diffMs < 24 * 60 * 60 * 1000) ? 'hourly' : 'daily';
+
+    if (effectiveRentalType === 'hourly') {
       diffHours = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60)));
       diffDays = Number((diffHours / 24).toFixed(1));
       subtotal = diffHours * appliedHourlyRate;
@@ -263,7 +284,7 @@ exports.createRental = async (req, res) => {
       customer: customer._id,
       startDate: start,
       expectedEndDate: expectedEnd,
-      rentalType,
+      rentalType: effectiveRentalType,
       dailyRate: appliedDailyRate,
       hourlyRate: appliedHourlyRate,
       totalDays: diffDays,

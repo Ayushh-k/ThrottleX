@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { X, CheckCircle2, AlertTriangle, Gauge, Calendar, IndianRupee } from 'lucide-react';
 import { api } from '../../services/api';
-import { formatINR, formatDateTime } from '../../utils/formatters';
+import { formatINR, formatDateTime, toLocalISOString } from '../../utils/formatters';
 
 export default function ReturnBikeModal({ isOpen, onClose, rental, onSuccess }) {
   if (!isOpen || !rental) return null;
 
-  const now = new Date().toISOString().slice(0, 16);
-  const [actualEndDate, setActualEndDate] = useState(now);
+  const [actualEndDate, setActualEndDate] = useState(toLocalISOString(new Date()));
   const [endOdometer, setEndOdometer] = useState(rental.bike?.currentOdometer || rental.startOdometer || 0);
   const [extraLateCharge, setExtraLateCharge] = useState(0);
   const [lateReason, setLateReason] = useState('');
@@ -33,7 +32,7 @@ export default function ReturnBikeModal({ isOpen, onClose, rental, onSuccess }) 
     try {
       setLoading(true);
       await api.returnBike(rental._id, {
-        actualEndDate,
+        actualEndDate: new Date(actualEndDate).toISOString(),
         endOdometer: Number(endOdometer),
         extraLateCharge: Number(extraLateCharge),
         lateReason,

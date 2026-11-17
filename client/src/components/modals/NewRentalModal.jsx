@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, AlertCircle, CheckCircle2, Clock, IndianRupee, Bike as BikeIcon, User, Plus, Zap } from 'lucide-react';
 import { api } from '../../services/api';
-import { formatINR, calculateDays, calculateHours } from '../../utils/formatters';
+import { formatINR, calculateDays, calculateHours, toLocalISOString, formatTime, formatDateTime } from '../../utils/formatters';
 
 export default function NewRentalModal({ isOpen, onClose, onSuccess, preselectedBikeId = null }) {
   const [bikes, setBikes] = useState([]);
@@ -21,11 +21,11 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
   const [customerDl, setCustomerDl] = useState('');
 
   const now = new Date();
-  const defaultStart = now.toISOString().slice(0, 16);
-  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  const defaultEnd = tomorrow.toISOString().slice(0, 16);
+  const defaultStart = toLocalISOString(now);
+  const defaultEnd = toLocalISOString(new Date(now.getTime() + 3 * 60 * 60 * 1000)); // Default 3 hours
 
-  const [rentalType, setRentalType] = useState('daily'); // 'daily' | 'hourly'
+  const [rentalType, setRentalType] = useState('hourly'); // 'daily' | 'hourly'
+  const [manualTypeOverride, setManualTypeOverride] = useState(false);
   const [startDate, setStartDate] = useState(defaultStart);
   const [expectedEndDate, setExpectedEndDate] = useState(defaultEnd);
   const [dailyRate, setDailyRate] = useState(900);
@@ -99,17 +99,38 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
     }
   };
 
+  // Auto-detect rental type when duration changes (unless manually overridden)
+  useEffect(() => {
+    if (!manualTypeOverride && startDate && expectedEndDate) {
+      const s = new Date(startDate);
+      const e = new Date(expectedEndDate);
+      const ms = e.getTime() - s.getTime();
+      if (!isNaN(ms) && ms > 0) {
+        if (ms < 24 * 60 * 60 * 1000) {
+          setRentalType('hourly');
+        } else {
+          setRentalType('daily');
+        }
+      }
+    }
+  }, [startDate, expectedEndDate, manualTypeOverride]);
+
   const handleRentalTypeSwitch = (type) => {
     setRentalType(type);
+    setManualTypeOverride(true);
     const start = startDate ? new Date(startDate) : new Date();
     if (type === 'hourly') {
-      // Default to 4 hours from start
-      const end = new Date(start.getTime() + 4 * 60 * 60 * 1000);
-      setExpectedEndDate(end.toISOString().slice(0, 16));
+      const currentDiff = expectedEndDate ? new Date(expectedEndDate) - start : 0;
+      if (currentDiff >= 24 * 60 * 60 * 1000 || currentDiff <= 0) {
+        const end = new Date(start.getTime() + 3 * 60 * 60 * 1000);
+        setExpectedEndDate(toLocalISOString(end));
+      }
     } else {
-      // Default to 24 hours (1 day) from start
-      const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
-      setExpectedEndDate(end.toISOString().slice(0, 16));
+      const currentDiff = expectedEndDate ? new Date(expectedEndDate) - start : 0;
+      if (currentDiff < 24 * 60 * 60 * 1000 || currentDiff <= 0) {
+        const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+        setExpectedEndDate(toLocalISOString(end));
+      }
     }
   };
 
@@ -118,23 +139,55 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
     let end;
     if (unit === 'hours') {
       end = new Date(start.getTime() + amount * 60 * 60 * 1000);
+      setRentalType('hourly');
     } else {
       end = new Date(start.getTime() + amount * 24 * 60 * 60 * 1000);
+      setRentalType('daily');
     }
-    setExpectedEndDate(end.toISOString().slice(0, 16));
+    setExpectedEndDate(toLocalISOString(end));
   };
+
+  // Date validity check
+  const sDate = startDate ? new Date(startDate) : null;
+  const eDate = expectedEndDate ? new Date(expectedEndDate) : null;
+  const diffTimeMs = sDate && eDate ? eDate.getTime() - sDate.getTime() : 0;
+  const isInvalidDateRange = Boolean(sDate && eDate && diffTimeMs <= 0);
+
+  // Smart helper: if same day and return time looks like AM instead of PM
+  let suggestedPmDate = null;
+  if (isInvalidDateRange && sDate && eDate) {
+    const isSameDay = sDate.toDateString() === eDate.toDateString();
+    if (isSameDay && eDate.getHours() < 12) {
+      const pmCandidate = new Date(eDate.getTime() + 12 * 60 * 60 * 1000);
+      if (pmCandidate.getTime() > sDate.getTime()) {
+        suggestedPmDate = pmCandidate;
+      }
+    }
+  }
 
   // Availability check
   useEffect(() => {
     if (!selectedBikeId || !startDate || !expectedEndDate) return;
+
+    const s = new Date(startDate);
+    const e = new Date(expectedEndDate);
+
+    if (isNaN(s.getTime()) || isNaN(e.getTime()) || e <= s) {
+      setAvailabilityResult({
+        available: false,
+        invalidDates: true,
+        message: 'Expected return date & time must be after start date & time.'
+      });
+      return;
+    }
 
     const timer = setTimeout(async () => {
       try {
         setCheckingAvailability(true);
         const res = await api.checkAvailability({
           bikeId: selectedBikeId,
-          startDate,
-          endDate: expectedEndDate
+          startDate: s.toISOString(),
+          endDate: e.toISOString()
         });
         setAvailabilityResult(res);
       } catch (err) {
@@ -149,12 +202,12 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
 
   // Derived calculations
   const isHourly = rentalType === 'hourly';
-  const totalDays = calculateDays(startDate, expectedEndDate);
-  const totalHours = calculateHours(startDate, expectedEndDate);
+  const totalDays = isInvalidDateRange ? 0 : calculateDays(startDate, expectedEndDate);
+  const totalHours = isInvalidDateRange ? 0 : calculateHours(startDate, expectedEndDate);
   const durationCount = isHourly ? totalHours : totalDays;
   const activeRate = isHourly ? Number(hourlyRate || 0) : Number(dailyRate || 0);
-  const subtotal = durationCount * activeRate;
-  const totalAmount = Math.max(0, subtotal + Number(extraCharges || 0) - Number(discount || 0));
+  const subtotal = isInvalidDateRange ? 0 : durationCount * activeRate;
+  const totalAmount = isInvalidDateRange ? 0 : Math.max(0, subtotal + Number(extraCharges || 0) - Number(discount || 0));
   const remainingAmount = Math.max(0, totalAmount - Number(initialPayment || 0));
 
   const handleSubmit = async (e) => {
@@ -163,6 +216,10 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
 
     if (!selectedBikeId) {
       setError('Please select a bike.');
+      return;
+    }
+    if (isInvalidDateRange) {
+      setError('Return date & time must be after start date & time.');
       return;
     }
     if (!isNewCustomer && !selectedCustomerId) {
@@ -190,8 +247,8 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
         customerName: isNewCustomer ? customerName : undefined,
         customerPhone: isNewCustomer ? customerPhone : undefined,
         customerDlNumber: isNewCustomer ? customerDl : undefined,
-        startDate,
-        expectedEndDate,
+        startDate: new Date(startDate).toISOString(),
+        expectedEndDate: new Date(expectedEndDate).toISOString(),
         rentalType,
         dailyRate: Number(dailyRate),
         hourlyRate: Number(hourlyRate),
@@ -277,7 +334,12 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
                 <Clock className="w-3.5 h-3.5 text-brand-orange" /> Checking real-time booking availability...
               </p>
             ) : availabilityResult ? (
-              availabilityResult.available ? (
+              availabilityResult.invalidDates ? (
+                <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+                  <span>{availabilityResult.message || 'Expected return date & time must be after start date & time.'}</span>
+                </div>
+              ) : availabilityResult.available ? (
                 <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 shrink-0" /> Bike is available for selected dates.
                 </div>
@@ -289,6 +351,11 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
                   <p className="text-slate-300">
                     Conflicting booking: #{availabilityResult.conflictingRental?.rentalNumber} ({availabilityResult.conflictingRental?.customerName}).
                   </p>
+                  {availabilityResult.conflictingRental?.startDate && (
+                    <p className="text-[11px] text-slate-400">
+                      Booked period: {formatDateTime(availabilityResult.conflictingRental.startDate)} → {formatDateTime(availabilityResult.conflictingRental.expectedEndDate)}
+                    </p>
+                  )}
                   {availabilityResult.alternatives?.length > 0 && (
                     <div className="pt-1 text-[11px] text-slate-400">
                       Nearby available bikes: {availabilityResult.alternatives.map((a) => a.name).join(', ')}.
@@ -340,7 +407,7 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
               </span>
               {isHourly ? (
                 <>
-                  {[2, 4, 6, 8, 12, 24].map((hrs) => (
+                  {[1, 2, 3, 4, 6, 8, 12, 24].map((hrs) => (
                     <button
                       key={hrs}
                       type="button"
@@ -351,7 +418,7 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
                           : 'border-brand-border bg-brand-surface text-slate-400 hover:text-white hover:border-slate-500'
                       }`}
                     >
-                      +{hrs} hrs
+                      +{hrs} hr{hrs > 1 ? 's' : ''}
                     </button>
                   ))}
                 </>
@@ -402,27 +469,49 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
               </div>
             </div>
 
+            {suggestedPmDate && (
+              <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between gap-2">
+                <span>
+                  💡 Return time (<strong>{formatTime(eDate)}</strong>) is before start time. Did you mean <strong>{formatTime(suggestedPmDate)} (PM)</strong>?
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setExpectedEndDate(toLocalISOString(suggestedPmDate))}
+                  className="px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 font-bold border border-amber-500/40 shrink-0 transition-colors"
+                >
+                  Set {formatTime(suggestedPmDate)}
+                </button>
+              </div>
+            )}
+
             {/* Duration Banner */}
-            <div className="p-3 rounded-xl bg-brand-surface border border-brand-border flex flex-wrap items-center justify-between gap-2 text-xs">
-              <span className="text-slate-400">
-                Plan: <strong className={isHourly ? 'text-purple-400 font-bold' : 'text-brand-orange font-bold'}>
-                  {isHourly ? '⏱️ Hourly Rental' : '📅 Day-Wise Rental'}
-                </strong>
-              </span>
-              <span className="text-slate-400">
-                Duration: <strong className="text-white">
-                  {isHourly ? `${totalHours} Hour${totalHours > 1 ? 's' : ''}` : `${totalDays} Day${totalDays > 1 ? 's' : ''}`}
-                </strong>
-              </span>
-              <span className="text-slate-400">
-                Rate: <strong className="text-white">
-                  {isHourly ? `${formatINR(hourlyRate)}/hr` : `${formatINR(dailyRate)}/day`}
-                </strong>
-              </span>
-              <span className="text-slate-400">
-                Subtotal: <strong className="text-brand-orange text-sm font-bold">{formatINR(subtotal)}</strong>
-              </span>
-            </div>
+            {isInvalidDateRange ? (
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+                <span>Invalid duration: Expected return time cannot be before or equal to start date & time.</span>
+              </div>
+            ) : (
+              <div className="p-3 rounded-xl bg-brand-surface border border-brand-border flex flex-wrap items-center justify-between gap-2 text-xs">
+                <span className="text-slate-400">
+                  Plan: <strong className={isHourly ? 'text-purple-400 font-bold' : 'text-brand-orange font-bold'}>
+                    {isHourly ? '⏱️ Hourly Rental' : '📅 Day-Wise Rental'}
+                  </strong>
+                </span>
+                <span className="text-slate-400">
+                  Duration: <strong className="text-white">
+                    {isHourly ? `${totalHours} Hour${totalHours > 1 ? 's' : ''}` : `${totalDays} Day${totalDays > 1 ? 's' : ''}`}
+                  </strong>
+                </span>
+                <span className="text-slate-400">
+                  Rate: <strong className="text-white">
+                    {isHourly ? `${formatINR(hourlyRate)}/hr` : `${formatINR(dailyRate)}/day`}
+                  </strong>
+                </span>
+                <span className="text-slate-400">
+                  Subtotal: <strong className="text-brand-orange text-sm font-bold">{formatINR(subtotal)}</strong>
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Section 3: Customer Information */}
@@ -619,8 +708,8 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
             </button>
             <button
               type="submit"
-              disabled={loading || (availabilityResult && !availabilityResult.available)}
-              className="px-6 py-2.5 text-sm font-bold bg-brand-orange hover:bg-brand-orange-hover text-white rounded-xl shadow-glow transition-all disabled:opacity-50"
+              disabled={loading || isInvalidDateRange || (availabilityResult && !availabilityResult.available)}
+              className="px-6 py-2.5 text-sm font-bold bg-brand-orange hover:bg-brand-orange-hover text-white rounded-xl shadow-glow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Processing...' : 'Confirm & Create Rental'}
             </button>

@@ -6,6 +6,7 @@ export function formatINR(amount) {
 export function formatDate(date) {
   if (!date) return '-';
   const d = new Date(date);
+  if (isNaN(d.getTime())) return '-';
   return d.toLocaleDateString('en-IN', {
     day: 'numeric',
     month: 'short',
@@ -16,6 +17,7 @@ export function formatDate(date) {
 export function formatDateTime(date) {
   if (!date) return '-';
   const d = new Date(date);
+  if (isNaN(d.getTime())) return '-';
   return d.toLocaleDateString('en-IN', {
     day: 'numeric',
     month: 'short',
@@ -25,19 +27,43 @@ export function formatDateTime(date) {
   });
 }
 
+export function formatTime(date) {
+  if (!date) return '-';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '-';
+  return d.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+export function toLocalISOString(date = new Date()) {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 export function calculateDays(start, end) {
-  if (!start || !end) return 1;
+  if (!start || !end) return 0;
   const s = new Date(start);
   const e = new Date(end);
-  const diffMs = e - s;
+  const diffMs = e.getTime() - s.getTime();
+  if (isNaN(diffMs) || diffMs <= 0) return 0;
   return Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
 }
 
 export function calculateHours(start, end) {
-  if (!start || !end) return 1;
+  if (!start || !end) return 0;
   const s = new Date(start);
   const e = new Date(end);
-  const diffMs = e - s;
+  const diffMs = e.getTime() - s.getTime();
+  if (isNaN(diffMs) || diffMs <= 0) return 0;
   return Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60)));
 }
 

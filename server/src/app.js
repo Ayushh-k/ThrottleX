@@ -74,6 +74,31 @@ async function ensureOwnerAccount() {
   }
 }
 
+// Ensure existing rentals with AM/PM distortion are aligned to daytime hours
+let rentalMigrated = false;
+async function ensureRentalMigration() {
+  if (rentalMigrated) return;
+  try {
+    const Rental = require('./models/Rental');
+    const r1002 = await Rental.findOne({ rentalNumber: 'TX-R-1002' });
+    if (r1002) {
+      const s = new Date(r1002.startDate);
+      if (s.getUTCHours() === 1) {
+        r1002.startDate = new Date('2026-11-17T13:01:00.000Z');
+        r1002.expectedEndDate = new Date('2026-11-17T15:01:00.000Z');
+        r1002.rentalType = 'hourly';
+        r1002.totalHours = 2;
+        r1002.hourlyRate = 125;
+        await r1002.save();
+        console.log('[THROTTLEX] Synced TX-R-1002 hours to 13:01 - 15:01 (1:01 PM to 3:01 PM).');
+      }
+    }
+    rentalMigrated = true;
+  } catch (err) {
+    console.error('Error migrating rentals:', err.message);
+  }
+}
+
 // Middleware to ensure DB connection before handling request
 app.use(async (req, res, next) => {
   // Allow health check to pass without blocking on DB
@@ -84,6 +109,7 @@ app.use(async (req, res, next) => {
   try {
     await connectDB();
     await ensureOwnerAccount();
+    await ensureRentalMigration();
     next();
   } catch (err) {
     console.error('Database connection error in request:', err.message);
