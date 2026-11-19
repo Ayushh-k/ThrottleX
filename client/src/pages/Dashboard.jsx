@@ -11,7 +11,15 @@ import {
   Sparkles,
   ArrowRight,
   Filter,
-  CheckCircle2
+  CheckCircle2,
+  Wallet,
+  Landmark,
+  QrCode,
+  Banknote,
+  Coins,
+  ChevronDown,
+  ChevronUp,
+  Users
 } from 'lucide-react';
 import {
   AreaChart,
@@ -40,6 +48,7 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState('month');
+  const [showHoldings, setShowHoldings] = useState(false);
 
   useEffect(() => {
     loadDashboard();
@@ -68,7 +77,7 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
     );
   }
 
-  const { summary = {}, analytics = {}, bikeCards = [], partnerSummary = {}, recentTransactions = [] } = data || {};
+  const { summary = {}, cashFlow = null, analytics = {}, bikeCards = [], partnerSummary = {}, recentTransactions = [] } = data || {};
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -166,6 +175,147 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
           onClick={() => onNavigate('bikes')}
         />
       </div>
+
+      {/* Real-Time Cash Flow & Liquidity Position */}
+      {cashFlow && (
+        <div className="p-5 rounded-2xl bg-brand-card border border-brand-border space-y-4 shadow-card-dark">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-brand-border/60">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <Wallet className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold font-display text-white flex items-center gap-2">
+                  Cash Flow & Real-Time Liquidity
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    ACTUAL CASH POSITION
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Actual liquid money available across channels vs customer receivables and partner liabilities
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <div className="text-left sm:text-right pr-2">
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 block font-mono">Total Liquid Capital</span>
+                <span className="text-lg font-bold font-display text-emerald-400">
+                  {formatINR(cashFlow.totalLiquidCash || 0)}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowHoldings(!showHoldings)}
+                className="px-3 py-1.5 text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 rounded-xl border border-brand-border flex items-center gap-1.5 transition-all"
+              >
+                <span>{showHoldings ? 'Hide Holdings' : 'Who Holds What?'}</span>
+                {showHoldings ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          </div>
+
+          {/* 5 Core Cash Position Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {/* 1. Cash in Hand */}
+            <div className="p-4 rounded-xl bg-brand-surface border border-brand-border/70 space-y-1.5 relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+                  <Banknote className="w-4 h-4 text-emerald-400" /> Cash in Hand
+                </span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              </div>
+              <p className="text-xl font-bold font-display text-white">
+                {formatINR(cashFlow.cashInHand || 0)}
+              </p>
+              <p className="text-[10px] text-slate-500">Physical currency held</p>
+            </div>
+
+            {/* 2. UPI Balance */}
+            <div className="p-4 rounded-xl bg-brand-surface border border-brand-border/70 space-y-1.5 relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+                  <QrCode className="w-4 h-4 text-sky-400" /> UPI Accounts
+                </span>
+                <span className="w-2 h-2 rounded-full bg-sky-400" />
+              </div>
+              <p className="text-xl font-bold font-display text-white">
+                {formatINR(cashFlow.upi || 0)}
+              </p>
+              <p className="text-[10px] text-slate-500">PhonePe / GPay / Paytm</p>
+            </div>
+
+            {/* 3. Bank Account */}
+            <div className="p-4 rounded-xl bg-brand-surface border border-brand-border/70 space-y-1.5 relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+                  <Landmark className="w-4 h-4 text-purple-400" /> Bank Balance
+                </span>
+                <span className="w-2 h-2 rounded-full bg-purple-400" />
+              </div>
+              <p className="text-xl font-bold font-display text-white">
+                {formatINR(cashFlow.bank || 0)}
+              </p>
+              <p className="text-[10px] text-slate-500">Current & IMPS accounts</p>
+            </div>
+
+            {/* 4. Customer Pending (Receivable) */}
+            <div className="p-4 rounded-xl bg-brand-surface border border-amber-500/20 bg-amber-500/[0.03] space-y-1.5 relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-amber-300 flex items-center gap-1.5">
+                  <Coins className="w-4 h-4 text-amber-400" /> Customer Pending
+                </span>
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              </div>
+              <p className="text-xl font-bold font-display text-amber-400">
+                {formatINR(cashFlow.customerPending || 0)}
+              </p>
+              <p className="text-[10px] text-amber-300/70">Uncollected booking balance</p>
+            </div>
+
+            {/* 5. Partner Payable */}
+            <div className="p-4 rounded-xl bg-brand-surface border border-rose-500/20 bg-rose-500/[0.03] space-y-1.5 relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-rose-300 flex items-center gap-1.5">
+                  <Scale className="w-4 h-4 text-rose-400" /> Partner Payable
+                </span>
+                <span className="w-2 h-2 rounded-full bg-rose-400" />
+              </div>
+              <p className="text-xl font-bold font-display text-rose-400">
+                {formatINR(cashFlow.partnerPayable || 0)}
+              </p>
+              <p className="text-[10px] text-rose-300/70">Owed for settlements & outlays</p>
+            </div>
+          </div>
+
+          {/* Expandable "Who is holding what cash?" breakdown */}
+          {showHoldings && cashFlow.partnerHoldings && (
+            <div className="p-4 rounded-xl bg-brand-dark/90 border border-brand-border space-y-3 animate-fade-in">
+              <div className="flex items-center justify-between pb-2 border-b border-white/5">
+                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-brand-orange" /> Partner-Wise Real Cash Holdings
+                </h4>
+                <span className="text-[11px] text-slate-500">Breakdown of who currently holds physical cash vs UPI balance</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {cashFlow.partnerHoldings.map((h) => (
+                  <div key={h.partnerId} className="p-3 rounded-lg bg-brand-surface border border-white/5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-white text-xs">{h.name}</span>
+                      <span className="font-bold font-display text-xs text-emerald-400">{formatINR(h.total)} Total</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5 text-[10px] text-slate-400 pt-1 border-t border-white/5">
+                      <div>Cash: <strong className="text-white block font-mono">{formatINR(h.cash)}</strong></div>
+                      <div>UPI: <strong className="text-sky-300 block font-mono">{formatINR(h.upi)}</strong></div>
+                      <div>Bank: <strong className="text-purple-300 block font-mono">{formatINR(h.bank)}</strong></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Partner Balance & Splitwise Settlement Recommendation Box */}
       {partnerSummary.recommendations && partnerSummary.recommendations.length > 0 && (

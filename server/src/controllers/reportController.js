@@ -20,6 +20,7 @@ exports.getReports = async (req, res) => {
 
     const overview = await calculationService.getFinancialOverview(filterStart, filterEnd);
     const partnerData = await settlementService.getPartnerBalances();
+    const cashFlow = await calculationService.getCashFlowOverview();
 
     // Bike-wise Performance
     const bikes = await Bike.find({ status: { $ne: 'inactive' } }).lean();
@@ -76,6 +77,7 @@ exports.getReports = async (req, res) => {
 
     return res.json({
       overview,
+      cashFlow,
       monthlySummary: {
         period: month && year ? `${month}/${year}` : 'Current Period',
         totalRentals: overview.totalRentalCount,

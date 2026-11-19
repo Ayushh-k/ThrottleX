@@ -3,6 +3,7 @@ const Rental = require('../models/Rental');
 const Payment = require('../models/Payment');
 const Transaction = require('../models/Transaction');
 const Settlement = require('../models/Settlement');
+const CapitalInvestment = require('../models/CapitalInvestment');
 
 async function getNextExpenseNumber() {
   const last = await Expense.findOne().sort({ createdAt: -1 }).select('expenseNumber');
@@ -79,10 +80,26 @@ async function getNextSettlementNumber() {
   return `TX-SET-${nextSeq}`;
 }
 
+async function getNextInvestmentNumber() {
+  const last = await CapitalInvestment.findOne().sort({ createdAt: -1 }).select('investmentNumber');
+  let nextSeq = 1001;
+  if (last && last.investmentNumber) {
+    const match = last.investmentNumber.match(/(\d+)$/);
+    if (match) {
+      nextSeq = Math.max(nextSeq, parseInt(match[1], 10) + 1);
+    }
+  }
+  while (await CapitalInvestment.exists({ investmentNumber: `TX-CAP-${nextSeq}` })) {
+    nextSeq++;
+  }
+  return `TX-CAP-${nextSeq}`;
+}
+
 module.exports = {
   getNextExpenseNumber,
   getNextRentalNumber,
   getNextPaymentReceiptNumber,
   getNextTransactionNumber,
-  getNextSettlementNumber
+  getNextSettlementNumber,
+  getNextInvestmentNumber
 };

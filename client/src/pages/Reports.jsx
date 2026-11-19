@@ -7,7 +7,13 @@ import {
   IndianRupee,
   TrendingUp,
   Award,
-  AlertCircle
+  AlertCircle,
+  Wallet,
+  Landmark,
+  QrCode,
+  Banknote,
+  Coins,
+  Scale
 } from 'lucide-react';
 import { api } from '../services/api';
 import { formatINR, formatDate } from '../utils/formatters';
@@ -35,10 +41,19 @@ export default function Reports({ refreshKey }) {
     }
   };
 
-  const { overview = {}, monthlySummary = {}, bikeWiseReports = [], partnerReports = [], customerReports = [] } = data || {};
+  const { overview = {}, cashFlow = null, monthlySummary = {}, bikeWiseReports = [], partnerReports = [], customerReports = [] } = data || {};
 
   const handleExportCSV = () => {
-    if (activeTab === 'bikes') {
+    if (activeTab === 'cashflow' && cashFlow) {
+      const rows = [
+        { Channel: 'Cash in Hand', Amount: cashFlow.cashInHand, Type: 'Liquid' },
+        { Channel: 'UPI Accounts', Amount: cashFlow.upi, Type: 'Liquid' },
+        { Channel: 'Bank Accounts', Amount: cashFlow.bank, Type: 'Liquid' },
+        { Channel: 'Customer Pending', Amount: cashFlow.customerPending, Type: 'Receivable' },
+        { Channel: 'Partner Payable', Amount: cashFlow.partnerPayable, Type: 'Payable' }
+      ];
+      exportToCSV(rows, 'THROTTLEX-Cash-Flow-Position.csv');
+    } else if (activeTab === 'bikes') {
       exportToCSV(bikeWiseReports, 'THROTTLEX-Bike-Performance.csv');
     } else if (activeTab === 'customers') {
       exportToCSV(customerReports, 'THROTTLEX-Customer-Report.csv');
@@ -132,6 +147,7 @@ export default function Reports({ refreshKey }) {
       <div className="flex items-center gap-2 border-b border-brand-border pb-2 text-xs font-semibold overflow-x-auto">
         {[
           { id: 'summary', label: 'Monthly Business Summary' },
+          { id: 'cashflow', label: 'Cash Flow & Real Liquidity' },
           { id: 'bikes', label: 'Bike-Wise P&L' },
           { id: 'customers', label: 'Customer Lifetime Report' }
         ].map((tab) => (
@@ -310,6 +326,97 @@ export default function Reports({ refreshKey }) {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Tab: Cash Flow & Real Liquidity */}
+      {activeTab === 'cashflow' && cashFlow && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Top 5 Liquidity Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="p-4 rounded-2xl bg-brand-card border border-brand-border space-y-1">
+              <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
+                <Banknote className="w-4 h-4 text-emerald-400" /> Cash in Hand
+              </span>
+              <p className="text-xl font-bold font-display text-white">
+                {formatINR(cashFlow.cashInHand || 0)}
+              </p>
+              <p className="text-[10px] text-slate-500">Physical notes held</p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-brand-card border border-brand-border space-y-1">
+              <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
+                <QrCode className="w-4 h-4 text-sky-400" /> UPI Accounts
+              </span>
+              <p className="text-xl font-bold font-display text-white">
+                {formatINR(cashFlow.upi || 0)}
+              </p>
+              <p className="text-[10px] text-slate-500">Digital payments</p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-brand-card border border-brand-border space-y-1">
+              <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
+                <Landmark className="w-4 h-4 text-purple-400" /> Bank Balance
+              </span>
+              <p className="text-xl font-bold font-display text-white">
+                {formatINR(cashFlow.bank || 0)}
+              </p>
+              <p className="text-[10px] text-slate-500">Bank accounts & capital</p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-brand-card border border-amber-500/25 bg-amber-500/[0.04] space-y-1">
+              <span className="text-[11px] font-semibold text-amber-300 flex items-center gap-1.5">
+                <Coins className="w-4 h-4 text-amber-400" /> Customer Pending
+              </span>
+              <p className="text-xl font-bold font-display text-amber-400">
+                {formatINR(cashFlow.customerPending || 0)}
+              </p>
+              <p className="text-[10px] text-amber-300/70">Uncollected trips</p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-brand-card border border-rose-500/25 bg-rose-500/[0.04] space-y-1">
+              <span className="text-[11px] font-semibold text-rose-300 flex items-center gap-1.5">
+                <Scale className="w-4 h-4 text-rose-400" /> Partner Payable
+              </span>
+              <p className="text-xl font-bold font-display text-rose-400">
+                {formatINR(cashFlow.partnerPayable || 0)}
+              </p>
+              <p className="text-[10px] text-rose-300/70">Debts to be settled</p>
+            </div>
+          </div>
+
+          {/* Partner Holdings Detail Card */}
+          {cashFlow.partnerHoldings && (
+            <div className="p-5 rounded-2xl bg-brand-card border border-brand-border space-y-4">
+              <h3 className="font-bold font-display text-white text-base">Who Holds What Cash (Partner Position)</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-brand-border text-slate-400 uppercase text-[10px]">
+                      <th className="py-3 px-3">Partner Name</th>
+                      <th className="py-3 px-3">Cash in Hand</th>
+                      <th className="py-3 px-3">UPI Account</th>
+                      <th className="py-3 px-3">Bank Transfer</th>
+                      <th className="py-3 px-3 text-right">Total Liquid In Hand</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-brand-border/40">
+                    {cashFlow.partnerHoldings.map((h) => (
+                      <tr key={h.partnerId} className="hover:bg-brand-surface/70">
+                        <td className="py-3.5 px-3 font-bold text-white">{h.name}</td>
+                        <td className="py-3.5 px-3 font-mono text-slate-200">{formatINR(h.cash)}</td>
+                        <td className="py-3.5 px-3 font-mono text-sky-300">{formatINR(h.upi)}</td>
+                        <td className="py-3.5 px-3 font-mono text-purple-300">{formatINR(h.bank)}</td>
+                        <td className="py-3.5 px-3 font-bold font-display text-emerald-400 text-sm text-right">
+                          {formatINR(h.total)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

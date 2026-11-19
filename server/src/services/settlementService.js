@@ -6,6 +6,7 @@ const User = require('../models/User');
 const Rental = require('../models/Rental');
 const Transaction = require('../models/Transaction');
 const AuditLog = require('../models/AuditLog');
+const CapitalInvestment = require('../models/CapitalInvestment');
 const { getNextSettlementNumber, getNextTransactionNumber } = require('../utils/idGenerator');
 
 // Generalized Debt Solver (Splitwise minimum transaction algorithm)
@@ -118,7 +119,27 @@ class SettlementService {
       }
     });
 
-    // 3. Completed settlements separated by type: 'rent', 'expense', or 'all'
+    // 3. Capital Investments contributed by each partner
+    const capitalInvestments = await CapitalInvestment.find().lean();
+    const partnerCapitalMap = {};
+    let totalCapitalInvested = 0;
+
+    capitalInvestments.forEach((ci) => {
+      const pId = ci.partner ? ci.partner.toString() : null;
+      if (pId) {
+        partnerCapitalMap[pId] = (partnerCapitalMap[pId] || 0) + (ci.amount || 0);
+        totalCapitalInvested += ci.amount || 0;
+      }
+    });
+
+    partners.forEach((p) => {
+      const id = p._id.toString();
+      const initial = p.initialCapital || 0;
+      partnerCapitalMap[id] = (partnerCapitalMap[id] || 0) + initial;
+      totalCapitalInvested += initial;
+    });
+
+    // 4. Completed settlements separated by type: 'rent', 'expense', or 'all'
     const settlements = await Settlement.find({ status: 'completed' }).lean();
     const rentSent = {};
     const rentRecv = {};
@@ -183,6 +204,10 @@ class SettlementService {
       const combinedBalance = Math.round((netEntitledProfit - totalCashHeld) * 100) / 100;
 
       const userAccount = userPartnerMap[id] || (p.email ? userPartnerMap[p.email.toLowerCase().trim()] : null);
+      const totalInvested = partnerCapitalMap[id] || 0;
+      const ownershipRatio = totalCapitalInvested > 0
+        ? Number(((totalInvested / totalCapitalInvested) * 100).toFixed(2))
+        : Number(p.effectiveShare.toFixed(2));
 
       return {
         partnerId: p._id,
@@ -191,9 +216,21 @@ class SettlementService {
         phone: p.phone,
         avatar: p.avatar,
         sharePercentage: p.effectiveShare,
+        ownershipPercentage: ownershipRatio,
         hasLoginAccess: Boolean(userAccount),
         loginEmail: userAccount?.email || p.email,
         userRole: userAccount?.role || (p.email === 'ayushkamboj9690@gmail.com' ? 'owner' : 'partner'),
+
+        // Dedicated Virtual Wallet
+        wallet: {
+          invested: totalInvested,
+          expensesPaid: paid,
+          revenueCollected: collected,
+          profitShare: Math.round(netEntitledProfit * 100) / 100,
+          currentBalance: combinedBalance,
+          status: combinedBalance > 0.01 ? 'receivable' : combinedBalance < -0.01 ? 'payable' : 'settled',
+          ownershipPercentage: ownershipRatio
+        },
 
         // Independent Rent Breakdown
         rent: {
@@ -263,9 +300,143 @@ class SettlementService {
       totalExpensesPaid,
       realizedProfit,
       totalSettlementsDone,
+      totalCapitalInvested,
       rentRecommendations,
       expenseRecommendations,
       recommendations: combinedRecommendations
+    };
+  }
+
+  /**
+   * Get virtual ledger timeline for a specific partner
+   */
+  async getPartnerVirtualLedger(partnerId) {
+    const partner = await Partner.findById(partnerId).lean();
+    if (!partner) throw new Error('Partner not found');
+
+    const balances = await this.getPartnerBalances();
+    const partnerMetric = balances.partners.find((p) => p.partnerId.toString() === partnerId.toString());
+
+    // Gather all ledger events for this partner
+    const validRentals = await Rental.find({ status: { $ne: 'cancelled' } }).distinct('_id');
+    const [payments, expenses, settlementsSent, settlementsRecv, investments] = await Promise.all([
+      Payment.find({ receivedByPartner: partnerId, rental: { $in: validRentals } })
+        .populate('customer', 'name')
+        .populate('rental', 'rentalNumber')
+        .sort({ paymentDate: -1 })
+        .lean(),
+      Expense.find({ paidByPartner: partnerId })
+        .populate('bike', 'name registrationNumber')
+        .sort({ expenseDate: -1 })
+        .lean(),
+      Settlement.find({ senderPartner: partnerId, status: 'completed' })
+        .populate('receiverPartner', 'name')
+        .sort({ settlementDate: -1 })
+        .lean(),
+      Settlement.find({ receiverPartner: partnerId, status: 'completed' })
+        .populate('senderPartner', 'name')
+        .sort({ settlementDate: -1 })
+        .lean(),
+      CapitalInvestment.find({ partner: partnerId })
+        .populate('bike', 'name')
+        .sort({ investmentDate: -1 })
+        .lean()
+    ]);
+
+    const events = [];
+
+    // Initial Capital
+    if (partner.initialCapital > 0) {
+      events.push({
+        id: `init-${partner._id}`,
+        date: partner.createdAt,
+        type: 'capital',
+        title: 'Initial Capital Contribution',
+        description: 'Founding capital deposited',
+        amount: partner.initialCapital,
+        direction: 'credit',
+        category: 'Capital'
+      });
+    }
+
+    // Capital Investments
+    investments.forEach((ci) => {
+      events.push({
+        id: ci._id,
+        date: ci.investmentDate,
+        type: 'capital',
+        title: `Capital Investment: ${ci.type === 'bike_purchase' ? `Bike Purchase (${ci.bike?.name || 'Fleet'})` : ci.type}`,
+        description: ci.notes || `Capital invested via ${(ci.paymentMethod || '').toUpperCase()}`,
+        amount: ci.amount,
+        direction: 'credit',
+        category: 'Capital'
+      });
+    });
+
+    // Rent Payments Received (Partner collects cash/upi into hand)
+    payments.forEach((p) => {
+      events.push({
+        id: p._id,
+        date: p.paymentDate,
+        type: 'rent_collected',
+        title: `Rent Collected (#${p.rental?.rentalNumber || 'Trip'})`,
+        description: `From ${p.customer?.name || 'Customer'} via ${(p.paymentMethod || '').toUpperCase()}`,
+        amount: p.amount,
+        direction: 'debit',
+        category: 'Revenue'
+      });
+    });
+
+    // Expenses Paid Out-of-Pocket
+    expenses.forEach((e) => {
+      events.push({
+        id: e._id,
+        date: e.expenseDate,
+        type: 'expense_paid',
+        title: `Expense Paid: ${e.category} (${e.bike?.name || 'General'})`,
+        description: e.description || 'Business operational outlay',
+        amount: e.amount,
+        direction: 'credit',
+        category: 'Expense'
+      });
+    });
+
+    // Settlements Sent
+    settlementsSent.forEach((s) => {
+      events.push({
+        id: s._id,
+        date: s.settlementDate,
+        type: 'settlement_sent',
+        title: `Settlement Paid → ${s.receiverPartner?.name || 'Partner'}`,
+        description: `${s.settlementType.toUpperCase()} Transfer (${(s.paymentMethod || '').toUpperCase()})`,
+        amount: s.amount,
+        direction: 'credit',
+        category: 'Settlement'
+      });
+    });
+
+    // Settlements Received
+    settlementsRecv.forEach((s) => {
+      events.push({
+        id: s._id,
+        date: s.settlementDate,
+        type: 'settlement_received',
+        title: `Settlement Received ← ${s.senderPartner?.name || 'Partner'}`,
+        description: `${s.settlementType.toUpperCase()} Inflow (${(s.paymentMethod || '').toUpperCase()})`,
+        amount: s.amount,
+        direction: 'debit',
+        category: 'Settlement'
+      });
+    });
+
+    // Sort chronologically (newest first)
+    events.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    return {
+      partner,
+      wallet: partnerMetric?.wallet || {},
+      metrics: partnerMetric,
+      events
     };
   }
 

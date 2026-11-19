@@ -21,6 +21,7 @@ const reportRoutes = require('./routes/reportRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const searchRoutes = require('./routes/searchRoutes');
+const capitalRoutes = require('./routes/capitalRoutes');
 const User = require('./models/User');
 const Partner = require('./models/Partner');
 
@@ -172,6 +173,7 @@ apiRouter.use('/reports', reportRoutes);
 apiRouter.use('/settings', settingsRoutes);
 apiRouter.use('/notifications', notificationRoutes);
 apiRouter.use('/search', searchRoutes);
+apiRouter.use('/capital', capitalRoutes);
 
 // Mount at both /api and root so it handles both direct and rewritten requests
 app.use('/api', apiRouter);

@@ -210,3 +210,13 @@ exports.updatePartner = async (req, res) => {
     return res.status(500).json({ message: 'Error updating partner.' });
   }
 };
+
+exports.getPartnerWallet = async (req, res) => {
+  try {
+    const data = await settlementService.getPartnerVirtualLedger(req.params.id);
+    return res.json(data);
+  } catch (err) {
+    console.error('getPartnerWallet error:', err);
+    return res.status(500).json({ message: err.message || 'Error fetching partner wallet.' });
+  }
+};

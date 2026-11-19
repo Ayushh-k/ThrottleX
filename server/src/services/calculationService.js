@@ -3,6 +3,7 @@ const Expense = require('../models/Expense');
 const Payment = require('../models/Payment');
 const Bike = require('../models/Bike');
 const Partner = require('../models/Partner');
+const CapitalInvestment = require('../models/CapitalInvestment');
 
 class CalculationService {
   /**
@@ -198,6 +199,250 @@ class CalculationService {
     return {
       timeSeries,
       bikePerformance
+    };
+  }
+
+  /**
+   * Calculate true profit for a single rental with fuel and maintenance allocation
+   * @param {Object} rental - Rental document or object
+   * @param {Array} [directExpenses] - Optional array of expenses for that bike
+   */
+  async calculateRentalProfit(rental, directExpenses = null) {
+    if (!rental) return null;
+    const grossRevenue = Number(rental.totalAmount || 0);
+    const bikeId = rental.bike?._id || rental.bike;
+
+    // Check distance traveled
+    const startOdo = Number(rental.startOdometer || 0);
+    const endOdo = Number(rental.endOdometer || 0);
+    const diffKm = (endOdo > startOdo && startOdo > 0) ? (endOdo - startOdo) : 0;
+
+    // Duration in days and hours
+    const days = Number(rental.totalDays || (rental.totalHours ? (rental.totalHours / 24).toFixed(1) : 1));
+    const hours = Number(rental.totalHours || (rental.totalDays ? rental.totalDays * 24 : 24));
+    const isHourly = rental.rentalType === 'hourly';
+
+    // Find direct trip expenses if not passed in
+    let tripExpenses = directExpenses;
+    if (!tripExpenses && bikeId) {
+      const sDate = new Date(rental.startDate);
+      // Give a 2-hour grace buffer before start and after end
+      const windowStart = new Date(sDate.getTime() - 2 * 60 * 60 * 1000);
+      const eDate = new Date(rental.actualEndDate || rental.expectedEndDate);
+      const windowEnd = new Date(eDate.getTime() + 2 * 60 * 60 * 1000);
+
+      tripExpenses = await Expense.find({
+        bike: bikeId,
+        expenseDate: { $gte: windowStart, $lte: windowEnd }
+      }).lean();
+    }
+    tripExpenses = tripExpenses || [];
+
+    // Direct trip fuel
+    const directFuel = tripExpenses
+      .filter((e) => e.category === 'petrol')
+      .reduce((sum, e) => sum + (e.amount || 0), 0);
+
+    // Direct trip maintenance/service/repair
+    const directMaint = tripExpenses
+      .filter((e) => ['service', 'repair', 'engine_oil', 'tyres'].includes(e.category))
+      .reduce((sum, e) => sum + (e.amount || 0), 0);
+
+    // Direct other trip expenses (challans, punctures, cleaning)
+    const directOther = tripExpenses
+      .filter((e) => !['petrol', 'service', 'repair', 'engine_oil', 'tyres'].includes(e.category))
+      .reduce((sum, e) => sum + (e.amount || 0), 0);
+
+    // Determine allocations: Use direct if logged; otherwise calculate realistic pro-rata estimate
+    let fuelAllocation = directFuel;
+    let fuelSource = directFuel > 0 ? 'direct_logged' : 'estimated';
+    if (directFuel === 0) {
+      if (diffKm > 0) {
+        // Assume avg motorcycle mileage of 35 km/l at ₹105/litre
+        fuelAllocation = Math.round((diffKm / 35) * 105);
+      } else if (isHourly) {
+        fuelAllocation = Math.round(hours * 35);
+      } else {
+        fuelAllocation = Math.round(days * 150);
+      }
+    }
+
+    let maintenanceAllocation = directMaint;
+    let maintSource = directMaint > 0 ? 'direct_logged' : 'estimated';
+    if (directMaint === 0) {
+      if (diffKm > 0) {
+        maintenanceAllocation = Math.round(diffKm * 0.80);
+      } else if (isHourly) {
+        maintenanceAllocation = Math.round(hours * 15);
+      } else {
+        maintenanceAllocation = Math.round(days * 75);
+      }
+    }
+
+    const otherAllocation = directOther;
+    const totalCost = fuelAllocation + maintenanceAllocation + otherAllocation;
+    const netProfit = Math.round(grossRevenue - totalCost);
+    const profitMargin = grossRevenue > 0 ? Number(((netProfit / grossRevenue) * 100).toFixed(1)) : 0;
+
+    return {
+      grossRevenue,
+      fuelAllocation,
+      fuelSource,
+      maintenanceAllocation,
+      maintSource,
+      otherAllocation,
+      totalCost,
+      netProfit,
+      profitMargin,
+      diffKm,
+      isDirectTripCost: directFuel > 0 || directMaint > 0 || directOther > 0
+    };
+  }
+
+  /**
+   * Cash Flow & Real-Time Liquidity Position
+   * Calculates actual cash in hand, UPI, Bank balances, customer receivables, and partner payables
+   */
+  async getCashFlowOverview() {
+    const validRentals = await Rental.find({ status: { $ne: 'cancelled' } }).distinct('_id');
+    const payments = await Payment.find({ rental: { $in: validRentals } })
+      .populate('receivedByPartner', 'name avatar')
+      .lean();
+    const expenses = await Expense.find()
+      .populate('paidByPartner', 'name avatar')
+      .lean();
+    const capitalInvestments = await CapitalInvestment.find()
+      .populate('partner', 'name avatar')
+      .lean();
+    const partners = await Partner.find({ status: 'active' }).lean();
+
+    // 1. Inflow from customer payments
+    let cashInflow = 0;
+    let upiInflow = 0;
+    let bankInflow = 0;
+
+    payments.forEach((p) => {
+      const amt = Number(p.amount || 0);
+      const m = (p.paymentMethod || '').toLowerCase();
+      if (m === 'cash') cashInflow += amt;
+      else if (m === 'bank_transfer' || m === 'bank') bankInflow += amt;
+      else upiInflow += amt;
+    });
+
+    // 2. Capital Contributions inflow
+    let cashCapital = 0;
+    let upiCapital = 0;
+    let bankCapital = 0;
+
+    capitalInvestments.forEach((c) => {
+      const amt = Number(c.amount || 0);
+      const m = (c.paymentMethod || '').toLowerCase();
+      if (m === 'cash') cashCapital += amt;
+      else if (m === 'bank_transfer' || m === 'bank') bankCapital += amt;
+      else upiCapital += amt;
+    });
+
+    // Add initialCapital from partners
+    partners.forEach((p) => {
+      bankCapital += Number(p.initialCapital || 0);
+    });
+
+    // 3. Outflows from expenses
+    let cashOutflow = 0;
+    let upiOutflow = 0;
+    let bankOutflow = 0;
+
+    expenses.forEach((e) => {
+      const amt = Number(e.amount || 0);
+      const m = (e.paymentMethod || '').toLowerCase();
+      if (m === 'cash') cashOutflow += amt;
+      else if (m === 'bank_transfer' || m === 'bank') bankOutflow += amt;
+      else upiOutflow += amt;
+    });
+
+    // Net positions
+    const cashInHand = Math.round((cashInflow + cashCapital - cashOutflow) * 100) / 100;
+    const upi = Math.round((upiInflow + upiCapital - upiOutflow) * 100) / 100;
+    const bank = Math.round((bankInflow + bankCapital - bankOutflow) * 100) / 100;
+    const totalLiquidCash = Math.round((cashInHand + upi + bank) * 100) / 100;
+
+    // 4. Customer Pending (Uncollected remaining balance on non-cancelled rentals)
+    const unpaidRentals = await Rental.find({
+      status: { $ne: 'cancelled' },
+      remainingAmount: { $gt: 0 }
+    }).populate('customer', 'name phone').populate('bike', 'name registrationNumber').lean();
+
+    const customerPending = unpaidRentals.reduce((sum, r) => sum + (r.remainingAmount || 0), 0);
+
+    // 5. Per-Partner Cash Holdings
+    const partnerHoldings = {};
+    partners.forEach((p) => {
+      partnerHoldings[p._id.toString()] = {
+        partnerId: p._id,
+        name: p.name,
+        avatar: p.avatar,
+        cash: 0,
+        upi: 0,
+        bank: 0,
+        total: 0
+      };
+    });
+
+    payments.forEach((p) => {
+      const pId = p.receivedByPartner?._id ? p.receivedByPartner._id.toString() : p.receivedByPartner ? p.receivedByPartner.toString() : null;
+      if (pId && partnerHoldings[pId]) {
+        const m = (p.paymentMethod || '').toLowerCase();
+        const amt = Number(p.amount || 0);
+        if (m === 'cash') partnerHoldings[pId].cash += amt;
+        else if (m === 'bank_transfer' || m === 'bank') partnerHoldings[pId].bank += amt;
+        else partnerHoldings[pId].upi += amt;
+        partnerHoldings[pId].total += amt;
+      }
+    });
+
+    expenses.forEach((e) => {
+      const pId = e.paidByPartner?._id ? e.paidByPartner._id.toString() : e.paidByPartner ? e.paidByPartner.toString() : null;
+      if (pId && partnerHoldings[pId]) {
+        const m = (e.paymentMethod || '').toLowerCase();
+        const amt = Number(e.amount || 0);
+        if (m === 'cash') partnerHoldings[pId].cash -= amt;
+        else if (m === 'bank_transfer' || m === 'bank') partnerHoldings[pId].bank -= amt;
+        else partnerHoldings[pId].upi -= amt;
+        partnerHoldings[pId].total -= amt;
+      }
+    });
+
+    // 6. Partner Payable from Settlement Recommendations
+    const settlementService = require('./settlementService');
+    const settlementBalances = await settlementService.getPartnerBalances();
+    const partnerPayable = settlementBalances.recommendations.reduce((sum, r) => sum + r.amount, 0);
+
+    return {
+      cashInHand,
+      upi,
+      bank,
+      totalLiquidCash,
+      customerPending,
+      partnerPayable,
+      breakdown: {
+        inflows: {
+          payments: { cash: cashInflow, upi: upiInflow, bank: bankInflow },
+          capital: { cash: cashCapital, upi: upiCapital, bank: bankCapital }
+        },
+        outflows: {
+          expenses: { cash: cashOutflow, upi: upiOutflow, bank: bankOutflow }
+        }
+      },
+      partnerHoldings: Object.values(partnerHoldings),
+      pendingCustomersList: unpaidRentals.slice(0, 5).map((r) => ({
+        rentalId: r._id,
+        rentalNumber: r.rentalNumber,
+        customerName: r.customer?.name || 'Customer',
+        customerPhone: r.customer?.phone || '',
+        bikeName: r.bike?.name || 'Bike',
+        remainingAmount: r.remainingAmount,
+        expectedEndDate: r.expectedEndDate
+      }))
     };
   }
 }

@@ -125,9 +125,16 @@ export const api = {
   // Partners & Settlements
   getPartners: () => request('/partners'),
   getPartnerById: (id) => request(`/partners/${id}`),
+  getPartnerWallet: (id) => request(`/partners/${id}/wallet`),
   createPartner: (payload) => request('/partners', { method: 'POST', body: JSON.stringify(payload) }),
   updatePartner: (id, payload) => request(`/partners/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   setPartnerLoginAccess: (id, payload) => request(`/partners/${id}/login-access`, { method: 'POST', body: JSON.stringify(payload) }),
+
+  // Capital & Investment Tracking
+  getCapital: () => request('/capital'),
+  createInvestment: (payload) => request('/capital', { method: 'POST', body: JSON.stringify(payload) }),
+  syncOwnershipToShare: () => request('/capital/sync-ownership', { method: 'POST' }),
+  deleteInvestment: (id) => request(`/capital/${id}`, { method: 'DELETE' }),
 
   getSettlements: () => request('/settlements'),
   recordSettlement: (payload) => request('/settlements', { method: 'POST', body: JSON.stringify(payload) }),

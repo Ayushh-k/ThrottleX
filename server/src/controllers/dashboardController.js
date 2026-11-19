@@ -64,7 +64,10 @@ exports.getDashboardData = async (req, res) => {
       .populate('bike paidByPartner receivedByPartner customer')
       .lean();
 
-    // 6. Refresh and get top alerts
+    // 6. Real-time Cash Position & Liquidity Overview
+    const cashFlow = await calculationService.getCashFlowOverview();
+
+    // 7. Refresh and get top alerts
     const alerts = await notificationService.refreshSystemAlerts();
     const unreadAlertsCount = alerts.filter((a) => !a.isRead).length;
 
@@ -73,6 +76,7 @@ exports.getDashboardData = async (req, res) => {
         ...financialOverview,
         amountPayable: totalAmountPayable
       },
+      cashFlow,
       analytics,
       bikeCards,
       partnerSummary: {

@@ -10,7 +10,11 @@ import {
   User,
   Clock,
   Shield,
-  FileText
+  FileText,
+  TrendingUp,
+  Fuel,
+  Wrench,
+  Sparkles
 } from 'lucide-react';
 import { api } from '../services/api';
 import { formatINR, formatDate, formatDateTime } from '../utils/formatters';
@@ -214,6 +218,83 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
             </span>
           </div>
         </div>
+
+        {/* Profit Per Rental: Unit Economics Breakdown */}
+        {data.profitability && (
+          <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-brand-surface to-brand-surface border border-emerald-500/30 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-emerald-400" />
+                <div>
+                  <h3 className="font-bold font-display text-white text-sm flex items-center gap-2">
+                    Profit Per Rental (Unit Economics)
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
+                      {data.profitability.profitMargin}% PROFIT MARGIN
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Calculated after allocating direct fuel, maintenance wear, and operational costs for this trip
+                  </p>
+                </div>
+              </div>
+
+              {data.profitability.diffKm > 0 && (
+                <span className="text-xs text-slate-300 font-mono self-start sm:self-auto">
+                  Trip Distance: <strong className="text-brand-orange">{data.profitability.diffKm} km</strong>
+                </span>
+              )}
+            </div>
+
+            {/* Profit Equation Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="p-3.5 rounded-xl bg-brand-dark border border-white/5 space-y-1">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Gross Rental Revenue</span>
+                <p className="text-base font-bold font-display text-white">
+                  {formatINR(data.profitability.grossRevenue)}
+                </p>
+                <span className="text-[10px] text-slate-500 block truncate">
+                  {rental.rentalType === 'hourly'
+                    ? `${rental.totalHours} hrs × ${formatINR(rental.hourlyRate)}/hr`
+                    : `${rental.totalDays} days × ${formatINR(rental.dailyRate)}/day`}
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-brand-dark border border-white/5 space-y-1">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block flex items-center gap-1">
+                  <Fuel className="w-3 h-3 text-rose-400" /> Fuel Allocation
+                </span>
+                <p className="text-base font-bold font-display text-rose-400">
+                  - {formatINR(data.profitability.fuelAllocation)}
+                </p>
+                <span className="text-[10px] text-slate-500 block">
+                  {data.profitability.fuelSource === 'direct_logged' ? 'Direct trip fuel' : 'Trip pro-rata allocation'}
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-brand-dark border border-white/5 space-y-1">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block flex items-center gap-1">
+                  <Wrench className="w-3 h-3 text-amber-400" /> Maintenance Reserve
+                </span>
+                <p className="text-base font-bold font-display text-amber-400">
+                  - {formatINR(data.profitability.maintenanceAllocation)}
+                </p>
+                <span className="text-[10px] text-slate-500 block">
+                  {data.profitability.maintSource === 'direct_logged' ? 'Direct service/oil' : 'Wear & tear reserve'}
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/35 space-y-1">
+                <span className="text-[10px] text-emerald-300 uppercase tracking-wider block font-bold">Actual Net Profit</span>
+                <p className="text-xl font-bold font-display text-emerald-400">
+                  {formatINR(data.profitability.netProfit)}
+                </p>
+                <span className="text-[10px] text-emerald-300/80 block font-mono">
+                  {data.profitability.profitMargin}% Realized Profit
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Financial Calculation Breakdown Table */}
         <div className="space-y-3">

@@ -5,6 +5,7 @@ const Payment = require('../models/Payment');
 const Partner = require('../models/Partner');
 const Settings = require('../models/Settings');
 const ledgerService = require('../services/ledgerService');
+const calculationService = require('../services/calculationService');
 const { getNextRentalNumber, getNextPaymentReceiptNumber } = require('../utils/idGenerator');
 
 // Helper to check if bike is available during requested dates
@@ -122,21 +123,40 @@ exports.getAllRentals = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    if (search) {
-      const q = search.toLowerCase();
-      const filtered = rentals.filter((r) => {
-        return (
-          r.rentalNumber?.toLowerCase().includes(q) ||
-          r.bike?.name?.toLowerCase().includes(q) ||
-          r.bike?.registrationNumber?.toLowerCase().includes(q) ||
-          r.customer?.name?.toLowerCase().includes(q) ||
-          r.customer?.phone?.includes(q)
-        );
-      });
-      return res.json({ rentals: filtered });
-    }
+    const targetRentals = search
+      ? rentals.filter((r) => {
+          const q = search.toLowerCase();
+          return (
+            r.rentalNumber?.toLowerCase().includes(q) ||
+            r.bike?.name?.toLowerCase().includes(q) ||
+            r.bike?.registrationNumber?.toLowerCase().includes(q) ||
+            r.customer?.name?.toLowerCase().includes(q) ||
+            r.customer?.phone?.includes(q)
+          );
+        })
+      : rentals;
 
-    return res.json({ rentals });
+    const enrichedRentals = await Promise.all(
+      targetRentals.map(async (r) => {
+        try {
+          const p = await calculationService.calculateRentalProfit(r);
+          return {
+            ...r,
+            profitability: {
+              netProfit: p.netProfit,
+              profitMargin: p.profitMargin,
+              totalCost: p.totalCost,
+              fuelAllocation: p.fuelAllocation,
+              maintenanceAllocation: p.maintenanceAllocation
+            }
+          };
+        } catch {
+          return r;
+        }
+      })
+    );
+
+    return res.json({ rentals: enrichedRentals });
   } catch (err) {
     console.error('getAllRentals error:', err);
     return res.status(500).json({ message: 'Error fetching rentals.' });
@@ -155,12 +175,15 @@ exports.getRentalById = async (req, res) => {
       return res.status(404).json({ message: 'Rental not found.' });
     }
 
-    const payments = await Payment.find({ rental: rental._id })
-      .populate('receivedByPartner', 'name avatar')
-      .populate('createdBy', 'name')
-      .sort({ paymentDate: -1 });
+    const [payments, profitability] = await Promise.all([
+      Payment.find({ rental: rental._id })
+        .populate('receivedByPartner', 'name avatar')
+        .populate('createdBy', 'name')
+        .sort({ paymentDate: -1 }),
+      calculationService.calculateRentalProfit(rental)
+    ]);
 
-    return res.json({ rental, payments });
+    return res.json({ rental, payments, profitability });
   } catch (err) {
     return res.status(500).json({ message: 'Error fetching rental details.' });
   }
