@@ -229,7 +229,7 @@ export default function RentalAgreementModal({ isOpen, onClose, rentalId, onAgre
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
       <div className="relative w-full max-w-4xl bg-brand-card border border-brand-border rounded-2xl shadow-2xl overflow-hidden my-6 flex flex-col max-h-[92vh]">
         {/* Modal Top Control Bar (Hidden when printing) */}
         <div className="print:hidden flex items-center justify-between p-4 px-6 border-b border-brand-border bg-brand-surface/90">

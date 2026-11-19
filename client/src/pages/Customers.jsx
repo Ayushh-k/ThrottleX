@@ -312,25 +312,25 @@ export default function Customers({ onTriggerAction, refreshKey }) {
 
       {/* Comprehensive Customer Profile & KYC Vault Modal */}
       {selectedCustomer && profileData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md animate-fade-in overflow-y-auto">
-          <div className="relative w-full max-w-3xl bg-brand-card border border-brand-border rounded-2xl shadow-2xl p-6 overflow-hidden max-h-[90vh] overflow-y-auto space-y-5 my-6">
-            {/* Header */}
-            <div className="flex items-start justify-between pb-4 border-b border-brand-border">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
+          <div className="relative w-full max-w-3xl bg-brand-card border border-brand-border rounded-2xl shadow-2xl overflow-hidden my-8 flex flex-col max-h-[90vh]">
+            {/* Standard Modal Header Bar */}
+            <div className="flex items-center justify-between p-5 border-b border-brand-border bg-brand-surface">
               <div className="flex items-center gap-3">
                 {profileData.customer.photoUrl ? (
                   <img
                     src={profileData.customer.photoUrl}
                     alt={profileData.customer.name}
-                    className="w-14 h-14 rounded-2xl object-cover border-2 border-brand-orange"
+                    className="w-12 h-12 rounded-xl object-cover border-2 border-brand-orange shrink-0"
                   />
                 ) : (
-                  <div className="w-14 h-14 rounded-2xl bg-brand-surface border border-brand-border flex items-center justify-center text-brand-orange font-bold text-xl">
-                    {profileData.customer.name[0]}
+                  <div className="w-12 h-12 rounded-xl bg-brand-card border border-brand-border flex items-center justify-center text-brand-orange font-bold text-lg shrink-0">
+                    {profileData.customer.name ? profileData.customer.name[0].toUpperCase() : 'U'}
                   </div>
                 )}
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-bold font-display text-white">{profileData.customer.name}</h3>
+                    <h3 className="text-lg font-bold font-display text-white">{profileData.customer.name}</h3>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold ${
                       profileData.customer.riskStatus === 'blocked'
                         ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
@@ -353,232 +353,251 @@ export default function Customers({ onTriggerAction, refreshKey }) {
                   setProfileData(null);
                   setActiveDocViewer(null);
                 }}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-white/5"
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-white/5 hover:bg-white/10"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Blocked Alert Banner if blocked */}
-            {profileData.customer.riskStatus === 'blocked' && (
-              <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-rose-400 shrink-0" />
-                  <div>
-                    <strong>BLOCKED RIDER:</strong> {profileData.customer.blockedReason || 'Flagged by administrator.'}
+            {/* Modal Body */}
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              {/* Blocked Alert Banner if blocked */}
+              {profileData.customer.riskStatus === 'blocked' && (
+                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-rose-400 shrink-0" />
+                    <div>
+                      <strong>BLOCKED RIDER:</strong> {profileData.customer.blockedReason || 'Flagged by administrator.'}
+                    </div>
                   </div>
-                </div>
-                <button
-                  type="button"
-                  disabled={updatingRisk}
-                  onClick={() => handleUpdateRiskStatus('verified')}
-                  className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold shrink-0 transition-colors"
-                >
-                  Unblock Rider
-                </button>
-              </div>
-            )}
-
-            {/* Risk Control Manager Bar */}
-            <div className="p-3.5 rounded-xl bg-brand-surface border border-brand-border space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-brand-orange" /> Update Risk Status & Security Clearance
-                </span>
-                {updatingRisk && <span className="text-[11px] text-brand-orange animate-pulse">Updating...</span>}
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {[
-                  { id: 'verified', label: '🟢 Verified', color: 'hover:bg-emerald-500/20' },
-                  { id: 'pending', label: '🟡 Pending KYC', color: 'hover:bg-amber-500/20' },
-                  { id: 'risk', label: '🟠 High Risk', color: 'hover:bg-orange-500/20' },
-                  { id: 'blocked', label: '🔴 Block Customer', color: 'hover:bg-rose-500/20' }
-                ].map((s) => (
                   <button
-                    key={s.id}
                     type="button"
                     disabled={updatingRisk}
-                    onClick={() => {
-                      if (s.id === 'blocked') {
-                        const reason = prompt('Enter reason for blocking this customer:', profileData.customer.blockedReason || 'Unpaid damage / Late return');
-                        if (reason !== null) {
-                          setBlockReasonInput(reason);
-                          handleUpdateRiskStatus('blocked');
+                    onClick={() => handleUpdateRiskStatus('verified')}
+                    className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold shrink-0 transition-colors"
+                  >
+                    Unblock Rider
+                  </button>
+                </div>
+              )}
+
+              {/* Risk Control Manager Bar */}
+              <div className="p-3.5 rounded-xl bg-brand-surface border border-brand-border space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-300 flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-brand-orange" /> Update Risk Status & Security Clearance
+                  </span>
+                  {updatingRisk && <span className="text-[11px] text-brand-orange animate-pulse">Updating...</span>}
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { id: 'verified', label: '🟢 Verified', color: 'hover:border-emerald-500' },
+                    { id: 'pending', label: '🟡 Pending KYC', color: 'hover:border-amber-500' },
+                    { id: 'risk', label: '🟠 High Risk', color: 'hover:border-orange-500' },
+                    { id: 'blocked', label: '🔴 Block Customer', color: 'hover:border-rose-500' }
+                  ].map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      disabled={updatingRisk}
+                      onClick={() => {
+                        if (s.id === 'blocked') {
+                          const reason = prompt('Enter reason for blocking this customer:', profileData.customer.blockedReason || 'Unpaid damage / Late return');
+                          if (reason !== null) {
+                            setBlockReasonInput(reason);
+                            handleUpdateRiskStatus('blocked');
+                          }
+                        } else {
+                          handleUpdateRiskStatus(s.id);
                         }
-                      } else {
-                        handleUpdateRiskStatus(s.id);
-                      }
-                    }}
-                    className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
-                      profileData.customer.riskStatus === s.id
-                        ? 'border-brand-orange bg-brand-orange/20 text-white font-bold shadow-glow-sm'
-                        : `border-brand-border bg-black/20 text-slate-400 ${s.color}`
+                      }}
+                      className={`p-2 rounded-xl border text-xs font-semibold transition-all text-center ${
+                        profileData.customer.riskStatus === s.id
+                          ? s.id === 'blocked'
+                            ? 'border-rose-500 bg-rose-500/20 text-rose-200 font-bold shadow-glow-sm'
+                            : 'border-brand-orange bg-brand-orange/20 text-white font-bold shadow-glow-sm'
+                          : `border-brand-border bg-brand-card text-slate-300 ${s.color}`
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* KYC Vault Document Gallery */}
+              <div className="space-y-2">
+                <h4 className="font-bold text-white text-xs uppercase tracking-wider flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-brand-orange" /> KYC Digital Document Vault
+                </h4>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {/* DL Front */}
+                  <div
+                    onClick={() => profileData.customer.dlPhotoUrl && setActiveDocViewer(profileData.customer.dlPhotoUrl)}
+                    className={`p-3 rounded-xl border transition-all text-center flex flex-col justify-between ${
+                      profileData.customer.dlPhotoUrl
+                        ? 'border-brand-border bg-brand-surface hover:border-brand-orange cursor-pointer'
+                        : 'border-dashed border-brand-border bg-brand-surface'
                     }`}
                   >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold mb-1">DL Front</p>
+                    {profileData.customer.dlPhotoUrl ? (
+                      <img src={profileData.customer.dlPhotoUrl} alt="DL Front" className="h-16 w-full object-cover rounded-lg" />
+                    ) : (
+                      <div className="h-16 flex flex-col items-center justify-center text-slate-500">
+                        <FileText className="w-6 h-6 mb-1 text-slate-500" />
+                        <span className="text-[11px] text-slate-400">Not Uploaded</span>
+                      </div>
+                    )}
+                    <span className="text-[10px] text-brand-orange mt-1.5 block font-mono font-semibold">
+                      {profileData.customer.dlNumber || 'DL on file'}
+                    </span>
+                  </div>
 
-            {/* KYC Vault Document Gallery */}
-            <div className="space-y-2">
-              <h4 className="font-bold text-white text-xs uppercase tracking-wider flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-brand-orange" /> KYC Digital Document Vault
-              </h4>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {/* DL Front */}
-                <div
-                  onClick={() => profileData.customer.dlPhotoUrl && setActiveDocViewer(profileData.customer.dlPhotoUrl)}
-                  className={`p-2.5 rounded-xl border transition-all text-center ${
-                    profileData.customer.dlPhotoUrl
-                      ? 'border-brand-border bg-brand-surface hover:border-brand-orange cursor-pointer'
-                      : 'border-brand-border/40 bg-black/20 opacity-60'
-                  }`}
-                >
-                  <p className="text-[10px] text-slate-400 uppercase mb-1">DL Front</p>
-                  {profileData.customer.dlPhotoUrl ? (
-                    <img src={profileData.customer.dlPhotoUrl} alt="DL Front" className="h-16 w-full object-cover rounded-lg" />
-                  ) : (
-                    <div className="h-16 flex items-center justify-center text-xs text-slate-600">Not Uploaded</div>
-                  )}
-                  <span className="text-[10px] text-brand-orange mt-1 block font-mono">
-                    {profileData.customer.dlNumber || 'DL on file'}
-                  </span>
-                </div>
-
-                {/* DL Back */}
-                <div
-                  onClick={() => profileData.customer.dlBackPhotoUrl && setActiveDocViewer(profileData.customer.dlBackPhotoUrl)}
-                  className={`p-2.5 rounded-xl border transition-all text-center ${
-                    profileData.customer.dlBackPhotoUrl
-                      ? 'border-brand-border bg-brand-surface hover:border-brand-orange cursor-pointer'
-                      : 'border-brand-border/40 bg-black/20 opacity-60'
-                  }`}
-                >
-                  <p className="text-[10px] text-slate-400 uppercase mb-1">DL Back</p>
-                  {profileData.customer.dlBackPhotoUrl ? (
-                    <img src={profileData.customer.dlBackPhotoUrl} alt="DL Back" className="h-16 w-full object-cover rounded-lg" />
-                  ) : (
-                    <div className="h-16 flex items-center justify-center text-xs text-slate-600">Not Uploaded</div>
-                  )}
-                  <span className="text-[10px] text-slate-400 mt-1 block">
-                    {profileData.customer.dlExpiryDate ? `Exp: ${formatDate(profileData.customer.dlExpiryDate)}` : 'No Expiry Set'}
-                  </span>
-                </div>
-
-                {/* Aadhaar Front */}
-                <div
-                  onClick={() => profileData.customer.aadhaarPhotoUrl && setActiveDocViewer(profileData.customer.aadhaarPhotoUrl)}
-                  className={`p-2.5 rounded-xl border transition-all text-center ${
-                    profileData.customer.aadhaarPhotoUrl
-                      ? 'border-brand-border bg-brand-surface hover:border-brand-orange cursor-pointer'
-                      : 'border-brand-border/40 bg-black/20 opacity-60'
-                  }`}
-                >
-                  <p className="text-[10px] text-slate-400 uppercase mb-1">Aadhaar Front</p>
-                  {profileData.customer.aadhaarPhotoUrl ? (
-                    <img src={profileData.customer.aadhaarPhotoUrl} alt="Aadhaar Front" className="h-16 w-full object-cover rounded-lg" />
-                  ) : (
-                    <div className="h-16 flex items-center justify-center text-xs text-slate-600">Not Uploaded</div>
-                  )}
-                  <span className="text-[10px] text-slate-300 mt-1 block font-mono">
-                    {profileData.customer.idProofNumber || 'ID on file'}
-                  </span>
-                </div>
-
-                {/* Aadhaar Back */}
-                <div
-                  onClick={() => profileData.customer.aadhaarBackPhotoUrl && setActiveDocViewer(profileData.customer.aadhaarBackPhotoUrl)}
-                  className={`p-2.5 rounded-xl border transition-all text-center ${
-                    profileData.customer.aadhaarBackPhotoUrl
-                      ? 'border-brand-border bg-brand-surface hover:border-brand-orange cursor-pointer'
-                      : 'border-brand-border/40 bg-black/20 opacity-60'
-                  }`}
-                >
-                  <p className="text-[10px] text-slate-400 uppercase mb-1">Aadhaar Back</p>
-                  {profileData.customer.aadhaarBackPhotoUrl ? (
-                    <img src={profileData.customer.aadhaarBackPhotoUrl} alt="Aadhaar Back" className="h-16 w-full object-cover rounded-lg" />
-                  ) : (
-                    <div className="h-16 flex items-center justify-center text-xs text-slate-600">Not Uploaded</div>
-                  )}
-                  <span className="text-[10px] text-slate-400 mt-1 block">Address Proof</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Fullscreen Document Viewer Preview */}
-            {activeDocViewer && (
-              <div className="p-3 rounded-xl bg-slate-950 border border-brand-orange space-y-2">
-                <div className="flex items-center justify-between text-xs text-slate-300">
-                  <span className="font-semibold text-brand-orange">🔍 Full Document Inspection</span>
-                  <button
-                    type="button"
-                    onClick={() => setActiveDocViewer(null)}
-                    className="text-xs text-slate-400 hover:text-white"
+                  {/* DL Back */}
+                  <div
+                    onClick={() => profileData.customer.dlBackPhotoUrl && setActiveDocViewer(profileData.customer.dlBackPhotoUrl)}
+                    className={`p-3 rounded-xl border transition-all text-center flex flex-col justify-between ${
+                      profileData.customer.dlBackPhotoUrl
+                        ? 'border-brand-border bg-brand-surface hover:border-brand-orange cursor-pointer'
+                        : 'border-dashed border-brand-border bg-brand-surface'
+                    }`}
                   >
-                    Close Viewer ✕
-                  </button>
-                </div>
-                <img src={activeDocViewer} alt="Document" className="max-h-72 w-auto mx-auto rounded-lg shadow-lg" />
-              </div>
-            )}
-
-            {/* Stats Overview */}
-            <div className="grid grid-cols-3 gap-3 p-3.5 rounded-xl bg-brand-surface border border-brand-border text-center text-xs">
-              <div>
-                <span className="text-[10px] text-slate-400 uppercase block">Completed Trips</span>
-                <p className="text-xl font-bold text-white mt-0.5">{profileData.stats.totalRentals}</p>
-              </div>
-              <div>
-                <span className="text-[10px] text-slate-400 uppercase block">Lifetime Spend</span>
-                <p className="text-xl font-bold text-emerald-400 mt-0.5">{formatINR(profileData.stats.totalPaid)}</p>
-              </div>
-              <div>
-                <span className="text-[10px] text-slate-400 uppercase block">Outstanding Balance</span>
-                <p className="text-xl font-bold text-amber-400 mt-0.5">{formatINR(profileData.stats.outstanding)}</p>
-              </div>
-            </div>
-
-            {/* Guarantor Details */}
-            {profileData.customer.guarantor?.name && (
-              <div className="p-3.5 rounded-xl bg-brand-surface/60 border border-brand-border/60 text-xs space-y-1">
-                <div className="font-semibold text-slate-300 flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-brand-orange" /> Emergency Guarantor Record
-                </div>
-                <p className="text-slate-400">
-                  Name: <strong className="text-white">{profileData.customer.guarantor.name}</strong> ({profileData.customer.guarantor.relation}) • Phone: <span className="font-mono text-slate-200">{profileData.customer.guarantor.phone}</span> • ID: <span className="font-mono text-slate-200">{profileData.customer.guarantor.idProofNumber || 'On Record'}</span>
-                </p>
-              </div>
-            )}
-
-            {/* Rental History */}
-            <div className="space-y-2">
-              <h4 className="font-bold text-white text-xs uppercase tracking-wider">Previous Rental History</h4>
-              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                {profileData.rentals?.length === 0 ? (
-                  <p className="text-xs text-slate-400 text-center py-4">No past rentals found for this customer.</p>
-                ) : (
-                  profileData.rentals.map((r) => (
-                    <div key={r._id} className="p-3 rounded-xl bg-brand-surface border border-brand-border/60 flex items-center justify-between text-xs">
-                      <div>
-                        <p className="font-semibold text-white">#{r.rentalNumber} • {r.bike?.name}</p>
-                        <p className="text-[10px] text-slate-400 font-mono">
-                          {r.bike?.registrationNumber} • {r.rentalType === 'hourly' ? `${r.totalHours} hrs` : `${r.totalDays} days`} • {formatDate(r.startDate)}
-                        </p>
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold mb-1">DL Back</p>
+                    {profileData.customer.dlBackPhotoUrl ? (
+                      <img src={profileData.customer.dlBackPhotoUrl} alt="DL Back" className="h-16 w-full object-cover rounded-lg" />
+                    ) : (
+                      <div className="h-16 flex flex-col items-center justify-center text-slate-500">
+                        <FileText className="w-6 h-6 mb-1 text-slate-500" />
+                        <span className="text-[11px] text-slate-400">Not Uploaded</span>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-white">{formatINR(r.totalAmount)}</p>
-                        <span className={`text-[10px] uppercase font-semibold ${
-                          r.status === 'active' ? 'text-emerald-400' : 'text-slate-400'
-                        }`}>
-                          {r.status}
-                        </span>
+                    )}
+                    <span className="text-[10px] text-slate-300 mt-1.5 block">
+                      {profileData.customer.dlExpiryDate ? `Exp: ${formatDate(profileData.customer.dlExpiryDate)}` : 'No Expiry Set'}
+                    </span>
+                  </div>
+
+                  {/* Aadhaar Front */}
+                  <div
+                    onClick={() => profileData.customer.aadhaarPhotoUrl && setActiveDocViewer(profileData.customer.aadhaarPhotoUrl)}
+                    className={`p-3 rounded-xl border transition-all text-center flex flex-col justify-between ${
+                      profileData.customer.aadhaarPhotoUrl
+                        ? 'border-brand-border bg-brand-surface hover:border-brand-orange cursor-pointer'
+                        : 'border-dashed border-brand-border bg-brand-surface'
+                    }`}
+                  >
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold mb-1">Aadhaar Front</p>
+                    {profileData.customer.aadhaarPhotoUrl ? (
+                      <img src={profileData.customer.aadhaarPhotoUrl} alt="Aadhaar Front" className="h-16 w-full object-cover rounded-lg" />
+                    ) : (
+                      <div className="h-16 flex flex-col items-center justify-center text-slate-500">
+                        <FileText className="w-6 h-6 mb-1 text-slate-500" />
+                        <span className="text-[11px] text-slate-400">Not Uploaded</span>
                       </div>
-                    </div>
-                  ))
-                )}
+                    )}
+                    <span className="text-[10px] text-slate-300 mt-1.5 block font-mono">
+                      {profileData.customer.idProofNumber || 'ID on file'}
+                    </span>
+                  </div>
+
+                  {/* Aadhaar Back */}
+                  <div
+                    onClick={() => profileData.customer.aadhaarBackPhotoUrl && setActiveDocViewer(profileData.customer.aadhaarBackPhotoUrl)}
+                    className={`p-3 rounded-xl border transition-all text-center flex flex-col justify-between ${
+                      profileData.customer.aadhaarBackPhotoUrl
+                        ? 'border-brand-border bg-brand-surface hover:border-brand-orange cursor-pointer'
+                        : 'border-dashed border-brand-border bg-brand-surface'
+                    }`}
+                  >
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold mb-1">Aadhaar Back</p>
+                    {profileData.customer.aadhaarBackPhotoUrl ? (
+                      <img src={profileData.customer.aadhaarBackPhotoUrl} alt="Aadhaar Back" className="h-16 w-full object-cover rounded-lg" />
+                    ) : (
+                      <div className="h-16 flex flex-col items-center justify-center text-slate-500">
+                        <FileText className="w-6 h-6 mb-1 text-slate-500" />
+                        <span className="text-[11px] text-slate-400">Not Uploaded</span>
+                      </div>
+                    )}
+                    <span className="text-[10px] text-slate-300 mt-1.5 block">Address Proof</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fullscreen Document Viewer Preview */}
+              {activeDocViewer && (
+                <div className="p-3 rounded-xl bg-brand-surface border border-brand-orange space-y-2">
+                  <div className="flex items-center justify-between text-xs text-slate-300">
+                    <span className="font-semibold text-brand-orange">🔍 Full Document Inspection</span>
+                    <button
+                      type="button"
+                      onClick={() => setActiveDocViewer(null)}
+                      className="text-xs text-slate-400 hover:text-white"
+                    >
+                      Close Viewer ✕
+                    </button>
+                  </div>
+                  <img src={activeDocViewer} alt="Document" className="max-h-72 w-auto mx-auto rounded-lg shadow-lg" />
+                </div>
+              )}
+
+              {/* Stats Overview */}
+              <div className="grid grid-cols-3 gap-3 p-3.5 rounded-xl bg-brand-surface border border-brand-border text-center text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase block font-semibold">Completed Trips</span>
+                  <p className="text-xl font-bold text-white mt-0.5">{profileData.stats.totalRentals}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase block font-semibold">Lifetime Spend</span>
+                  <p className="text-xl font-bold text-emerald-400 mt-0.5">{formatINR(profileData.stats.totalPaid)}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase block font-semibold">Outstanding Balance</span>
+                  <p className="text-xl font-bold text-amber-400 mt-0.5">{formatINR(profileData.stats.outstanding)}</p>
+                </div>
+              </div>
+
+              {/* Guarantor Details */}
+              {profileData.customer.guarantor?.name && (
+                <div className="p-3.5 rounded-xl bg-brand-surface border border-brand-border text-xs space-y-1">
+                  <div className="font-semibold text-slate-300 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-brand-orange" /> Emergency Guarantor Record
+                  </div>
+                  <p className="text-slate-400">
+                    Name: <strong className="text-white">{profileData.customer.guarantor.name}</strong> ({profileData.customer.guarantor.relation}) • Phone: <span className="font-mono text-slate-200">{profileData.customer.guarantor.phone}</span> • ID: <span className="font-mono text-slate-200">{profileData.customer.guarantor.idProofNumber || 'On Record'}</span>
+                  </p>
+                </div>
+              )}
+
+              {/* Rental History */}
+              <div className="space-y-2">
+                <h4 className="font-bold text-white text-xs uppercase tracking-wider">Previous Rental History</h4>
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {profileData.rentals?.length === 0 ? (
+                    <p className="text-xs text-slate-400 text-center py-4 bg-brand-surface rounded-xl border border-brand-border">
+                      No past rentals found for this customer.
+                    </p>
+                  ) : (
+                    profileData.rentals.map((r) => (
+                      <div key={r._id} className="p-3 rounded-xl bg-brand-surface border border-brand-border flex items-center justify-between text-xs">
+                        <div>
+                          <p className="font-semibold text-white">#{r.rentalNumber} • {r.bike?.name}</p>
+                          <p className="text-[10px] text-slate-400 font-mono">
+                            {r.bike?.registrationNumber} • {r.rentalType === 'hourly' ? `${r.totalHours} hrs` : `${r.totalDays} days`} • {formatDate(r.startDate)}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-white">{formatINR(r.totalAmount)}</p>
+                          <span className={`text-[10px] uppercase font-semibold ${
+                            r.status === 'active' ? 'text-emerald-400' : 'text-slate-400'
+                          }`}>
+                            {r.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </div>
