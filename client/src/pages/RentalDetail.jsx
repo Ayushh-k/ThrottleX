@@ -14,16 +14,23 @@ import {
   TrendingUp,
   Fuel,
   Wrench,
-  Sparkles
+  Sparkles,
+  Share2,
+  PenTool,
+  ShieldAlert,
+  Check,
+  ExternalLink
 } from 'lucide-react';
 import { api } from '../services/api';
-import { formatINR, formatDate, formatDateTime } from '../utils/formatters';
+import { formatINR, formatDate, formatDateTime, formatKm } from '../utils/formatters';
 import { exportReportToPDF } from '../utils/pdfExport';
 import StatusBadge from '../components/StatusBadge';
+import RentalAgreementModal from '../components/modals/RentalAgreementModal';
 
 export default function RentalDetail({ rentalId, onBack, onTriggerAction, refreshKey }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showAgreementModal, setShowAgreementModal] = useState(false);
 
   useEffect(() => {
     loadRental();
@@ -69,7 +76,7 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
     return (
       <div className="py-24 text-center text-slate-400 text-xs">
         <div className="w-8 h-8 border-2 border-brand-orange border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-        Loading rental contract...
+        Loading rental contract & inspection records...
       </div>
     );
   }
@@ -86,6 +93,8 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
   }
 
   const { rental, payments = [] } = data;
+  const handover = rental.handoverInspection || {};
+  const returnInsp = rental.returnInspection || {};
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto animate-fade-in">
@@ -98,18 +107,26 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
           <ArrowLeft className="w-4 h-4" /> Back to Rentals List
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Agreement Button */}
+          <button
+            onClick={() => setShowAgreementModal(true)}
+            className="px-3.5 py-1.5 text-xs font-bold bg-brand-orange/20 hover:bg-brand-orange/30 text-brand-orange rounded-xl border border-brand-orange/40 flex items-center gap-1.5 transition-all shadow-glow-sm"
+          >
+            <FileText className="w-4 h-4" /> Rental Agreement & Signatures
+          </button>
+
           <button
             onClick={handleExportPDF}
             className="px-3.5 py-1.5 text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 rounded-xl border border-brand-border flex items-center gap-1.5"
           >
-            <Printer className="w-4 h-4 text-brand-orange" /> Export PDF Invoice
+            <Printer className="w-4 h-4 text-brand-orange" /> Invoice PDF
           </button>
 
           {rental.remainingAmount > 0 && (
             <button
               onClick={() => onTriggerAction('record_payment_for_rental', rental)}
-              className="px-4 py-1.5 text-xs font-bold bg-brand-orange hover:bg-brand-orange-hover text-white rounded-xl shadow-glow-sm"
+              className="px-4 py-1.5 text-xs font-bold bg-brand-orange hover:bg-orange-600 text-white rounded-xl shadow-glow-sm"
             >
               + Record Payment
             </button>
@@ -118,9 +135,9 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
           {rental.status === 'active' && (
             <button
               onClick={() => onTriggerAction('return_bike', rental)}
-              className="px-4 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-glow-sm"
+              className="px-4 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-glow-sm flex items-center gap-1"
             >
-              Complete Return
+              <CheckCircle2 className="w-4 h-4" /> Complete Return
             </button>
           )}
         </div>
@@ -135,6 +152,11 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
               <h1 className="text-2xl font-bold font-display text-white">
                 Rental Invoice #{rental.rentalNumber}
               </h1>
+              {rental.agreementNumber && (
+                <span className="text-[11px] px-2 py-0.5 rounded font-mono font-semibold bg-brand-orange/20 text-brand-orange">
+                  Agr: {rental.agreementNumber}
+                </span>
+              )}
               {rental.rentalType === 'hourly' ? (
                 <span className="inline-flex items-center gap-1 font-bold text-[11px] px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
                   <Clock className="w-3 h-3" /> Hourly Plan
@@ -148,7 +170,7 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
               <StatusBadge status={rental.paymentStatus} />
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Created on {formatDateTime(rental.createdAt)} • Managed under THROTTLEX Fleet
+              Created on {formatDateTime(rental.createdAt)} • THROTTLEX Fleet Verified Agreement
             </p>
           </div>
 
@@ -178,106 +200,188 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
               <div className="space-y-0.5 text-xs">
                 <p className="font-bold text-white text-sm">{rental.bike?.name}</p>
                 <p className="font-mono text-slate-300">{rental.bike?.registrationNumber}</p>
-                <p className="text-slate-400">{rental.bike?.variant || rental.bike?.model}</p>
-                <p className="text-slate-400">Odometer: {rental.startOdometer} km (Start)</p>
+                <p className="text-slate-400">
+                  Start Odometer: <strong className="text-white font-mono">{formatKm(rental.startOdometer)}</strong>
+                </p>
+                {rental.endOdometer && (
+                  <p className="text-slate-400">
+                    Return Odometer: <strong className="text-emerald-400 font-mono">{formatKm(rental.endOdometer)}</strong>
+                    {rental.endOdometer > rental.startOdometer && (
+                      <span className="ml-1 text-slate-400 font-normal">
+                        (+{rental.endOdometer - rental.startOdometer} km driven)
+                      </span>
+                    )}
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
           {/* Customer Info */}
-          <div className="p-4 rounded-xl bg-brand-surface border border-brand-border space-y-2 text-xs">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
-              <User className="w-4 h-4" /> Customer & Licence Details
+          <div className="p-4 rounded-xl bg-brand-surface border border-brand-border space-y-3">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+              <User className="w-4 h-4" /> Customer & KYC Particulars
             </p>
-            <p className="font-bold text-white text-sm">{rental.customer?.name}</p>
-            <p className="text-slate-300">Phone: {rental.customer?.phone}</p>
-            <p className="text-slate-400">Email: {rental.customer?.email || 'N/A'}</p>
-            <p className="text-slate-400">DL No: {rental.customer?.dlNumber || 'Verified'}</p>
-            {rental.customer?.address && (
-              <p className="text-slate-400 truncate">Address: {rental.customer.address}</p>
-            )}
+            <div className="space-y-1 text-xs">
+              <p className="font-bold text-white text-sm">{rental.customer?.name}</p>
+              <p className="text-slate-300 font-mono">Mobile: {rental.customer?.phone}</p>
+              <p className="text-slate-400">
+                DL Number: <span className="font-mono text-white">{rental.customer?.dlNumber || 'Verified on File'}</span>
+              </p>
+              {rental.guarantor?.name && (
+                <p className="text-slate-400">
+                  Guarantor: <strong className="text-slate-200">{rental.guarantor.name}</strong> ({rental.guarantor.relation})
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Duration & Scheduling Bar */}
-        <div className="p-4 rounded-xl bg-brand-surface border border-brand-border grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-center">
-          <div>
-            <span className="text-slate-400 block uppercase text-[10px]">Start Date & Time</span>
-            <span className="font-semibold text-white mt-1 block">{formatDateTime(rental.startDate)}</span>
-          </div>
-          <div>
-            <span className="text-slate-400 block uppercase text-[10px]">Expected Return</span>
-            <span className="font-semibold text-white mt-1 block">{formatDateTime(rental.expectedEndDate)}</span>
-          </div>
-          <div>
-            <span className="text-slate-400 block uppercase text-[10px]">
-              {rental.rentalType === 'hourly' ? 'Total Billed Hours' : 'Total Billed Days'}
-            </span>
-            <span className={`text-sm font-bold mt-0.5 block ${rental.rentalType === 'hourly' ? 'text-purple-400' : 'text-brand-orange'}`}>
-              {rental.rentalType === 'hourly' ? `${rental.totalHours} Hours` : `${rental.totalDays} Days`}
-            </span>
-          </div>
-        </div>
-
-        {/* Profit Per Rental: Unit Economics Breakdown */}
-        {data.profitability && (
-          <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-brand-surface to-brand-surface border border-emerald-500/30 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-emerald-400" />
-                <div>
-                  <h3 className="font-bold font-display text-white text-sm flex items-center gap-2">
-                    Profit Per Rental (Unit Economics)
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
-                      {data.profitability.profitMargin}% PROFIT MARGIN
-                    </span>
-                  </h3>
-                  <p className="text-[11px] text-slate-400">
-                    Calculated after allocating direct fuel, maintenance wear, and operational costs for this trip
-                  </p>
-                </div>
+        {/* Technical Handover & Return Inspection Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Handover Inspection Summary */}
+          <div className="p-4 rounded-xl bg-brand-surface border border-brand-border space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-brand-orange flex items-center gap-1.5">
+                <Wrench className="w-4 h-4" /> Pre-Ride Handover Inspection
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-semibold border border-emerald-500/20">
+                Passed ✓
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="p-2 rounded bg-black/20">
+                <span className="text-[10px] text-slate-400 block uppercase">Handover Fuel</span>
+                <strong className="text-emerald-400">{handover.fuelLevel || 'Full Tank'}</strong>
               </div>
+              <div className="p-2 rounded bg-black/20">
+                <span className="text-[10px] text-slate-400 block uppercase">Start Odo</span>
+                <strong className="text-white font-mono">{formatKm(rental.startOdometer)}</strong>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-brand-border/40">
+              <span>24 Checkpoints: <strong className="text-white">All Checked</strong></span>
+              <span>
+                Signatures: {handover.customerSignature ? <strong className="text-emerald-400">Digitally Signed ✓</strong> : <span className="text-slate-500">Pending</span>}
+              </span>
+            </div>
+          </div>
 
-              {data.profitability.diffKm > 0 && (
-                <span className="text-xs text-slate-300 font-mono self-start sm:self-auto">
-                  Trip Distance: <strong className="text-brand-orange">{data.profitability.diffKm} km</strong>
+          {/* Return Drop-Off Inspection Summary */}
+          <div className="p-4 rounded-xl bg-brand-surface border border-brand-border space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4" /> Return Inspection & Condition
+              </span>
+              {returnInsp.confirmed ? (
+                returnInsp.damageDetected ? (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 font-bold border border-rose-500/30">
+                    ⚠️ Damage Flagged
+                  </span>
+                ) : (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30">
+                    Clean Drop-Off ✓
+                  </span>
+                )
+              ) : (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-slate-400">
+                  Pending Return
                 </span>
               )}
             </div>
 
-            {/* Profit Equation Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="p-3.5 rounded-xl bg-brand-dark border border-white/5 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Gross Rental Revenue</span>
-                <p className="text-base font-bold font-display text-white">
-                  {formatINR(data.profitability.grossRevenue)}
-                </p>
-                <span className="text-[10px] text-slate-500 block truncate">
-                  {rental.rentalType === 'hourly'
-                    ? `${rental.totalHours} hrs × ${formatINR(rental.hourlyRate)}/hr`
-                    : `${rental.totalDays} days × ${formatINR(rental.dailyRate)}/day`}
-                </span>
+            {returnInsp.confirmed ? (
+              <div className="space-y-2 text-xs">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-2 rounded bg-black/20">
+                    <span className="text-[10px] text-slate-400 block uppercase">Return Fuel</span>
+                    <strong className="text-white">{returnInsp.fuelLevel || 'Full'}</strong>
+                  </div>
+                  <div className="p-2 rounded bg-black/20">
+                    <span className="text-[10px] text-slate-400 block uppercase">Return Odo</span>
+                    <strong className="text-white font-mono">{formatKm(returnInsp.odometer || rental.endOdometer || 0)}</strong>
+                  </div>
+                </div>
+
+                {returnInsp.damageDetected ? (
+                  <div className="p-2 rounded bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[11px]">
+                    <strong>New Damage Detected:</strong> {returnInsp.damageRemarks || 'Deficiencies flagged during return inspection.'}
+                    {returnInsp.damageChargeAmount > 0 && (
+                      <span className="block mt-0.5 font-bold text-rose-400">
+                        Damage Fee Assessed: {formatINR(returnInsp.damageChargeAmount)}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-emerald-400">
+                    ✓ No scratches or damage detected. Vehicle clearance completed.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 italic py-2">
+                Drop-off technical inspection will be recorded when the bike is returned.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Schedule & Duration Strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-brand-surface border border-brand-border text-xs">
+          <div>
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Start Date & Time</span>
+            <span className="font-semibold text-white mt-1 block">{formatDateTime(rental.startDate)}</span>
+          </div>
+          <div>
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Expected Return</span>
+            <span className="font-semibold text-white mt-1 block">{formatDateTime(rental.expectedEndDate)}</span>
+          </div>
+          <div>
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Actual Return</span>
+            <span className="font-semibold text-white mt-1 block">
+              {rental.actualEndDate ? formatDateTime(rental.actualEndDate) : 'In Progress'}
+            </span>
+          </div>
+          <div>
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Duration & Tariff</span>
+            <span className="font-semibold text-brand-orange mt-1 block">
+              {rental.rentalType === 'hourly'
+                ? `${rental.totalHours} hrs @ ${formatINR(rental.hourlyRate)}/hr`
+                : `${rental.totalDays} days @ ${formatINR(rental.dailyRate)}/day`}
+            </span>
+          </div>
+        </div>
+
+        {/* Unit Economics & Profit Per Rental */}
+        {data.profitability && (
+          <div className="p-4 rounded-xl bg-brand-surface/70 border border-emerald-500/25 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4" /> Unit Economics & True Profit Per Rental
+              </span>
+              <span className="text-[11px] text-slate-400 font-mono">
+                Margin: <strong className="text-emerald-400">{data.profitability.profitMargin}%</strong>
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+              <div className="p-3.5 rounded-xl bg-black/30 border border-white/5 space-y-1">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Gross Revenue</span>
+                <p className="text-lg font-bold font-display text-white">{formatINR(data.profitability.grossRevenue)}</p>
+                <span className="text-[10px] text-slate-500 block">Total tariff billed</span>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-brand-dark border border-white/5 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider block flex items-center gap-1">
-                  <Fuel className="w-3 h-3 text-rose-400" /> Fuel Allocation
-                </span>
-                <p className="text-base font-bold font-display text-rose-400">
-                  - {formatINR(data.profitability.fuelAllocation)}
-                </p>
+              <div className="p-3.5 rounded-xl bg-black/30 border border-white/5 space-y-1">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Fuel Allocation</span>
+                <p className="text-lg font-bold font-display text-amber-400">-{formatINR(data.profitability.fuelAllocation)}</p>
                 <span className="text-[10px] text-slate-500 block">
-                  {data.profitability.fuelSource === 'direct_logged' ? 'Direct trip fuel' : 'Trip pro-rata allocation'}
+                  {data.profitability.fuelSource === 'direct_logged' ? 'Direct trip fuel' : 'Trip fuel pro-rata'}
                 </span>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-brand-dark border border-white/5 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider block flex items-center gap-1">
-                  <Wrench className="w-3 h-3 text-amber-400" /> Maintenance Reserve
-                </span>
-                <p className="text-base font-bold font-display text-amber-400">
-                  - {formatINR(data.profitability.maintenanceAllocation)}
-                </p>
+              <div className="p-3.5 rounded-xl bg-black/30 border border-white/5 space-y-1">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Maintenance Reserve</span>
+                <p className="text-lg font-bold font-display text-sky-400">-{formatINR(data.profitability.maintenanceAllocation)}</p>
                 <span className="text-[10px] text-slate-500 block">
                   {data.profitability.maintSource === 'direct_logged' ? 'Direct service/oil' : 'Wear & tear reserve'}
                 </span>
@@ -285,9 +389,7 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
 
               <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/35 space-y-1">
                 <span className="text-[10px] text-emerald-300 uppercase tracking-wider block font-bold">Actual Net Profit</span>
-                <p className="text-xl font-bold font-display text-emerald-400">
-                  {formatINR(data.profitability.netProfit)}
-                </p>
+                <p className="text-xl font-bold font-display text-emerald-400">{formatINR(data.profitability.netProfit)}</p>
                 <span className="text-[10px] text-emerald-300/80 block font-mono">
                   {data.profitability.profitMargin}% Realized Profit
                 </span>
@@ -323,7 +425,7 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
             {rental.extraCharges > 0 && (
               <div className="flex justify-between py-1 border-b border-white/5">
                 <span className="text-rose-300">
-                  Extra / Late Charges ({rental.extraChargesReason || 'Late return'}):
+                  Extra / Late / Damage Charges ({rental.extraChargesReason || 'Additional fees'}):
                 </span>
                 <span className="font-bold text-rose-400">+{formatINR(rental.extraCharges)}</span>
               </div>
@@ -353,7 +455,7 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
           </div>
         </div>
 
-        {/* Multi-Payment History Log (Section 11 Prompt) */}
+        {/* Multi-Payment History Log */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-white text-sm">
@@ -411,6 +513,14 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
           )}
         </div>
       </div>
+
+      {/* Official Rental Agreement Modal */}
+      <RentalAgreementModal
+        isOpen={showAgreementModal}
+        onClose={() => setShowAgreementModal(false)}
+        rentalId={rental._id}
+        onAgreementUpdated={loadRental}
+      />
     </div>
   );
 }

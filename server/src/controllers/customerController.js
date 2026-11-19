@@ -25,11 +25,23 @@ exports.getAllCustomers = async (req, res) => {
         const totalSpent = rentals.reduce((sum, r) => sum + (r.amountPaid || 0), 0);
         const outstanding = rentals.reduce((sum, r) => sum + (r.remainingAmount || 0), 0);
 
+        const now = new Date();
+        const dlExp = c.dlExpiryDate ? new Date(c.dlExpiryDate) : null;
+        const isDlExpired = dlExp ? dlExp < now : false;
+        const daysToDlExpiry = dlExp ? Math.ceil((dlExp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+        const isExpiringSoon = dlExp && !isDlExpired && daysToDlExpiry <= 30;
+
         return {
           ...c,
           totalRentals: rentals.length,
           totalSpent,
-          outstanding
+          outstanding,
+          isDlExpired,
+          daysToDlExpiry,
+          isExpiringSoon,
+          hasPhoto: Boolean(c.photoUrl),
+          hasDlPhoto: Boolean(c.dlPhotoUrl),
+          hasIdPhoto: Boolean(c.aadhaarPhotoUrl)
         };
       })
     );
@@ -82,7 +94,34 @@ exports.getCustomerById = async (req, res) => {
 // Create customer
 exports.createCustomer = async (req, res) => {
   try {
-    const { name, phone, email, dlNumber, idProofType, idProofNumber, address, emergencyContact, notes } = req.body;
+    const {
+      name,
+      phone,
+      email,
+      fatherName,
+      altPhone,
+      dob,
+      currentAddress,
+      permanentAddress,
+      address,
+      emergencyContact,
+      dlNumber,
+      dlExpiryDate,
+      idProofType,
+      idProofNumber,
+      idProofExpiryDate,
+      panNumber,
+      collegeId,
+      photoUrl,
+      dlPhotoUrl,
+      dlBackPhotoUrl,
+      aadhaarPhotoUrl,
+      aadhaarBackPhotoUrl,
+      riskStatus,
+      blockedReason,
+      guarantor,
+      notes
+    } = req.body;
 
     if (!name || !phone) {
       return res.status(400).json({ message: 'Customer name and phone number are required.' });
@@ -98,11 +137,28 @@ exports.createCustomer = async (req, res) => {
       name: name.trim(),
       phone: cleanPhone,
       email: email ? email.trim() : '',
+      fatherName: fatherName || '',
+      altPhone: altPhone || '',
+      dob: dob ? new Date(dob) : undefined,
+      currentAddress: currentAddress || address || '',
+      permanentAddress: permanentAddress || currentAddress || address || '',
+      address: currentAddress || address || '',
+      emergencyContact: emergencyContact || '',
       dlNumber: dlNumber ? dlNumber.trim().toUpperCase() : '',
+      dlExpiryDate: dlExpiryDate ? new Date(dlExpiryDate) : undefined,
       idProofType: idProofType || 'Aadhaar',
       idProofNumber: idProofNumber ? idProofNumber.trim().toUpperCase() : '',
-      address: address || '',
-      emergencyContact: emergencyContact || '',
+      idProofExpiryDate: idProofExpiryDate ? new Date(idProofExpiryDate) : undefined,
+      panNumber: panNumber ? panNumber.trim().toUpperCase() : '',
+      collegeId: collegeId || '',
+      photoUrl: photoUrl || '',
+      dlPhotoUrl: dlPhotoUrl || '',
+      dlBackPhotoUrl: dlBackPhotoUrl || '',
+      aadhaarPhotoUrl: aadhaarPhotoUrl || '',
+      aadhaarBackPhotoUrl: aadhaarBackPhotoUrl || '',
+      riskStatus: riskStatus || 'verified',
+      blockedReason: blockedReason || '',
+      guarantor: guarantor || {},
       notes: notes || ''
     });
 
@@ -112,12 +168,13 @@ exports.createCustomer = async (req, res) => {
       entityId: customer._id,
       userId: req.user?._id,
       userName: req.user?.name || 'Partner',
-      details: `Created customer profile for ${customer.name} (${customer.phone}).`
+      details: `Created customer profile for ${customer.name} (${customer.phone}) with KYC.`
     });
 
     return res.status(201).json({ message: 'Customer created successfully.', customer });
   } catch (err) {
-    return res.status(500).json({ message: 'Error creating customer.' });
+    console.error('createCustomer error:', err);
+    return res.status(500).json({ message: err.message || 'Error creating customer.' });
   }
 };
 

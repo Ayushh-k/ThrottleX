@@ -300,6 +300,125 @@ class CalculationService {
   }
 
   /**
+   * 4. Calculate dynamic Bike Health Score (0-100%)
+   * Based on service due, tyre condition, engine oil, mileage wear, and repair history
+   */
+  calculateBikeHealth(bike) {
+    if (!bike) return { score: 92, status: 'healthy', label: '92% Healthy', color: 'emerald', factors: [] };
+
+    let totalScore = 0;
+    const factors = [];
+
+    // 1. Service Due Factor (max 25 pts)
+    const odo = Number(bike.currentOdometer || 0);
+    const nextSvcOdo = Number(bike.nextServiceOdo || 0);
+    let servicePts = 25;
+    let serviceDesc = 'Service on schedule';
+
+    if (nextSvcOdo > 0) {
+      const remainingKm = nextSvcOdo - odo;
+      if (remainingKm <= 0) {
+        servicePts = 0;
+        serviceDesc = `Service overdue by ${Math.abs(remainingKm)} km`;
+      } else if (remainingKm <= 500) {
+        servicePts = 12;
+        serviceDesc = `Service due soon in ${remainingKm} km`;
+      } else {
+        servicePts = 25;
+        serviceDesc = `Next service due in ${remainingKm} km`;
+      }
+    }
+    if (bike.nextServiceDate && new Date(bike.nextServiceDate) < new Date()) {
+      servicePts = Math.max(0, servicePts - 10);
+      serviceDesc = 'Service date elapsed';
+    }
+    totalScore += servicePts;
+    factors.push({ name: 'Service Schedule', score: servicePts, max: 25, text: serviceDesc });
+
+    // 2. Engine Oil Condition (max 20 pts)
+    const oil = bike.engineOilCondition || 'good';
+    let oilPts = 17;
+    if (oil === 'excellent') oilPts = 20;
+    else if (oil === 'good') oilPts = 17;
+    else if (oil === 'fair') oilPts = 10;
+    else if (oil === 'needs_change') oilPts = 0;
+    totalScore += oilPts;
+    factors.push({ name: 'Engine Oil', score: oilPts, max: 20, status: oil, text: `Oil condition: ${oil.replace('_', ' ')}` });
+
+    // 3. Tyre Condition (max 20 pts)
+    const tyre = bike.tyreCondition || 'good';
+    let tyrePts = 18;
+    if (tyre === 'new') tyrePts = 20;
+    else if (tyre === 'good') tyrePts = 18;
+    else if (tyre === 'fair') tyrePts = 10;
+    else if (tyre === 'worn_out') tyrePts = 0;
+    totalScore += tyrePts;
+    factors.push({ name: 'Tyres & Grip', score: tyrePts, max: 20, status: tyre, text: `Tyre condition: ${tyre.replace('_', ' ')}` });
+
+    // 4. Brake Condition (max 15 pts)
+    const brake = bike.brakeCondition || 'good';
+    let brakePts = 13;
+    if (brake === 'excellent') brakePts = 15;
+    else if (brake === 'good') brakePts = 13;
+    else if (brake === 'fair') brakePts = 7;
+    else if (brake === 'worn_out') brakePts = 0;
+    totalScore += brakePts;
+    factors.push({ name: 'Braking System', score: brakePts, max: 15, status: brake, text: `Brakes: ${brake.replace('_', ' ')}` });
+
+    // 5. Mileage & Component Wear (max 10 pts)
+    let wearPts = 10;
+    let wearDesc = 'Low fleet mileage (< 15k km)';
+    if (odo >= 50000) {
+      wearPts = 4;
+      wearDesc = `High mileage (${odo.toLocaleString('en-IN')} km)`;
+    } else if (odo >= 30000) {
+      wearPts = 7;
+      wearDesc = `Moderate mileage (${odo.toLocaleString('en-IN')} km)`;
+    } else if (odo >= 15000) {
+      wearPts = 9;
+      wearDesc = `Optimal mileage (${odo.toLocaleString('en-IN')} km)`;
+    }
+    totalScore += wearPts;
+    factors.push({ name: 'Odometer Wear', score: wearPts, max: 10, text: wearDesc });
+
+    // 6. Active Status (max 10 pts)
+    let statusPts = 10;
+    let statusDesc = 'Operational in fleet';
+    if (bike.status === 'maintenance') {
+      statusPts = 0;
+      statusDesc = 'Under active workshop maintenance';
+    } else if (bike.status === 'inactive') {
+      statusPts = 2;
+      statusDesc = 'Marked inactive';
+    }
+    totalScore += statusPts;
+    factors.push({ name: 'Operational Status', score: statusPts, max: 10, text: statusDesc });
+
+    const finalScore = Math.max(15, Math.min(100, Math.round(totalScore)));
+    let statusTag = 'healthy';
+    let color = 'emerald';
+    let label = `${finalScore}% Healthy`;
+
+    if (finalScore < 65 || bike.status === 'maintenance') {
+      statusTag = 'critical';
+      color = 'rose';
+      label = `${finalScore}% Critical Attention`;
+    } else if (finalScore < 85) {
+      statusTag = 'moderate';
+      color = 'amber';
+      label = `${finalScore}% Moderate (Service Soon)`;
+    }
+
+    return {
+      score: finalScore,
+      status: statusTag,
+      label,
+      color,
+      factors
+    };
+  }
+
+  /**
    * Cash Flow & Real-Time Liquidity Position
    * Calculates actual cash in hand, UPI, Bank balances, customer receivables, and partner payables
    */

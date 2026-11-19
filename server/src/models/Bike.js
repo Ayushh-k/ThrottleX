@@ -25,6 +25,27 @@ const bikeSchema = new mongoose.Schema({
   insuranceExpiryDate: { type: Date },
   nextServiceOdo: { type: Number, default: 0 },
   nextServiceDate: { type: Date },
+
+  // Bike Health Parameters
+  lastServiceDate: { type: Date },
+  lastServiceOdo: { type: Number, default: 0 },
+  engineOilCondition: {
+    type: String,
+    enum: ['excellent', 'good', 'fair', 'needs_change'],
+    default: 'good'
+  },
+  tyreCondition: {
+    type: String,
+    enum: ['new', 'good', 'fair', 'worn_out'],
+    default: 'good'
+  },
+  brakeCondition: {
+    type: String,
+    enum: ['excellent', 'good', 'fair', 'worn_out'],
+    default: 'good'
+  },
+  healthScore: { type: Number, default: 95 },
+
   notes: { type: String, default: '' }
 }, {
   timestamps: true

@@ -31,9 +31,11 @@ exports.getAllBikes = async (req, res) => {
     const enrichedBikes = await Promise.all(
       bikes.map(async (bike) => {
         const financials = await calculationService.getBikeFinancials(bike._id);
+        const healthScore = calculationService.calculateBikeHealth(bike);
         return {
           ...bike,
-          financials
+          financials,
+          healthScore
         };
       })
     );
@@ -116,8 +118,11 @@ exports.getBikeById = async (req, res) => {
       };
     }
 
+    const healthScore = calculationService.calculateBikeHealth(bike);
+
     return res.json({
       bike,
+      healthScore,
       financials,
       rentals,
       expenses,

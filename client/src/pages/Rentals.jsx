@@ -11,11 +11,13 @@ import {
   IndianRupee,
   RotateCcw,
   ArrowRight,
-  Calendar
+  Calendar,
+  FileText
 } from 'lucide-react';
 import { api } from '../services/api';
 import { formatINR, formatDate, formatDateTime, calculateHours } from '../utils/formatters';
 import StatusBadge from '../components/StatusBadge';
+import RentalAgreementModal from '../components/modals/RentalAgreementModal';
 
 export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
   const [rentals, setRentals] = useState([]);
@@ -24,6 +26,7 @@ export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
   const [rentalTypeFilter, setRentalTypeFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [agreementRentalId, setAgreementRentalId] = useState(null);
 
   useEffect(() => {
     loadRentals();
@@ -243,6 +246,13 @@ export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
                         </button>
                       )}
                       <button
+                        onClick={() => setAgreementRentalId(r._id)}
+                        className="px-2.5 py-1 text-[11px] font-bold text-brand-orange bg-brand-orange/15 hover:bg-brand-orange/25 rounded-lg border border-brand-orange/30"
+                        title="View & Print Official Rental Agreement"
+                      >
+                        Agr 📄
+                      </button>
+                      <button
                         onClick={() => onNavigate('rental-detail', r._id)}
                         className="px-2.5 py-1 text-[11px] font-semibold text-slate-300 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10"
                       >
@@ -256,6 +266,14 @@ export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
           </div>
         )}
       </div>
+
+      {/* Rental Agreement & Contract Modal */}
+      <RentalAgreementModal
+        isOpen={Boolean(agreementRentalId)}
+        onClose={() => setAgreementRentalId(null)}
+        rentalId={agreementRentalId}
+        onAgreementUpdated={loadRentals}
+      />
     </div>
   );
 }

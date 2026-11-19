@@ -87,7 +87,10 @@ export const api = {
     return request(`/rentals${q ? `?${q}` : ''}`);
   },
   getRentalById: (id) => request(`/rentals/${id}`),
+  getRentalAgreement: (id) => request(`/rentals/${id}/agreement`),
   createRental: (payload) => request('/rentals', { method: 'POST', body: JSON.stringify(payload) }),
+  recordHandoverInspection: (id, payload) => request(`/rentals/${id}/handover`, { method: 'POST', body: JSON.stringify(payload) }),
+  recordReturnInspection: (id, payload) => request(`/rentals/${id}/return-inspection`, { method: 'POST', body: JSON.stringify(payload) }),
   returnBike: (id, payload) => request(`/rentals/${id}/return`, { method: 'POST', body: JSON.stringify(payload) }),
   recordRentalPayment: (id, payload) => request(`/rentals/${id}/payment`, { method: 'POST', body: JSON.stringify(payload) }),
   cancelRental: (id) => request(`/rentals/${id}/cancel`, { method: 'POST' }),

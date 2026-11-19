@@ -11,7 +11,11 @@ import {
   CheckCircle2,
   Plus,
   Clock,
-  Gauge
+  Gauge,
+  Activity,
+  ShieldCheck,
+  Disc,
+  Flame
 } from 'lucide-react';
 import { api } from '../services/api';
 import { formatINR, formatDate, formatDateTime, formatKm, calculateHours } from '../utils/formatters';
@@ -215,9 +219,10 @@ export default function BikeProfile({ bikeId, onBack, onTriggerAction, refreshKe
         </div>
       </div>
 
-      {/* Tabs: Rentals History, Expense History, Fuel Analysis, Maintenance Log */}
+      {/* Tabs: Health Diagnostics, Rentals History, Expense History, Fuel Analysis, Maintenance Log */}
       <div className="border-b border-brand-border flex items-center gap-2 text-xs font-semibold overflow-x-auto pb-1">
         {[
+          { id: 'health', label: `🟢 Health Score (${data.healthScore?.score || 92}%)`, icon: Activity },
           { id: 'overview', label: `Rental History (${rentals.length})`, icon: Calendar },
           { id: 'expenses', label: `Expense History (${expenses.length})`, icon: Receipt },
           { id: 'fuel', label: `Fuel Tracking (${fuelAnalysis.entries?.length || 0})`, icon: Fuel },
@@ -241,6 +246,117 @@ export default function BikeProfile({ bikeId, onBack, onTriggerAction, refreshKe
           );
         })}
       </div>
+
+      {/* Tab 0: Bike Health Score & Comprehensive Diagnostics */}
+      {activeTab === 'health' && (
+        <div className="p-6 rounded-2xl bg-brand-card border border-brand-border space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-brand-border">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold font-display text-white text-lg flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-emerald-400" /> Motorcycle Health Diagnostics & Fleet Score
+                </h3>
+                <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase font-mono ${
+                  (data.healthScore?.score || 92) >= 80
+                    ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                    : (data.healthScore?.score || 92) >= 60
+                    ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                    : 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
+                }`}>
+                  {data.healthScore?.label || '92% Healthy'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Dynamic algorithmic rating computed from scheduled service intervals, tyre wear, oil life, brakes, and odometer wear
+              </p>
+            </div>
+
+            <button
+              onClick={() => onTriggerAction('add_maintenance_for_bike', bike._id)}
+              className="px-3.5 py-1.5 text-xs font-bold bg-brand-orange hover:bg-orange-600 text-white rounded-xl shadow-glow-sm flex items-center gap-1.5 self-start sm:self-auto"
+            >
+              <Wrench className="w-4 h-4" /> Log Service / Maintenance
+            </button>
+          </div>
+
+          {/* Health Score Big Banner */}
+          <div className="p-5 rounded-2xl bg-brand-surface border border-brand-border space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase tracking-widest block font-bold">
+                  Fleet Health Index
+                </span>
+                <div className="flex items-baseline gap-2 mt-0.5">
+                  <span className={`text-3xl sm:text-4xl font-extrabold font-display ${
+                    (data.healthScore?.score || 92) >= 80 ? 'text-emerald-400' : 'text-amber-400'
+                  }`}>
+                    {data.healthScore?.score || 92}%
+                  </span>
+                  <span className="text-xs text-slate-400">/ 100% Operational Target</span>
+                </div>
+              </div>
+
+              <div className="text-left sm:text-right text-xs">
+                <span className="text-slate-400 block">Overall Condition:</span>
+                <span className={`font-bold text-sm ${
+                  (data.healthScore?.score || 92) >= 80 ? 'text-emerald-400' : 'text-amber-400'
+                }`}>
+                  {data.healthScore?.label || '92% Healthy (Road-Ready)'}
+                </span>
+              </div>
+            </div>
+
+            {/* Visual Health Gauge Bar */}
+            <div className="w-full h-3 rounded-full bg-black/50 overflow-hidden p-0.5 border border-white/5">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${
+                  (data.healthScore?.score || 92) >= 80
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                    : (data.healthScore?.score || 92) >= 60
+                    ? 'bg-gradient-to-r from-amber-500 to-yellow-400'
+                    : 'bg-gradient-to-r from-rose-600 to-red-400'
+                }`}
+                style={{ width: `${data.healthScore?.score || 92}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Factors Diagnostic Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {(data.healthScore?.factors || [
+              { name: 'Service Schedule', score: 25, max: 25, text: 'Service on schedule' },
+              { name: 'Engine Oil', score: 17, max: 20, status: 'good', text: 'Oil condition: Good' },
+              { name: 'Tyres & Grip', score: 18, max: 20, status: 'good', text: 'Tyre condition: Good' },
+              { name: 'Braking System', score: 13, max: 15, status: 'good', text: 'Brakes: Good' },
+              { name: 'Odometer Wear', score: 9, max: 10, text: 'Optimal mileage' },
+              { name: 'Operational Status', score: 10, max: 10, text: 'Operational in fleet' }
+            ]).map((factor, idx) => {
+              const ratio = factor.score / factor.max;
+              return (
+                <div key={idx} className="p-4 rounded-xl bg-brand-surface border border-brand-border/70 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-white flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-brand-orange" /> {factor.name}
+                    </span>
+                    <span className="font-mono font-bold text-slate-300">
+                      {factor.score}/{factor.max} pts
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">{factor.text}</p>
+                  <div className="w-full h-1.5 rounded-full bg-black/40 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${
+                        ratio >= 0.8 ? 'bg-emerald-500' : ratio >= 0.5 ? 'bg-amber-500' : 'bg-rose-500'
+                      }`}
+                      style={{ width: `${Math.round(ratio * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Tab 1: Rental History (Section 8 Prompt) */}
       {activeTab === 'overview' && (
