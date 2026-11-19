@@ -8,9 +8,6 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  Bike,
-  KeyRound,
-  TrendingUp,
   X,
   HelpCircle
 } from 'lucide-react';
@@ -106,76 +103,85 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Center Showcase: Headline & Sleek Visual Dashboard Telemetry */}
-          <div className="my-auto py-8 max-w-xl space-y-7">
-            {/* Enterprise Tagline Badge */}
+          {/* Center Showcase: Brand Statement & Static Product Architecture */}
+          <div className="my-auto py-8 max-w-xl space-y-8">
+            {/* Subtle Brand Tag Badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-[11px] font-semibold text-slate-300">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-orange animate-pulse" />
-              FLEET & RENTAL MANAGEMENT
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-orange" />
+              RENTAL PLATFORM ARCHITECTURE
             </div>
 
-            {/* Hero Headings */}
+            {/* Primary Brand Statement */}
             <div className="space-y-3">
               <h1 className="text-4xl xl:text-5xl font-black font-display tracking-tight text-white uppercase leading-[1.12]">
-                RENTAL BUSINESS <br />
+                BUILT FOR THE ROAD. <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400">
-                  MANAGEMENT
+                  DESIGNED FOR CONTROL.
                 </span>
               </h1>
               <p className="text-slate-400 text-base xl:text-lg leading-relaxed max-w-lg font-normal">
-                Manage your fleet, rentals, customers and revenue from one place.
+                A smarter way to manage your rental operations.
               </p>
             </div>
 
-            {/* Subtle Dashboard-Style Preview (Visual Only, Minimal & Automotive) */}
-            <div className="pt-2">
-              <div className="bg-brand-surface/75 border border-brand-border/80 rounded-2xl p-5 shadow-card-dark backdrop-blur-sm max-w-lg space-y-4">
-                {/* Header Strip */}
-                <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] text-xs">
-                  <div className="flex items-center gap-2 text-slate-300 font-semibold">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    Fleet Telemetry Active
-                  </div>
-                  <span className="text-[10px] tracking-wider uppercase font-mono text-slate-500">
-                    HUB: UP-11 READY
-                  </span>
-                </div>
+            {/* Static Visual System Card */}
+            <div className="pt-1">
+              <div className="relative bg-brand-surface/75 border border-brand-border/80 rounded-2xl p-6 shadow-card-dark backdrop-blur-sm max-w-md overflow-hidden">
+                {/* Subtle Decorative Road / Racing Lines (Purely Decorative, Minimal Automotive) */}
+                <svg
+                  className="absolute right-0 bottom-0 w-64 h-36 opacity-[0.14] pointer-events-none"
+                  viewBox="0 0 240 140"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path d="M 0 140 L 140 30 L 240 30" stroke="#94A3B8" strokeWidth="1" strokeDasharray="4 4" />
+                  <path d="M 35 140 L 165 42 L 240 42" stroke="#64748B" strokeWidth="1" />
+                  <path d="M 80 140 L 195 56 L 240 56" stroke="#FF5500" strokeWidth="1.5" strokeOpacity="0.85" />
+                  <path d="M 130 140 C 175 110 205 85 240 70" stroke="#475569" strokeWidth="1" strokeDasharray="2 3" />
+                </svg>
 
-                {/* 3 Metric Cards */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="p-3 rounded-xl bg-brand-dark/80 border border-white/[0.05] space-y-1">
-                    <div className="flex items-center justify-between text-slate-400 text-[11px]">
-                      <span>Fleet</span>
-                      <Bike className="w-3.5 h-3.5 text-brand-orange" />
+                {/* Card Content */}
+                <div className="relative z-10 space-y-4">
+                  {/* Top Bar: THROTTLEX SYSTEM */}
+                  <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+                    <span className="text-xs font-mono font-bold tracking-widest text-slate-300 uppercase">
+                      THROTTLEX SYSTEM
+                    </span>
+                    <span className="text-[10px] font-mono tracking-wider text-brand-orange/80 uppercase">
+                      ENTERPRISE CORE
+                    </span>
+                  </div>
+
+                  {/* Section Label: RENTAL MANAGEMENT */}
+                  <div className="space-y-3">
+                    <p className="text-[11px] font-bold font-display uppercase tracking-wider text-slate-400">
+                      RENTAL MANAGEMENT
+                    </p>
+
+                    {/* Static Capability Labels */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2.5 text-xs text-slate-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                        <span className="font-medium tracking-wide">Fleet Management</span>
+                      </div>
+                      <div className="flex items-center gap-2.5 text-xs text-slate-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                        <span className="font-medium tracking-wide">Rental Operations</span>
+                      </div>
+                      <div className="flex items-center gap-2.5 text-xs text-slate-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                        <span className="font-medium tracking-wide">Business Tracking</span>
+                      </div>
                     </div>
-                    <p className="text-lg font-bold font-display text-white">12 Bikes</p>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-brand-dark/80 border border-white/[0.05] space-y-1">
-                    <div className="flex items-center justify-between text-slate-400 text-[11px]">
-                      <span>Active</span>
-                      <KeyRound className="w-3.5 h-3.5 text-emerald-400" />
+                  {/* Card Footer: OWN THE ROAD → */}
+                  <div className="pt-3 border-t border-white/[0.06] flex items-center justify-end">
+                    <div className="inline-flex items-center gap-1.5 text-xs font-bold font-display tracking-widest text-brand-orange hover:text-white transition-colors">
+                      <span>OWN THE ROAD</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-brand-orange" />
                     </div>
-                    <p className="text-lg font-bold font-display text-white">08 Rented</p>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-brand-dark/80 border border-white/[0.05] space-y-1">
-                    <div className="flex items-center justify-between text-slate-400 text-[11px]">
-                      <span>Revenue</span>
-                      <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
-                    </div>
-                    <p className="text-lg font-bold font-display text-white">₹24K</p>
-                  </div>
-                </div>
-
-                {/* Micro Progress Bar */}
-                <div className="space-y-1.5 pt-1">
-                  <div className="flex items-center justify-between text-[10px] text-slate-400">
-                    <span>Fleet Utilization Rate</span>
-                    <span className="font-semibold text-slate-200 font-mono">67% Active</span>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-brand-dark overflow-hidden border border-white/[0.05]">
-                    <div className="h-full bg-gradient-to-r from-brand-orange to-amber-500 rounded-full w-[67%]" />
                   </div>
                 </div>
               </div>
@@ -194,17 +200,20 @@ export default function Login() {
            ========================================================================= */}
         <div className="flex-1 lg:col-span-5 flex flex-col justify-center items-center px-4 sm:px-8 lg:px-12 py-12 relative z-20">
           {/* Mobile / Tablet Header (Visible only on < lg screens) */}
-          <div className="lg:hidden text-center mb-8 space-y-2">
+          <div className="lg:hidden text-center mb-6 space-y-1.5">
             <img
               src="/logo-x.png"
               alt="THROTTLEX"
-              className="w-14 h-14 object-contain mx-auto drop-shadow-[0_0_14px_rgba(255,85,0,0.35)]"
+              className="w-12 h-12 object-contain mx-auto drop-shadow-[0_0_14px_rgba(255,85,0,0.35)]"
             />
-            <div className="text-3xl font-black font-display tracking-wider text-white">
+            <div className="text-2xl font-black font-display tracking-wider text-white">
               THROTTLE<span className="text-brand-orange">X</span>
             </div>
             <p className="text-[10px] tracking-[0.25em] text-slate-400 font-bold uppercase">
               OWN THE ROAD.
+            </p>
+            <p className="text-[11px] text-slate-400 font-normal pt-0.5">
+              A smarter way to manage your rental operations.
             </p>
           </div>
 
