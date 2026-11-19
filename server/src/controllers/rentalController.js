@@ -136,27 +136,7 @@ exports.getAllRentals = async (req, res) => {
         })
       : rentals;
 
-    const enrichedRentals = await Promise.all(
-      targetRentals.map(async (r) => {
-        try {
-          const p = await calculationService.calculateRentalProfit(r);
-          return {
-            ...r,
-            profitability: {
-              netProfit: p.netProfit,
-              profitMargin: p.profitMargin,
-              totalCost: p.totalCost,
-              fuelAllocation: p.fuelAllocation,
-              maintenanceAllocation: p.maintenanceAllocation
-            }
-          };
-        } catch {
-          return r;
-        }
-      })
-    );
-
-    return res.json({ rentals: enrichedRentals });
+    return res.json({ rentals: targetRentals });
   } catch (err) {
     console.error('getAllRentals error:', err);
     return res.status(500).json({ message: 'Error fetching rentals.' });
@@ -175,15 +155,12 @@ exports.getRentalById = async (req, res) => {
       return res.status(404).json({ message: 'Rental not found.' });
     }
 
-    const [payments, profitability] = await Promise.all([
-      Payment.find({ rental: rental._id })
-        .populate('receivedByPartner', 'name avatar')
-        .populate('createdBy', 'name')
-        .sort({ paymentDate: -1 }),
-      calculationService.calculateRentalProfit(rental)
-    ]);
+    const payments = await Payment.find({ rental: rental._id })
+      .populate('receivedByPartner', 'name avatar')
+      .populate('createdBy', 'name')
+      .sort({ paymentDate: -1 });
 
-    return res.json({ rental, payments, profitability });
+    return res.json({ rental, payments });
   } catch (err) {
     return res.status(500).json({ message: 'Error fetching rental details.' });
   }

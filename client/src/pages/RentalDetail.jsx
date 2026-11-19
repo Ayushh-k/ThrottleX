@@ -352,52 +352,6 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
           </div>
         </div>
 
-        {/* Unit Economics & Profit Per Rental */}
-        {data.profitability && (
-          <div className="p-4 rounded-xl bg-brand-surface/70 border border-emerald-500/25 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4" /> Unit Economics & True Profit Per Rental
-              </span>
-              <span className="text-[11px] text-slate-400 font-mono">
-                Margin: <strong className="text-emerald-400">{data.profitability.profitMargin}%</strong>
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-              <div className="p-3.5 rounded-xl bg-black/30 border border-white/5 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Gross Revenue</span>
-                <p className="text-lg font-bold font-display text-white">{formatINR(data.profitability.grossRevenue)}</p>
-                <span className="text-[10px] text-slate-500 block">Total tariff billed</span>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-black/30 border border-white/5 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Fuel Allocation</span>
-                <p className="text-lg font-bold font-display text-amber-400">-{formatINR(data.profitability.fuelAllocation)}</p>
-                <span className="text-[10px] text-slate-500 block">
-                  {data.profitability.fuelSource === 'direct_logged' ? 'Direct trip fuel' : 'Trip fuel pro-rata'}
-                </span>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-black/30 border border-white/5 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Maintenance Reserve</span>
-                <p className="text-lg font-bold font-display text-sky-400">-{formatINR(data.profitability.maintenanceAllocation)}</p>
-                <span className="text-[10px] text-slate-500 block">
-                  {data.profitability.maintSource === 'direct_logged' ? 'Direct service/oil' : 'Wear & tear reserve'}
-                </span>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/35 space-y-1">
-                <span className="text-[10px] text-emerald-300 uppercase tracking-wider block font-bold">Actual Net Profit</span>
-                <p className="text-xl font-bold font-display text-emerald-400">{formatINR(data.profitability.netProfit)}</p>
-                <span className="text-[10px] text-emerald-300/80 block font-mono">
-                  {data.profitability.profitMargin}% Realized Profit
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Financial Calculation Breakdown Table */}
         <div className="space-y-3">
           <h3 className="font-bold text-white text-sm">Financial Charges Breakdown</h3>

@@ -150,9 +150,8 @@ export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
                   <th className="py-3 px-3">Rental Window</th>
                   <th className="py-3 px-3">Plan & Duration</th>
                   <th className="py-3 px-3">Total Rent</th>
-                  <th className="py-3 px-3 text-emerald-400">Net Profit</th>
-                  <th className="py-3 px-3">Paid</th>
-                  <th className="py-3 px-3">Balance</th>
+                  <th className="py-3 px-3 text-emerald-400">Paid Amount</th>
+                  <th className="py-3 px-3 text-amber-400">Balance</th>
                   <th className="py-3 px-3">Rental Status</th>
                   <th className="py-3 px-3">Payment</th>
                   <th className="py-3 px-3 text-right">Actions</th>
@@ -202,24 +201,10 @@ export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
                     <td className="py-3.5 px-3 font-bold font-display text-white">
                       {formatINR(r.totalAmount)}
                     </td>
-                    <td className="py-3.5 px-3 whitespace-nowrap">
-                      {r.profitability ? (
-                        <div>
-                          <span className="font-bold text-emerald-400 font-display text-xs">
-                            {formatINR(r.profitability.netProfit)}
-                          </span>
-                          <span className="text-[10px] text-slate-400 ml-1 font-mono">
-                            ({r.profitability.profitMargin}%)
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-500 text-xs">-</span>
-                      )}
-                    </td>
-                    <td className="py-3.5 px-3 font-semibold text-emerald-400">
+                    <td className="py-3.5 px-3 font-bold font-display text-emerald-400">
                       {formatINR(r.amountPaid)}
                     </td>
-                    <td className="py-3.5 px-3 font-bold text-amber-400">
+                    <td className="py-3.5 px-3 font-bold font-display text-amber-400">
                       {formatINR(r.remainingAmount)}
                     </td>
                     <td className="py-3.5 px-3">
