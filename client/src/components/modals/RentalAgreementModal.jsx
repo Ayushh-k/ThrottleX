@@ -229,10 +229,10 @@ export default function RentalAgreementModal({ isOpen, onClose, rentalId, onAgre
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
-      <div className="relative w-full max-w-4xl bg-brand-card border border-brand-border rounded-2xl shadow-2xl overflow-hidden my-6 flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/35 backdrop-blur-xl animate-fade-in overflow-y-auto">
+      <div className="relative w-full max-w-4xl bg-[#0c1322]/85 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] overflow-hidden my-6 flex flex-col max-h-[92vh]">
         {/* Modal Top Control Bar (Hidden when printing) */}
-        <div className="print:hidden flex items-center justify-between p-4 px-6 border-b border-brand-border bg-brand-surface/90">
+        <div className="print:hidden flex items-center justify-between p-4 px-6 border-b border-white/10 bg-white/[0.04] backdrop-blur-md">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-brand-orange/15 border border-brand-orange/30 flex items-center justify-center text-brand-orange">
               <FileText className="w-5 h-5" />
