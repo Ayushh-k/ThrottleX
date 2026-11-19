@@ -16,7 +16,9 @@ import {
   Lock,
   Unlock,
   Check,
-  UserCheck
+  UserCheck,
+  X,
+  Loader2
 } from 'lucide-react';
 import { api } from '../services/api';
 import { formatINR, formatDate } from '../utils/formatters';
@@ -28,6 +30,8 @@ export default function Customers({ onTriggerAction, refreshKey }) {
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'verified' | 'pending' | 'risk' | 'blocked' | 'expiring'
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [profileData, setProfileData] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState(null);
   const [updatingRisk, setUpdatingRisk] = useState(false);
   const [blockReasonInput, setBlockReasonInput] = useState('');
   const [activeDocViewer, setActiveDocViewer] = useState(null);
@@ -51,11 +55,17 @@ export default function Customers({ onTriggerAction, refreshKey }) {
   const handleOpenProfile = async (c) => {
     try {
       setSelectedCustomer(c);
+      setProfileLoading(true);
+      setProfileError(null);
+      setProfileData(null);
       const res = await api.getCustomerById(c._id);
       setProfileData(res);
-      setBlockReasonInput(res.customer.blockedReason || '');
+      setBlockReasonInput(res?.customer?.blockedReason || '');
     } catch (e) {
-      console.error(e);
+      console.error('Error opening customer profile:', e);
+      setProfileError(e.message || 'Failed to load customer profile details.');
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -311,43 +321,55 @@ export default function Customers({ onTriggerAction, refreshKey }) {
       </div>
 
       {/* Comprehensive Customer Profile & KYC Vault Modal with Glassmorphism */}
-      {selectedCustomer && profileData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/35 backdrop-blur-xl animate-fade-in overflow-y-auto">
-          <div className="relative w-full max-w-3xl bg-[#0c1322]/85 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] overflow-hidden my-8 flex flex-col max-h-[90vh]">
+      {selectedCustomer && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setSelectedCustomer(null);
+              setProfileData(null);
+              setActiveDocViewer(null);
+            }
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-fade-in overflow-y-auto"
+        >
+          <div className="relative w-full max-w-3xl bg-slate-900/75 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.7)] overflow-hidden my-8 flex flex-col max-h-[90vh]">
             {/* Glassmorphic Modal Header */}
-            <div className="flex items-center justify-between p-5 border-b border-white/10 bg-white/[0.04] backdrop-blur-md">
+            <div className="flex items-center justify-between p-5 border-b border-white/10 bg-white/[0.05] backdrop-blur-md">
               <div className="flex items-center gap-3">
-                {profileData.customer.photoUrl ? (
+                {(profileData?.customer?.photoUrl || selectedCustomer.photoUrl) ? (
                   <img
-                    src={profileData.customer.photoUrl}
-                    alt={profileData.customer.name}
+                    src={profileData?.customer?.photoUrl || selectedCustomer.photoUrl}
+                    alt={profileData?.customer?.name || selectedCustomer.name}
                     className="w-12 h-12 rounded-xl object-cover border-2 border-brand-orange shrink-0 shadow-glow-sm"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-xl bg-white/[0.06] border border-white/15 flex items-center justify-center text-brand-orange font-bold text-lg shrink-0">
-                    {profileData.customer.name ? profileData.customer.name[0].toUpperCase() : 'U'}
+                  <div className="w-12 h-12 rounded-xl bg-white/[0.08] border border-white/15 flex items-center justify-center text-brand-orange font-bold text-lg shrink-0">
+                    {((profileData?.customer?.name || selectedCustomer.name || 'U')[0]).toUpperCase()}
                   </div>
                 )}
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-bold font-display text-white">{profileData.customer.name}</h3>
+                    <h3 className="text-lg font-bold font-display text-white">
+                      {profileData?.customer?.name || selectedCustomer.name}
+                    </h3>
                     <span className={`text-[10px] px-2.5 py-0.5 rounded-full uppercase font-bold tracking-wider ${
-                      profileData.customer.riskStatus === 'blocked'
+                      (profileData?.customer?.riskStatus || selectedCustomer.riskStatus) === 'blocked'
                         ? 'bg-rose-500/25 text-rose-300 border border-rose-500/40 shadow-sm'
-                        : profileData.customer.riskStatus === 'risk'
+                        : (profileData?.customer?.riskStatus || selectedCustomer.riskStatus) === 'risk'
                         ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40 shadow-sm'
                         : 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shadow-sm'
                     }`}>
-                      {profileData.customer.riskStatus || 'verified'}
+                      {profileData?.customer?.riskStatus || selectedCustomer.riskStatus || 'verified'}
                     </span>
                   </div>
                   <p className="text-xs text-slate-300 mt-0.5">
-                    Phone: <span className="font-mono text-white font-semibold">{profileData.customer.phone}</span> • Father: {profileData.customer.fatherName || 'On Record'}
+                    Phone: <span className="font-mono text-white font-semibold">{profileData?.customer?.phone || selectedCustomer.phone}</span> • Father: {profileData?.customer?.fatherName || selectedCustomer.fatherName || 'On Record'}
                   </p>
                 </div>
               </div>
 
               <button
+                type="button"
                 onClick={() => {
                   setSelectedCustomer(null);
                   setProfileData(null);
@@ -360,246 +382,266 @@ export default function Customers({ onTriggerAction, refreshKey }) {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-4 overflow-y-auto flex-1">
-              {/* Blocked Alert Banner if blocked */}
-              {profileData.customer.riskStatus === 'blocked' && (
-                <div className="p-3.5 rounded-xl bg-rose-500/20 backdrop-blur-md border border-rose-500/40 text-rose-200 text-xs flex items-center justify-between gap-3 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-rose-400 shrink-0" />
-                    <div>
-                      <strong className="text-rose-100">BLOCKED RIDER:</strong> {profileData.customer.blockedReason || 'Flagged by administrator.'}
+            {profileLoading ? (
+              <div className="p-16 flex flex-col items-center justify-center space-y-3 text-center">
+                <Loader2 className="w-8 h-8 text-brand-orange animate-spin" />
+                <p className="text-sm font-semibold text-white">Loading Customer Profile...</p>
+                <p className="text-xs text-slate-400">Fetching verified documents, past trips, and financial ledger</p>
+              </div>
+            ) : profileError ? (
+              <div className="p-12 text-center space-y-3">
+                <AlertCircle className="w-10 h-10 text-rose-400 mx-auto" />
+                <p className="text-sm font-semibold text-rose-200">{profileError}</p>
+                <button
+                  type="button"
+                  onClick={() => handleOpenProfile(selectedCustomer)}
+                  className="px-4 py-1.5 text-xs font-bold bg-brand-orange text-white rounded-lg hover:bg-orange-600 transition-colors"
+                >
+                  Retry Loading
+                </button>
+              </div>
+            ) : profileData?.customer ? (
+              <div className="p-6 space-y-4 overflow-y-auto flex-1">
+                {/* Blocked Alert Banner if blocked */}
+                {profileData.customer.riskStatus === 'blocked' && (
+                  <div className="p-3.5 rounded-xl bg-rose-500/20 backdrop-blur-md border border-rose-500/40 text-rose-200 text-xs flex items-center justify-between gap-3 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-rose-400 shrink-0" />
+                      <div>
+                        <strong className="text-rose-100">BLOCKED RIDER:</strong> {profileData.customer.blockedReason || 'Flagged by administrator.'}
+                      </div>
                     </div>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={updatingRisk}
-                    onClick={() => handleUpdateRiskStatus('verified')}
-                    className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold shrink-0 transition-colors shadow-sm"
-                  >
-                    Unblock Rider
-                  </button>
-                </div>
-              )}
-
-              {/* Glass Risk Control Manager Bar */}
-              <div className="p-4 rounded-xl bg-white/[0.04] backdrop-blur-md border border-white/10 space-y-2.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-slate-200 flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-brand-orange" /> Update Risk Status & Security Clearance
-                  </span>
-                  {updatingRisk && <span className="text-[11px] text-brand-orange animate-pulse">Updating...</span>}
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[
-                    { id: 'verified', label: '🟢 Verified', color: 'hover:border-emerald-500 hover:bg-emerald-500/10' },
-                    { id: 'pending', label: '🟡 Pending KYC', color: 'hover:border-amber-500 hover:bg-amber-500/10' },
-                    { id: 'risk', label: '🟠 High Risk', color: 'hover:border-orange-500 hover:bg-orange-500/10' },
-                    { id: 'blocked', label: '🔴 Block Customer', color: 'hover:border-rose-500 hover:bg-rose-500/10' }
-                  ].map((s) => (
                     <button
-                      key={s.id}
                       type="button"
                       disabled={updatingRisk}
-                      onClick={() => {
-                        if (s.id === 'blocked') {
-                          const reason = prompt('Enter reason for blocking this customer:', profileData.customer.blockedReason || 'Unpaid damage / Late return');
-                          if (reason !== null) {
-                            setBlockReasonInput(reason);
-                            handleUpdateRiskStatus('blocked');
+                      onClick={() => handleUpdateRiskStatus('verified')}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold shrink-0 transition-colors shadow-sm"
+                    >
+                      Unblock Rider
+                    </button>
+                  </div>
+                )}
+
+                {/* Glass Risk Control Manager Bar */}
+                <div className="p-4 rounded-xl bg-white/[0.04] backdrop-blur-md border border-white/10 space-y-2.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-200 flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-brand-orange" /> Update Risk Status & Security Clearance
+                    </span>
+                    {updatingRisk && <span className="text-[11px] text-brand-orange animate-pulse">Updating...</span>}
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { id: 'verified', label: '🟢 Verified', color: 'hover:border-emerald-500 hover:bg-emerald-500/10' },
+                      { id: 'pending', label: '🟡 Pending KYC', color: 'hover:border-amber-500 hover:bg-amber-500/10' },
+                      { id: 'risk', label: '🟠 High Risk', color: 'hover:border-orange-500 hover:bg-orange-500/10' },
+                      { id: 'blocked', label: '🔴 Block Customer', color: 'hover:border-rose-500 hover:bg-rose-500/10' }
+                    ].map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        disabled={updatingRisk}
+                        onClick={() => {
+                          if (s.id === 'blocked') {
+                            const reason = prompt('Enter reason for blocking this customer:', profileData.customer.blockedReason || 'Unpaid damage / Late return');
+                            if (reason !== null) {
+                              setBlockReasonInput(reason);
+                              handleUpdateRiskStatus('blocked');
+                            }
+                          } else {
+                            handleUpdateRiskStatus(s.id);
                           }
-                        } else {
-                          handleUpdateRiskStatus(s.id);
-                        }
-                      }}
-                      className={`p-2 rounded-xl border text-xs font-semibold transition-all text-center ${
-                        profileData.customer.riskStatus === s.id
-                          ? s.id === 'blocked'
-                            ? 'border-rose-500 bg-rose-500/25 text-rose-200 font-bold shadow-sm'
-                            : 'border-brand-orange bg-brand-orange/25 text-white font-bold shadow-glow-sm'
-                          : `border-white/10 bg-white/[0.03] text-slate-300 ${s.color}`
+                        }}
+                        className={`p-2 rounded-xl border text-xs font-semibold transition-all text-center ${
+                          profileData.customer.riskStatus === s.id
+                            ? s.id === 'blocked'
+                              ? 'border-rose-500 bg-rose-500/25 text-rose-200 font-bold shadow-sm'
+                              : 'border-brand-orange bg-brand-orange/25 text-white font-bold shadow-glow-sm'
+                            : `border-white/10 bg-white/[0.03] text-slate-300 ${s.color}`
+                        }`}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Glass KYC Vault Document Gallery */}
+                <div className="space-y-2">
+                  <h4 className="font-bold text-white text-xs uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-brand-orange" /> KYC Digital Document Vault
+                  </h4>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {/* DL Front */}
+                    <div
+                      onClick={() => profileData.customer.dlPhotoUrl && setActiveDocViewer(profileData.customer.dlPhotoUrl)}
+                      className={`p-3 rounded-xl border transition-all text-center flex flex-col justify-between ${
+                        profileData.customer.dlPhotoUrl
+                          ? 'border-white/15 bg-white/[0.04] backdrop-blur-md hover:border-brand-orange cursor-pointer hover:bg-white/[0.08]'
+                          : 'border-dashed border-white/15 bg-white/[0.03] backdrop-blur-md hover:border-white/30'
                       }`}
                     >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                      <p className="text-[10px] text-slate-300 uppercase font-semibold mb-1">DL Front</p>
+                      {profileData.customer.dlPhotoUrl ? (
+                        <img src={profileData.customer.dlPhotoUrl} alt="DL Front" className="h-16 w-full object-cover rounded-lg" />
+                      ) : (
+                        <div className="h-16 flex flex-col items-center justify-center text-slate-400">
+                          <FileText className="w-6 h-6 mb-1 text-slate-400" />
+                          <span className="text-[11px] text-slate-300">Not Uploaded</span>
+                        </div>
+                      )}
+                      <span className="text-[10px] text-brand-orange mt-1.5 block font-mono font-semibold">
+                        {profileData.customer.dlNumber || 'DL on file'}
+                      </span>
+                    </div>
 
-              {/* Glass KYC Vault Document Gallery */}
-              <div className="space-y-2">
-                <h4 className="font-bold text-white text-xs uppercase tracking-wider flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-brand-orange" /> KYC Digital Document Vault
-                </h4>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {/* DL Front */}
-                  <div
-                    onClick={() => profileData.customer.dlPhotoUrl && setActiveDocViewer(profileData.customer.dlPhotoUrl)}
-                    className={`p-3 rounded-xl border transition-all text-center flex flex-col justify-between ${
-                      profileData.customer.dlPhotoUrl
-                        ? 'border-white/15 bg-white/[0.04] backdrop-blur-md hover:border-brand-orange cursor-pointer hover:bg-white/[0.08]'
-                        : 'border-dashed border-white/15 bg-white/[0.03] backdrop-blur-md hover:border-white/30'
-                    }`}
-                  >
-                    <p className="text-[10px] text-slate-300 uppercase font-semibold mb-1">DL Front</p>
-                    {profileData.customer.dlPhotoUrl ? (
-                      <img src={profileData.customer.dlPhotoUrl} alt="DL Front" className="h-16 w-full object-cover rounded-lg" />
-                    ) : (
-                      <div className="h-16 flex flex-col items-center justify-center text-slate-400">
-                        <FileText className="w-6 h-6 mb-1 text-slate-400" />
-                        <span className="text-[11px] text-slate-300">Not Uploaded</span>
-                      </div>
-                    )}
-                    <span className="text-[10px] text-brand-orange mt-1.5 block font-mono font-semibold">
-                      {profileData.customer.dlNumber || 'DL on file'}
-                    </span>
-                  </div>
-
-                  {/* DL Back */}
-                  <div
-                    onClick={() => profileData.customer.dlBackPhotoUrl && setActiveDocViewer(profileData.customer.dlBackPhotoUrl)}
-                    className={`p-3 rounded-xl border transition-all text-center flex flex-col justify-between ${
-                      profileData.customer.dlBackPhotoUrl
-                        ? 'border-white/15 bg-white/[0.04] backdrop-blur-md hover:border-brand-orange cursor-pointer hover:bg-white/[0.08]'
-                        : 'border-dashed border-white/15 bg-white/[0.03] backdrop-blur-md hover:border-white/30'
-                    }`}
-                  >
-                    <p className="text-[10px] text-slate-300 uppercase font-semibold mb-1">DL Back</p>
-                    {profileData.customer.dlBackPhotoUrl ? (
-                      <img src={profileData.customer.dlBackPhotoUrl} alt="DL Back" className="h-16 w-full object-cover rounded-lg" />
-                    ) : (
-                      <div className="h-16 flex flex-col items-center justify-center text-slate-400">
-                        <FileText className="w-6 h-6 mb-1 text-slate-400" />
-                        <span className="text-[11px] text-slate-300">Not Uploaded</span>
-                      </div>
-                    )}
-                    <span className="text-[10px] text-slate-200 mt-1.5 block">
-                      {profileData.customer.dlExpiryDate ? `Exp: ${formatDate(profileData.customer.dlExpiryDate)}` : 'No Expiry Set'}
-                    </span>
-                  </div>
-
-                  {/* Aadhaar Front */}
-                  <div
-                    onClick={() => profileData.customer.aadhaarPhotoUrl && setActiveDocViewer(profileData.customer.aadhaarPhotoUrl)}
-                    className={`p-3 rounded-xl border transition-all text-center flex flex-col justify-between ${
-                      profileData.customer.aadhaarPhotoUrl
-                        ? 'border-white/15 bg-white/[0.04] backdrop-blur-md hover:border-brand-orange cursor-pointer hover:bg-white/[0.08]'
-                        : 'border-dashed border-white/15 bg-white/[0.03] backdrop-blur-md hover:border-white/30'
-                    }`}
-                  >
-                    <p className="text-[10px] text-slate-300 uppercase font-semibold mb-1">Aadhaar Front</p>
-                    {profileData.customer.aadhaarPhotoUrl ? (
-                      <img src={profileData.customer.aadhaarPhotoUrl} alt="Aadhaar Front" className="h-16 w-full object-cover rounded-lg" />
-                    ) : (
-                      <div className="h-16 flex flex-col items-center justify-center text-slate-400">
-                        <FileText className="w-6 h-6 mb-1 text-slate-400" />
-                        <span className="text-[11px] text-slate-300">Not Uploaded</span>
-                      </div>
-                    )}
-                    <span className="text-[10px] text-slate-200 mt-1.5 block font-mono">
-                      {profileData.customer.idProofNumber || 'ID on file'}
-                    </span>
-                  </div>
-
-                  {/* Aadhaar Back */}
-                  <div
-                    onClick={() => profileData.customer.aadhaarBackPhotoUrl && setActiveDocViewer(profileData.customer.aadhaarBackPhotoUrl)}
-                    className={`p-3 rounded-xl border transition-all text-center flex flex-col justify-between ${
-                      profileData.customer.aadhaarBackPhotoUrl
-                        ? 'border-white/15 bg-white/[0.04] backdrop-blur-md hover:border-brand-orange cursor-pointer hover:bg-white/[0.08]'
-                        : 'border-dashed border-white/15 bg-white/[0.03] backdrop-blur-md hover:border-white/30'
-                    }`}
-                  >
-                    <p className="text-[10px] text-slate-300 uppercase font-semibold mb-1">Aadhaar Back</p>
-                    {profileData.customer.aadhaarBackPhotoUrl ? (
-                      <img src={profileData.customer.aadhaarBackPhotoUrl} alt="Aadhaar Back" className="h-16 w-full object-cover rounded-lg" />
-                    ) : (
-                      <div className="h-16 flex flex-col items-center justify-center text-slate-400">
-                        <FileText className="w-6 h-6 mb-1 text-slate-400" />
-                        <span className="text-[11px] text-slate-300">Not Uploaded</span>
-                      </div>
-                    )}
-                    <span className="text-[10px] text-slate-200 mt-1.5 block">Address Proof</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Fullscreen Document Viewer Preview */}
-              {activeDocViewer && (
-                <div className="p-3 rounded-xl bg-slate-900/90 backdrop-blur-xl border border-brand-orange space-y-2 shadow-2xl">
-                  <div className="flex items-center justify-between text-xs text-slate-300">
-                    <span className="font-semibold text-brand-orange">🔍 Full Document Inspection</span>
-                    <button
-                      type="button"
-                      onClick={() => setActiveDocViewer(null)}
-                      className="text-xs text-slate-400 hover:text-white"
+                    {/* DL Back */}
+                    <div
+                      onClick={() => profileData.customer.dlBackPhotoUrl && setActiveDocViewer(profileData.customer.dlBackPhotoUrl)}
+                      className={`p-3 rounded-xl border transition-all text-center flex flex-col justify-between ${
+                        profileData.customer.dlBackPhotoUrl
+                          ? 'border-white/15 bg-white/[0.04] backdrop-blur-md hover:border-brand-orange cursor-pointer hover:bg-white/[0.08]'
+                          : 'border-dashed border-white/15 bg-white/[0.03] backdrop-blur-md hover:border-white/30'
+                      }`}
                     >
-                      Close Viewer ✕
-                    </button>
+                      <p className="text-[10px] text-slate-300 uppercase font-semibold mb-1">DL Back</p>
+                      {profileData.customer.dlBackPhotoUrl ? (
+                        <img src={profileData.customer.dlBackPhotoUrl} alt="DL Back" className="h-16 w-full object-cover rounded-lg" />
+                      ) : (
+                        <div className="h-16 flex flex-col items-center justify-center text-slate-400">
+                          <FileText className="w-6 h-6 mb-1 text-slate-400" />
+                          <span className="text-[11px] text-slate-300">Not Uploaded</span>
+                        </div>
+                      )}
+                      <span className="text-[10px] text-slate-200 mt-1.5 block">
+                        {profileData.customer.dlExpiryDate ? `Exp: ${formatDate(profileData.customer.dlExpiryDate)}` : 'No Expiry Set'}
+                      </span>
+                    </div>
+
+                    {/* Aadhaar Front */}
+                    <div
+                      onClick={() => profileData.customer.aadhaarPhotoUrl && setActiveDocViewer(profileData.customer.aadhaarPhotoUrl)}
+                      className={`p-3 rounded-xl border transition-all text-center flex flex-col justify-between ${
+                        profileData.customer.aadhaarPhotoUrl
+                          ? 'border-white/15 bg-white/[0.04] backdrop-blur-md hover:border-brand-orange cursor-pointer hover:bg-white/[0.08]'
+                          : 'border-dashed border-white/15 bg-white/[0.03] backdrop-blur-md hover:border-white/30'
+                      }`}
+                    >
+                      <p className="text-[10px] text-slate-300 uppercase font-semibold mb-1">Aadhaar Front</p>
+                      {profileData.customer.aadhaarPhotoUrl ? (
+                        <img src={profileData.customer.aadhaarPhotoUrl} alt="Aadhaar Front" className="h-16 w-full object-cover rounded-lg" />
+                      ) : (
+                        <div className="h-16 flex flex-col items-center justify-center text-slate-400">
+                          <FileText className="w-6 h-6 mb-1 text-slate-400" />
+                          <span className="text-[11px] text-slate-300">Not Uploaded</span>
+                        </div>
+                      )}
+                      <span className="text-[10px] text-slate-200 mt-1.5 block font-mono">
+                        {profileData.customer.idProofNumber || 'ID on file'}
+                      </span>
+                    </div>
+
+                    {/* Aadhaar Back */}
+                    <div
+                      onClick={() => profileData.customer.aadhaarBackPhotoUrl && setActiveDocViewer(profileData.customer.aadhaarBackPhotoUrl)}
+                      className={`p-3 rounded-xl border transition-all text-center flex flex-col justify-between ${
+                        profileData.customer.aadhaarBackPhotoUrl
+                          ? 'border-white/15 bg-white/[0.04] backdrop-blur-md hover:border-brand-orange cursor-pointer hover:bg-white/[0.08]'
+                          : 'border-dashed border-white/15 bg-white/[0.03] backdrop-blur-md hover:border-white/30'
+                      }`}
+                    >
+                      <p className="text-[10px] text-slate-300 uppercase font-semibold mb-1">Aadhaar Back</p>
+                      {profileData.customer.aadhaarBackPhotoUrl ? (
+                        <img src={profileData.customer.aadhaarBackPhotoUrl} alt="Aadhaar Back" className="h-16 w-full object-cover rounded-lg" />
+                      ) : (
+                        <div className="h-16 flex flex-col items-center justify-center text-slate-400">
+                          <FileText className="w-6 h-6 mb-1 text-slate-400" />
+                          <span className="text-[11px] text-slate-300">Not Uploaded</span>
+                        </div>
+                      )}
+                      <span className="text-[10px] text-slate-200 mt-1.5 block">Address Proof</span>
+                    </div>
                   </div>
-                  <img src={activeDocViewer} alt="Document" className="max-h-72 w-auto mx-auto rounded-lg shadow-lg" />
                 </div>
-              )}
 
-              {/* Stats Overview */}
-              <div className="grid grid-cols-3 gap-3 p-3.5 rounded-xl bg-white/[0.04] backdrop-blur-md border border-white/10 text-center text-xs">
-                <div>
-                  <span className="text-[10px] text-slate-300 uppercase block font-semibold">Completed Trips</span>
-                  <p className="text-xl font-bold text-white mt-0.5">{profileData.stats.totalRentals}</p>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-300 uppercase block font-semibold">Lifetime Spend</span>
-                  <p className="text-xl font-bold text-emerald-400 mt-0.5">{formatINR(profileData.stats.totalPaid)}</p>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-300 uppercase block font-semibold">Outstanding Balance</span>
-                  <p className="text-xl font-bold text-amber-400 mt-0.5">{formatINR(profileData.stats.outstanding)}</p>
-                </div>
-              </div>
-
-              {/* Guarantor Details */}
-              {profileData.customer.guarantor?.name && (
-                <div className="p-3.5 rounded-xl bg-white/[0.04] backdrop-blur-md border border-white/10 text-xs space-y-1">
-                  <div className="font-semibold text-slate-200 flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-brand-orange" /> Emergency Guarantor Record
+                {/* Fullscreen Document Viewer Preview */}
+                {activeDocViewer && (
+                  <div className="p-3 rounded-xl bg-slate-900/90 backdrop-blur-xl border border-brand-orange space-y-2 shadow-2xl">
+                    <div className="flex items-center justify-between text-xs text-slate-300">
+                      <span className="font-semibold text-brand-orange">🔍 Full Document Inspection</span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveDocViewer(null)}
+                        className="text-xs text-slate-400 hover:text-white"
+                      >
+                        Close Viewer ✕
+                      </button>
+                    </div>
+                    <img src={activeDocViewer} alt="Document" className="max-h-72 w-auto mx-auto rounded-lg shadow-lg" />
                   </div>
-                  <p className="text-slate-300">
-                    Name: <strong className="text-white">{profileData.customer.guarantor.name}</strong> ({profileData.customer.guarantor.relation}) • Phone: <span className="font-mono text-white">{profileData.customer.guarantor.phone}</span> • ID: <span className="font-mono text-white">{profileData.customer.guarantor.idProofNumber || 'On Record'}</span>
-                  </p>
-                </div>
-              )}
+                )}
 
-              {/* Rental History */}
-              <div className="space-y-2">
-                <h4 className="font-bold text-white text-xs uppercase tracking-wider">Previous Rental History</h4>
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                  {profileData.rentals?.length === 0 ? (
-                    <p className="text-xs text-slate-400 text-center py-4 bg-white/[0.03] backdrop-blur-md rounded-xl border border-white/10">
-                      No past rentals found for this customer.
+                {/* Stats Overview */}
+                <div className="grid grid-cols-3 gap-3 p-3.5 rounded-xl bg-white/[0.04] backdrop-blur-md border border-white/10 text-center text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-300 uppercase block font-semibold">Completed Trips</span>
+                    <p className="text-xl font-bold text-white mt-0.5">{profileData.stats?.totalRentals || 0}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-300 uppercase block font-semibold">Lifetime Spend</span>
+                    <p className="text-xl font-bold text-emerald-400 mt-0.5">{formatINR(profileData.stats?.totalPaid || 0)}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-300 uppercase block font-semibold">Outstanding Balance</span>
+                    <p className="text-xl font-bold text-amber-400 mt-0.5">{formatINR(profileData.stats?.outstanding || 0)}</p>
+                  </div>
+                </div>
+
+                {/* Guarantor Details */}
+                {profileData.customer.guarantor?.name && (
+                  <div className="p-3.5 rounded-xl bg-white/[0.04] backdrop-blur-md border border-white/10 text-xs space-y-1">
+                    <div className="font-semibold text-slate-200 flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-brand-orange" /> Emergency Guarantor Record
+                    </div>
+                    <p className="text-slate-300">
+                      Name: <strong className="text-white">{profileData.customer.guarantor.name}</strong> ({profileData.customer.guarantor.relation}) • Phone: <span className="font-mono text-white">{profileData.customer.guarantor.phone}</span> • ID: <span className="font-mono text-white">{profileData.customer.guarantor.idProofNumber || 'On Record'}</span>
                     </p>
-                  ) : (
-                    profileData.rentals.map((r) => (
-                      <div key={r._id} className="p-3 rounded-xl bg-white/[0.04] backdrop-blur-md border border-white/10 flex items-center justify-between text-xs hover:border-brand-orange/40 hover:bg-white/[0.07] transition-all">
-                        <div>
-                          <p className="font-semibold text-white">#{r.rentalNumber} • {r.bike?.name}</p>
-                          <p className="text-[10px] text-slate-300 font-mono">
-                            {r.bike?.registrationNumber} • {r.rentalType === 'hourly' ? `${r.totalHours} hrs` : `${r.totalDays} days`} • {formatDate(r.startDate)}
-                          </p>
+                  </div>
+                )}
+
+                {/* Rental History */}
+                <div className="space-y-2">
+                  <h4 className="font-bold text-white text-xs uppercase tracking-wider">Previous Rental History</h4>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {(!profileData.rentals || profileData.rentals.length === 0) ? (
+                      <p className="text-xs text-slate-400 text-center py-4 bg-white/[0.03] backdrop-blur-md rounded-xl border border-white/10">
+                        No past rentals found for this customer.
+                      </p>
+                    ) : (
+                      profileData.rentals.map((r) => (
+                        <div key={r._id} className="p-3 rounded-xl bg-white/[0.04] backdrop-blur-md border border-white/10 flex items-center justify-between text-xs hover:border-brand-orange/40 hover:bg-white/[0.07] transition-all">
+                          <div>
+                            <p className="font-semibold text-white">#{r.rentalNumber} • {r.bike?.name}</p>
+                            <p className="text-[10px] text-slate-300 font-mono">
+                              {r.bike?.registrationNumber} • {r.rentalType === 'hourly' ? `${r.totalHours} hrs` : `${r.totalDays} days`} • {formatDate(r.startDate)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-white">{formatINR(r.totalAmount)}</p>
+                            <span className={`text-[10px] uppercase font-semibold ${
+                              r.status === 'active' ? 'text-emerald-400' : 'text-slate-400'
+                            }`}>
+                              {r.status}
+                            </span>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-white">{formatINR(r.totalAmount)}</p>
-                          <span className={`text-[10px] uppercase font-semibold ${
-                            r.status === 'active' ? 'text-emerald-400' : 'text-slate-400'
-                          }`}>
-                            {r.status}
-                          </span>
-                        </div>
-                      </div>
-                    ))
-                  )}
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : null}
           </div>
         </div>
       )}
