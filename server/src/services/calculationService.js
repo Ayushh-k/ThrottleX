@@ -426,12 +426,18 @@ class CalculationService {
     const validRentals = await Rental.find({ status: { $ne: 'cancelled' } }).distinct('_id');
     const payments = await Payment.find({ rental: { $in: validRentals } })
       .populate('receivedByPartner', 'name avatar')
+      .populate('customer', 'name phone')
+      .populate({ path: 'rental', select: 'rentalNumber bike', populate: { path: 'bike', select: 'name registrationNumber' } })
+      .sort({ paymentDate: -1 })
       .lean();
     const expenses = await Expense.find()
       .populate('paidByPartner', 'name avatar')
+      .populate('bike', 'name registrationNumber')
+      .sort({ expenseDate: -1 })
       .lean();
     const capitalInvestments = await CapitalInvestment.find()
       .populate('partner', 'name avatar')
+      .sort({ date: -1 })
       .lean();
     const partners = await Partner.find({ status: 'active' }).lean();
 
@@ -489,7 +495,11 @@ class CalculationService {
     const unpaidRentals = await Rental.find({
       status: { $ne: 'cancelled' },
       remainingAmount: { $gt: 0 }
-    }).populate('customer', 'name phone').populate('bike', 'name registrationNumber').lean();
+    })
+      .populate('customer', 'name phone')
+      .populate('bike', 'name registrationNumber')
+      .sort({ remainingAmount: -1 })
+      .lean();
 
     const customerPending = unpaidRentals.reduce((sum, r) => sum + (r.remainingAmount || 0), 0);
 
@@ -536,6 +546,113 @@ class CalculationService {
     const settlementBalances = await settlementService.getPartnerBalances();
     const partnerPayable = settlementBalances.recommendations.reduce((sum, r) => sum + r.amount, 0);
 
+    const partnerPayableList = settlementBalances.recommendations.map((r) => {
+      const fromP = partners.find((p) => p._id.toString() === r.from.toString());
+      const toP = partners.find((p) => p._id.toString() === r.to.toString());
+      return {
+        fromId: r.from,
+        toId: r.to,
+        fromName: fromP?.name || 'Partner',
+        toName: toP?.name || 'Partner',
+        amount: r.amount,
+        reason: r.reason || `Settlement transfer from ${fromP?.name || 'Partner'} to ${toP?.name || 'Partner'}`
+      };
+    });
+
+    // Recent Transactions Filtered by Method for Drill-Down Modals
+    const recentUPIPayments = payments
+      .filter((p) => !['cash', 'bank_transfer', 'bank'].includes((p.paymentMethod || '').toLowerCase()))
+      .slice(0, 20)
+      .map((p) => ({
+        id: p._id,
+        receiptNumber: p.receiptNumber,
+        amount: p.amount,
+        customerName: p.customer?.name || 'Customer',
+        customerPhone: p.customer?.phone || '',
+        rentalNumber: p.rental?.rentalNumber || '',
+        bikeName: p.rental?.bike?.name || 'Bike',
+        bikeReg: p.rental?.bike?.registrationNumber || '',
+        partnerName: p.receivedByPartner?.name || 'Partner',
+        date: p.paymentDate
+      }));
+
+    const recentCashPayments = payments
+      .filter((p) => (p.paymentMethod || '').toLowerCase() === 'cash')
+      .slice(0, 20)
+      .map((p) => ({
+        id: p._id,
+        receiptNumber: p.receiptNumber,
+        amount: p.amount,
+        customerName: p.customer?.name || 'Customer',
+        customerPhone: p.customer?.phone || '',
+        rentalNumber: p.rental?.rentalNumber || '',
+        bikeName: p.rental?.bike?.name || 'Bike',
+        bikeReg: p.rental?.bike?.registrationNumber || '',
+        partnerName: p.receivedByPartner?.name || 'Partner',
+        date: p.paymentDate
+      }));
+
+    const recentBankPayments = payments
+      .filter((p) => ['bank_transfer', 'bank'].includes((p.paymentMethod || '').toLowerCase()))
+      .slice(0, 20)
+      .map((p) => ({
+        id: p._id,
+        receiptNumber: p.receiptNumber,
+        amount: p.amount,
+        customerName: p.customer?.name || 'Customer',
+        customerPhone: p.customer?.phone || '',
+        rentalNumber: p.rental?.rentalNumber || '',
+        bikeName: p.rental?.bike?.name || 'Bike',
+        bikeReg: p.rental?.bike?.registrationNumber || '',
+        partnerName: p.receivedByPartner?.name || 'Partner',
+        date: p.paymentDate
+      }));
+
+    const recentUPIExpenses = expenses
+      .filter((e) => !['cash', 'bank_transfer', 'bank'].includes((e.paymentMethod || '').toLowerCase()))
+      .slice(0, 20)
+      .map((e) => ({
+        id: e._id,
+        expenseNumber: e.expenseNumber,
+        category: e.category,
+        description: e.description,
+        amount: e.amount,
+        bikeName: e.bike?.name || 'General Fleet',
+        bikeReg: e.bike?.registrationNumber || '',
+        partnerName: e.paidByPartner?.name || 'Partner',
+        date: e.expenseDate
+      }));
+
+    const recentCashExpenses = expenses
+      .filter((e) => (e.paymentMethod || '').toLowerCase() === 'cash')
+      .slice(0, 20)
+      .map((e) => ({
+        id: e._id,
+        expenseNumber: e.expenseNumber,
+        category: e.category,
+        description: e.description,
+        amount: e.amount,
+        bikeName: e.bike?.name || 'General Fleet',
+        bikeReg: e.bike?.registrationNumber || '',
+        partnerName: e.paidByPartner?.name || 'Partner',
+        date: e.expenseDate
+      }));
+
+    const recentBankExpenses = expenses
+      .filter((e) => ['bank_transfer', 'bank'].includes((e.paymentMethod || '').toLowerCase()))
+      .slice(0, 20)
+      .map((e) => ({
+        id: e._id,
+        expenseNumber: e.expenseNumber,
+        category: e.category,
+        description: e.description,
+        amount: e.amount,
+        bikeName: e.bike?.name || 'General Fleet',
+        bikeReg: e.bike?.registrationNumber || '',
+        partnerName: e.paidByPartner?.name || 'Partner',
+        date: e.expenseDate
+      }));
+
     return {
       cashInHand,
       upi,
@@ -550,17 +667,28 @@ class CalculationService {
         },
         outflows: {
           expenses: { cash: cashOutflow, upi: upiOutflow, bank: bankOutflow }
-        }
+        },
+        recentUPIPayments,
+        recentCashPayments,
+        recentBankPayments,
+        recentUPIExpenses,
+        recentCashExpenses,
+        recentBankExpenses,
+        partnerPayableList
       },
       partnerHoldings: Object.values(partnerHoldings),
-      pendingCustomersList: unpaidRentals.slice(0, 5).map((r) => ({
+      pendingCustomersList: unpaidRentals.slice(0, 20).map((r) => ({
         rentalId: r._id,
         rentalNumber: r.rentalNumber,
         customerName: r.customer?.name || 'Customer',
         customerPhone: r.customer?.phone || '',
         bikeName: r.bike?.name || 'Bike',
+        bikeReg: r.bike?.registrationNumber || '',
         remainingAmount: r.remainingAmount,
-        expectedEndDate: r.expectedEndDate
+        totalAmount: r.totalAmount,
+        amountPaid: r.amountPaid,
+        expectedEndDate: r.expectedEndDate,
+        status: r.status
       }))
     };
   }

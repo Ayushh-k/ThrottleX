@@ -19,7 +19,15 @@ import {
   Coins,
   ChevronDown,
   ChevronUp,
-  Users
+  Users,
+  X,
+  Phone,
+  MessageCircle,
+  ExternalLink,
+  ShieldAlert,
+  ArrowDownLeft,
+  Clock,
+  Plus
 } from 'lucide-react';
 import {
   AreaChart,
@@ -49,6 +57,8 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState('month');
   const [showHoldings, setShowHoldings] = useState(false);
+  const [activeCashModal, setActiveCashModal] = useState(null); // 'cash' | 'upi' | 'bank' | 'customer_pending' | 'partner_payable'
+  const [cashModalTab, setCashModalTab] = useState('inflows'); // 'inflows' | 'outflows'
 
   useEffect(() => {
     loadDashboard();
@@ -218,73 +228,126 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
           {/* 5 Core Cash Position Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {/* 1. Cash in Hand */}
-            <div className="p-4 rounded-xl bg-brand-surface border border-brand-border/70 space-y-1.5 relative overflow-hidden">
+            <div
+              onClick={() => {
+                setActiveCashModal('cash');
+                setCashModalTab('inflows');
+              }}
+              className="p-4 rounded-xl bg-brand-surface border border-brand-border/70 hover:border-emerald-500/60 hover:bg-emerald-500/[0.04] space-y-1.5 relative overflow-hidden cursor-pointer transition-all hover:scale-[1.02] group shadow-sm"
+            >
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
                   <Banknote className="w-4 h-4 text-emerald-400" /> Cash in Hand
                 </span>
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="text-[10px] text-slate-500 group-hover:text-emerald-400 font-medium flex items-center gap-0.5 transition-colors">
+                  Details <ArrowUpRight className="w-3 h-3" />
+                </span>
               </div>
               <p className="text-xl font-bold font-display text-white">
                 {formatINR(cashFlow.cashInHand || 0)}
               </p>
-              <p className="text-[10px] text-slate-500">Physical currency held</p>
+              <div className="flex items-center justify-between text-[10px] text-slate-400">
+                <span>Physical currency held</span>
+                <span className="text-[9px] text-emerald-400/90 font-mono font-semibold bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">TAP FOR INFO</span>
+              </div>
             </div>
 
             {/* 2. UPI Balance */}
-            <div className="p-4 rounded-xl bg-brand-surface border border-brand-border/70 space-y-1.5 relative overflow-hidden">
+            <div
+              onClick={() => {
+                setActiveCashModal('upi');
+                setCashModalTab('inflows');
+              }}
+              className="p-4 rounded-xl bg-brand-surface border border-brand-border/70 hover:border-sky-500/60 hover:bg-sky-500/[0.04] space-y-1.5 relative overflow-hidden cursor-pointer transition-all hover:scale-[1.02] group shadow-sm"
+            >
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
                   <QrCode className="w-4 h-4 text-sky-400" /> UPI Accounts
                 </span>
-                <span className="w-2 h-2 rounded-full bg-sky-400" />
+                <span className="text-[10px] text-slate-500 group-hover:text-sky-400 font-medium flex items-center gap-0.5 transition-colors">
+                  Details <ArrowUpRight className="w-3 h-3" />
+                </span>
               </div>
               <p className="text-xl font-bold font-display text-white">
                 {formatINR(cashFlow.upi || 0)}
               </p>
-              <p className="text-[10px] text-slate-500">PhonePe / GPay / Paytm</p>
+              <div className="flex items-center justify-between text-[10px] text-slate-400">
+                <span>PhonePe / GPay / Paytm</span>
+                <span className="text-[9px] text-sky-400/90 font-mono font-semibold bg-sky-500/10 px-1.5 py-0.2 rounded border border-sky-500/20">TAP FOR INFO</span>
+              </div>
             </div>
 
             {/* 3. Bank Account */}
-            <div className="p-4 rounded-xl bg-brand-surface border border-brand-border/70 space-y-1.5 relative overflow-hidden">
+            <div
+              onClick={() => {
+                setActiveCashModal('bank');
+                setCashModalTab('inflows');
+              }}
+              className="p-4 rounded-xl bg-brand-surface border border-brand-border/70 hover:border-purple-500/60 hover:bg-purple-500/[0.04] space-y-1.5 relative overflow-hidden cursor-pointer transition-all hover:scale-[1.02] group shadow-sm"
+            >
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
                   <Landmark className="w-4 h-4 text-purple-400" /> Bank Balance
                 </span>
-                <span className="w-2 h-2 rounded-full bg-purple-400" />
+                <span className="text-[10px] text-slate-500 group-hover:text-purple-400 font-medium flex items-center gap-0.5 transition-colors">
+                  Details <ArrowUpRight className="w-3 h-3" />
+                </span>
               </div>
               <p className="text-xl font-bold font-display text-white">
                 {formatINR(cashFlow.bank || 0)}
               </p>
-              <p className="text-[10px] text-slate-500">Current & IMPS accounts</p>
+              <div className="flex items-center justify-between text-[10px] text-slate-400">
+                <span>Current & IMPS accounts</span>
+                <span className="text-[9px] text-purple-400/90 font-mono font-semibold bg-purple-500/10 px-1.5 py-0.2 rounded border border-purple-500/20">TAP FOR INFO</span>
+              </div>
             </div>
 
             {/* 4. Customer Pending (Receivable) */}
-            <div className="p-4 rounded-xl bg-brand-surface border border-amber-500/20 bg-amber-500/[0.03] space-y-1.5 relative overflow-hidden">
+            <div
+              onClick={() => {
+                setActiveCashModal('customer_pending');
+              }}
+              className="p-4 rounded-xl bg-brand-surface border border-amber-500/30 bg-amber-500/[0.03] hover:border-amber-500/60 hover:bg-amber-500/[0.06] space-y-1.5 relative overflow-hidden cursor-pointer transition-all hover:scale-[1.02] group shadow-sm"
+            >
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-amber-300 flex items-center gap-1.5">
                   <Coins className="w-4 h-4 text-amber-400" /> Customer Pending
                 </span>
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                <span className="text-[10px] text-amber-400/80 group-hover:text-amber-300 font-medium flex items-center gap-0.5 transition-colors">
+                  Remind <ArrowUpRight className="w-3 h-3" />
+                </span>
               </div>
               <p className="text-xl font-bold font-display text-amber-400">
                 {formatINR(cashFlow.customerPending || 0)}
               </p>
-              <p className="text-[10px] text-amber-300/70">Uncollected booking balance</p>
+              <div className="flex items-center justify-between text-[10px] text-amber-300/70">
+                <span>Uncollected balance</span>
+                <span className="text-[9px] text-amber-400 font-mono font-semibold bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20">TAP TO COLLECT</span>
+              </div>
             </div>
 
             {/* 5. Partner Payable */}
-            <div className="p-4 rounded-xl bg-brand-surface border border-rose-500/20 bg-rose-500/[0.03] space-y-1.5 relative overflow-hidden">
+            <div
+              onClick={() => {
+                setActiveCashModal('partner_payable');
+              }}
+              className="p-4 rounded-xl bg-brand-surface border border-rose-500/30 bg-rose-500/[0.03] hover:border-rose-500/60 hover:bg-rose-500/[0.06] space-y-1.5 relative overflow-hidden cursor-pointer transition-all hover:scale-[1.02] group shadow-sm"
+            >
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-rose-300 flex items-center gap-1.5">
                   <Scale className="w-4 h-4 text-rose-400" /> Partner Payable
                 </span>
-                <span className="w-2 h-2 rounded-full bg-rose-400" />
+                <span className="text-[10px] text-rose-400/80 group-hover:text-rose-300 font-medium flex items-center gap-0.5 transition-colors">
+                  Settle <ArrowUpRight className="w-3 h-3" />
+                </span>
               </div>
               <p className="text-xl font-bold font-display text-rose-400">
                 {formatINR(cashFlow.partnerPayable || 0)}
               </p>
-              <p className="text-[10px] text-rose-300/70">Owed for settlements & outlays</p>
+              <div className="flex items-center justify-between text-[10px] text-rose-300/70">
+                <span>Settlements owed</span>
+                <span className="text-[9px] text-rose-400 font-mono font-semibold bg-rose-500/10 px-1.5 py-0.2 rounded border border-rose-500/20">TAP TO SETTLE</span>
+              </div>
             </div>
           </div>
 
@@ -710,6 +773,414 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
           </div>
         </div>
       </div>
+
+      {/* Interactive Cash Flow Deep-Dive Drill-Down Modal */}
+      {activeCashModal && cashFlow && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setActiveCashModal(null);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-fade-in overflow-y-auto"
+        >
+          <div className="relative w-full max-w-2xl bg-slate-900/90 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.7)] overflow-hidden my-6 flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-white/10 bg-white/[0.04]">
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-xl border ${
+                  activeCashModal === 'upi' ? 'bg-sky-500/15 border-sky-500/30 text-sky-400' :
+                  activeCashModal === 'cash' ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400' :
+                  activeCashModal === 'bank' ? 'bg-purple-500/15 border-purple-500/30 text-purple-400' :
+                  activeCashModal === 'customer_pending' ? 'bg-amber-500/15 border-amber-500/30 text-amber-400' :
+                  'bg-rose-500/15 border-rose-500/30 text-rose-400'
+                }`}>
+                  {activeCashModal === 'upi' && <QrCode className="w-5 h-5" />}
+                  {activeCashModal === 'cash' && <Banknote className="w-5 h-5" />}
+                  {activeCashModal === 'bank' && <Landmark className="w-5 h-5" />}
+                  {activeCashModal === 'customer_pending' && <Coins className="w-5 h-5" />}
+                  {activeCashModal === 'partner_payable' && <Scale className="w-5 h-5" />}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold font-display text-white">
+                      {activeCashModal === 'upi' && 'UPI Accounts & QR Payments'}
+                      {activeCashModal === 'cash' && 'Physical Cash in Hand'}
+                      {activeCashModal === 'bank' && 'Bank Accounts & IMPS Balance'}
+                      {activeCashModal === 'customer_pending' && 'Customer Pending & Receivables'}
+                      {activeCashModal === 'partner_payable' && 'Partner Payable & Settlements'}
+                    </h3>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-slate-300 font-semibold uppercase">
+                      {activeCashModal === 'upi' && 'PhonePe / GPay / Paytm'}
+                      {activeCashModal === 'cash' && 'Shop Counter Cash'}
+                      {activeCashModal === 'bank' && 'Company Bank'}
+                      {activeCashModal === 'customer_pending' && `${cashFlow.pendingCustomersList?.length || 0} Riders`}
+                      {activeCashModal === 'partner_payable' && 'Splitwise Settlements'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {activeCashModal === 'upi' && 'Complete breakdown of QR scans, customer GPay/PhonePe payments, and UPI expenses'}
+                    {activeCashModal === 'cash' && 'Breakdown of physical currency received from riders vs cash operational expenses'}
+                    {activeCashModal === 'bank' && 'Direct IMPS, bank transfers, and partner capital investments in company accounts'}
+                    {activeCashModal === 'customer_pending' && 'Uncollected rental balances with direct 1-tap WhatsApp reminder'}
+                    {activeCashModal === 'partner_payable' && 'Internal settlements between partners for bike repairs and collections'}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActiveCashModal(null)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-white/10 hover:bg-white/20 transition-all border border-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 space-y-4 overflow-y-auto flex-1">
+              {/* Plain-English / Hinglish Educational Explain Box */}
+              <div className={`p-3.5 rounded-xl border text-xs space-y-1.5 ${
+                activeCashModal === 'upi' ? 'bg-sky-500/10 border-sky-500/30' :
+                activeCashModal === 'cash' ? 'bg-emerald-500/10 border-emerald-500/30' :
+                activeCashModal === 'bank' ? 'bg-purple-500/10 border-purple-500/30' :
+                activeCashModal === 'customer_pending' ? 'bg-amber-500/10 border-amber-500/30' :
+                'bg-rose-500/10 border-rose-500/30'
+              }`}>
+                <div className="flex items-center gap-1.5 font-bold text-white">
+                  <Sparkles className="w-4 h-4 text-brand-orange" />
+                  <span>
+                    {activeCashModal === 'upi' && 'Yeh Paisa Kahan Se Aaya & Kahan Gaya?'}
+                    {activeCashModal === 'cash' && 'Cash Flow Kaise Calculate Hota Hai?'}
+                    {activeCashModal === 'bank' && 'Bank Balance Kaise Calculate Hota Hai?'}
+                    {activeCashModal === 'customer_pending' && 'Customer Pending Kya Hai?'}
+                    {activeCashModal === 'partner_payable' && 'Partner Payable Ka Matlab Kya Hai?'}
+                  </span>
+                </div>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  {activeCashModal === 'upi' && (
+                    <>
+                      Customer jab bhi bike rental ka payment <strong>PhonePe, Google Pay ya Shop QR code</strong> se pay karta hai, wo paisa sidha yahan <strong>+ Inflows</strong> me add hota hai. Jab koi partner bike servicing ya petrol ke liye UPI se pay karta hai, wo yahan se <strong>− Outflows</strong> me minus hota hai. Bacha hua amount aapka actual digital balance hai.
+                    </>
+                  )}
+                  {activeCashModal === 'cash' && (
+                    <>
+                      Customer se physical currency (notes/coins) me jo payment aayi, wo <strong>+ Inflow</strong> bani. Usme se petrol ya repair ke cash kharche minus huye. Bacha hua cash counter ya partners ke paas physically maujood hai.
+                    </>
+                  )}
+                  {activeCashModal === 'bank' && (
+                    <>
+                      Direct bank transfers, IMPS/NEFT customer deposits aur partners dwara invest kiya gaya capital jo company bank account me jama hai minus bank se kiye gaye kharche.
+                    </>
+                  )}
+                  {activeCashModal === 'customer_pending' && (
+                    <>
+                      Yeh wo booking balance hai jo customers ne ride shuru karne ke baad abhi tak pura pay nahi kiya hai. Aap direct neeche se <strong>WhatsApp Reminder</strong> bhej kar ya direct call karke remaining payment collect kar sakte hain.
+                    </>
+                  )}
+                  {activeCashModal === 'partner_payable' && (
+                    <>
+                      Jab koi partner apni personal jeb se bike repair/fuel me kharch karta hai ya kisi partner ke account me customer ka zyada paisa jama ho jata hai, tab system calculated settlement recommendation banata hai taaki sabhi partners ka hisaab 100% barabar ho sake.
+                    </>
+                  )}
+                </p>
+              </div>
+
+              {/* Financial Summary Strip */}
+              {['upi', 'cash', 'bank'].includes(activeCashModal) && (
+                <div className="grid grid-cols-3 gap-2.5 p-3 rounded-xl bg-white/[0.03] border border-white/10 text-center text-xs">
+                  <div>
+                    <span className="text-[10px] text-emerald-400 font-semibold block uppercase">Total Inflows (+)</span>
+                    <p className="text-base font-bold font-mono text-emerald-400 mt-0.5">
+                      +{formatINR(
+                        activeCashModal === 'upi' ? ((cashFlow.breakdown?.inflows?.payments?.upi || 0) + (cashFlow.breakdown?.inflows?.capital?.upi || 0)) :
+                        activeCashModal === 'cash' ? ((cashFlow.breakdown?.inflows?.payments?.cash || 0) + (cashFlow.breakdown?.inflows?.capital?.cash || 0)) :
+                        ((cashFlow.breakdown?.inflows?.payments?.bank || 0) + (cashFlow.breakdown?.inflows?.capital?.bank || 0))
+                      )}
+                    </p>
+                    <span className="text-[9px] text-slate-500">Payments & Capital</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-rose-400 font-semibold block uppercase">Total Outflows (−)</span>
+                    <p className="text-base font-bold font-mono text-rose-400 mt-0.5">
+                      −{formatINR(
+                        activeCashModal === 'upi' ? (cashFlow.breakdown?.outflows?.expenses?.upi || 0) :
+                        activeCashModal === 'cash' ? (cashFlow.breakdown?.outflows?.expenses?.cash || 0) :
+                        (cashFlow.breakdown?.outflows?.expenses?.bank || 0)
+                      )}
+                    </p>
+                    <span className="text-[9px] text-slate-500">Expenses & Fuel</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-white font-semibold block uppercase">Net Liquid Balance</span>
+                    <p className="text-base font-bold font-mono text-white mt-0.5">
+                      {formatINR(
+                        activeCashModal === 'upi' ? (cashFlow.upi || 0) :
+                        activeCashModal === 'cash' ? (cashFlow.cashInHand || 0) :
+                        (cashFlow.bank || 0)
+                      )}
+                    </p>
+                    <span className="text-[9px] text-sky-400 font-semibold">Available Now</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Partner Distribution Box: Who is holding this currency right now? */}
+              {['upi', 'cash', 'bank'].includes(activeCashModal) && cashFlow.partnerHoldings && (
+                <div className="space-y-2">
+                  <h4 className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-brand-orange" />
+                    Yeh {activeCashModal.toUpperCase()} Balance Kis Partner Ke Paas Hai?
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {cashFlow.partnerHoldings.map((h) => {
+                      const amount = activeCashModal === 'upi' ? h.upi : activeCashModal === 'cash' ? h.cash : h.bank;
+                      return (
+                        <div key={h.partnerId} className="p-2.5 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold text-white text-xs">{h.name}</p>
+                            <p className="text-[10px] text-slate-400">Personal holding</p>
+                          </div>
+                          <span className={`text-xs font-bold font-mono ${amount >= 0 ? 'text-sky-300' : 'text-rose-400'}`}>
+                            {formatINR(amount || 0)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Tabs for Inflows vs Outflows */}
+              {['upi', 'cash', 'bank'].includes(activeCashModal) && (
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center gap-2 border-b border-white/10 pb-2">
+                    <button
+                      type="button"
+                      onClick={() => setCashModalTab('inflows')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                        cashModalTab === 'inflows'
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />
+                      Customer Payments (+ Inflows)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCashModalTab('outflows')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                        cashModalTab === 'outflows'
+                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <ArrowUpRight className="w-3.5 h-3.5 text-rose-400" />
+                      Business Expenses (− Outflows)
+                    </button>
+                  </div>
+
+                  {/* Transaction List */}
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {cashModalTab === 'inflows' ? (
+                      (() => {
+                        const list =
+                          activeCashModal === 'upi' ? (cashFlow.breakdown?.recentUPIPayments || []) :
+                          activeCashModal === 'cash' ? (cashFlow.breakdown?.recentCashPayments || []) :
+                          (cashFlow.breakdown?.recentBankPayments || []);
+                        if (list.length === 0) {
+                          return (
+                            <p className="text-xs text-slate-400 text-center py-6 bg-white/[0.02] rounded-xl border border-white/10">
+                              No customer payments recorded in this channel yet.
+                            </p>
+                          );
+                        }
+                        return list.map((item) => (
+                          <div key={item.id} className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between text-xs hover:border-white/20 transition-all">
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <strong className="text-white">{item.customerName}</strong>
+                                {item.rentalNumber && (
+                                  <span className="text-[10px] text-slate-400 font-mono">#{item.rentalNumber}</span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-slate-400 mt-0.5">
+                                {item.bikeName} {item.bikeReg && `(${item.bikeReg})`} • Received by: <span className="text-slate-300 font-semibold">{item.partnerName}</span> • {formatDate(item.date)}
+                              </p>
+                            </div>
+                            <span className="font-bold font-mono text-emerald-400 text-sm">
+                              +{formatINR(item.amount)}
+                            </span>
+                          </div>
+                        ));
+                      })()
+                    ) : (
+                      (() => {
+                        const list =
+                          activeCashModal === 'upi' ? (cashFlow.breakdown?.recentUPIExpenses || []) :
+                          activeCashModal === 'cash' ? (cashFlow.breakdown?.recentCashExpenses || []) :
+                          (cashFlow.breakdown?.recentBankExpenses || []);
+                        if (list.length === 0) {
+                          return (
+                            <p className="text-xs text-slate-400 text-center py-6 bg-white/[0.02] rounded-xl border border-white/10">
+                              No expenses recorded in this channel yet.
+                            </p>
+                          );
+                        }
+                        return list.map((item) => (
+                          <div key={item.id} className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between text-xs hover:border-white/20 transition-all">
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                  {item.category}
+                                </span>
+                                <strong className="text-white">{item.description}</strong>
+                              </div>
+                              <p className="text-[10px] text-slate-400 mt-0.5">
+                                {item.bikeName} • Paid by: <span className="text-slate-300 font-semibold">{item.partnerName}</span> • {formatDate(item.date)}
+                              </p>
+                            </div>
+                            <span className="font-bold font-mono text-rose-400 text-sm">
+                              −{formatINR(item.amount)}
+                            </span>
+                          </div>
+                        ));
+                      })()
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Customer Pending List with Direct WhatsApp and Call Reminder */}
+              {activeCashModal === 'customer_pending' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-amber-400" /> Unpaid Customer Bookings ({cashFlow.pendingCustomersList?.length || 0})
+                    </h4>
+                    <span className="text-xs font-mono font-bold text-amber-400">
+                      Total: {formatINR(cashFlow.customerPending || 0)}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    {(!cashFlow.pendingCustomersList || cashFlow.pendingCustomersList.length === 0) ? (
+                      <p className="text-xs text-slate-400 text-center py-8 bg-white/[0.02] rounded-xl border border-white/10">
+                        🎉 Great! All customers have cleared their rental dues. Zero pending!
+                      </p>
+                    ) : (
+                      cashFlow.pendingCustomersList.map((item) => {
+                        const cleanPhone = (item.customerPhone || '').replace(/\D/g, '').slice(-10);
+                        const waMsg = encodeURIComponent(
+                          `Namaste ${item.customerName}, this is a gentle reminder from THROTTLEX regarding your rental #${item.rentalNumber} for ${item.bikeName}. Your remaining balance is ₹${item.remainingAmount}. Kindly clear the payment at the earliest. Thank you!`
+                        );
+                        return (
+                          <div key={item.rentalId} className="p-3 rounded-xl bg-white/[0.03] border border-amber-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs hover:border-amber-500/40 transition-all">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <strong className="text-white text-sm">{item.customerName}</strong>
+                                <span className="text-[10px] text-amber-400 font-mono bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                                  #{item.rentalNumber}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-300 mt-0.5 font-mono">
+                                📞 {item.customerPhone || 'No Phone'} • 🏍️ {item.bikeName} {item.bikeReg && `(${item.bikeReg})`}
+                              </p>
+                              {item.expectedEndDate && (
+                                <p className="text-[10px] text-slate-400 mt-0.5">
+                                  Return Due: {formatDate(item.expectedEndDate)}
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2 self-end sm:self-auto">
+                              <div className="text-right pr-2">
+                                <span className="text-[10px] text-slate-400 block">Pending</span>
+                                <span className="text-sm font-bold font-mono text-amber-400">
+                                  {formatINR(item.remainingAmount)}
+                                </span>
+                              </div>
+                              {cleanPhone && (
+                                <>
+                                  <a
+                                    href={`https://wa.me/91${cleanPhone}?text=${waMsg}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-2.5 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold flex items-center gap-1 transition-all"
+                                  >
+                                    <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+                                  </a>
+                                  <a
+                                    href={`tel:${cleanPhone}`}
+                                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 border border-white/10 transition-all"
+                                    title="Call Customer"
+                                  >
+                                    <Phone className="w-3.5 h-3.5" />
+                                  </a>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Partner Payable Breakdown */}
+              {activeCashModal === 'partner_payable' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-rose-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <Scale className="w-3.5 h-3.5 text-rose-400" /> Active Settlement Recommendations
+                    </h4>
+                    <span className="text-xs font-mono font-bold text-rose-400">
+                      Total: {formatINR(cashFlow.partnerPayable || 0)}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {(!cashFlow.breakdown?.partnerPayableList || cashFlow.breakdown.partnerPayableList.length === 0) ? (
+                      <p className="text-xs text-slate-400 text-center py-8 bg-white/[0.02] rounded-xl border border-white/10">
+                        🎉 All partner accounts are 100% balanced! No pending settlements.
+                      </p>
+                    ) : (
+                      cashFlow.breakdown.partnerPayableList.map((item, idx) => (
+                        <div key={idx} className="p-3.5 rounded-xl bg-white/[0.03] border border-rose-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-white text-sm">{item.fromName}</span>
+                              <span className="text-rose-400 font-bold">➔ PAYS ➔</span>
+                              <span className="font-bold text-emerald-400 text-sm">{item.toName}</span>
+                            </div>
+                            <p className="text-[11px] text-slate-400">{item.reason}</p>
+                          </div>
+                          <span className="text-base font-bold font-mono text-rose-400">
+                            {formatINR(item.amount)}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="pt-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveCashModal(null);
+                        onNavigate('partners');
+                      }}
+                      className="px-4 py-2 rounded-xl bg-brand-orange hover:bg-orange-600 text-white font-bold text-xs flex items-center gap-1.5 mx-auto transition-all shadow-glow-sm"
+                    >
+                      Open Full Partner Settlement & Wallets <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
