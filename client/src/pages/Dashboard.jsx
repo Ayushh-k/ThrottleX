@@ -59,6 +59,7 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
   const [showHoldings, setShowHoldings] = useState(false);
   const [activeCashModal, setActiveCashModal] = useState(null); // 'cash' | 'upi' | 'bank' | 'customer_pending' | 'partner_payable'
   const [cashModalTab, setCashModalTab] = useState('inflows'); // 'inflows' | 'outflows'
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     loadDashboard();
@@ -67,10 +68,12 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
   const loadDashboard = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const res = await api.getDashboardData({ timeframe });
       setData(res);
     } catch (err) {
       console.error('Failed to load dashboard:', err);
+      setLoadError(err.message || 'Failed to retrieve telemetry data');
     } finally {
       setLoading(false);
     }
@@ -83,6 +86,24 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
           <div className="w-8 h-8 border-2 border-brand-orange border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-xs text-slate-400">Loading THROTTLEX financial telemetry...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (loadError && !data) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4 text-center">
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 max-w-md">
+          <ShieldAlert className="w-10 h-10 text-rose-400 mx-auto mb-2" />
+          <p className="font-bold text-white text-base">Dashboard Telemetry Error</p>
+          <p className="text-xs text-slate-300 mt-1">{loadError}</p>
+        </div>
+        <button
+          onClick={loadDashboard}
+          className="px-5 py-2.5 bg-brand-orange text-white text-xs font-bold rounded-xl hover:bg-orange-600 transition-all shadow-glow-sm"
+        >
+          Retry Connection
+        </button>
       </div>
     );
   }
@@ -147,8 +168,8 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
         <MetricCard
           title="Net Profit"
           value={formatINR(summary.netProfit)}
-          subtitle={`${summary.profitMargin || 0}% Net Margin`}
-          trend={`${summary.profitMargin}%`}
+          subtitle={`${summary.profitMargin != null ? summary.profitMargin : 0}% Net Margin`}
+          trend={summary.profitMargin != null ? `${summary.profitMargin}%` : undefined}
           trendPositive={summary.netProfit >= 0}
           icon={TrendingUp}
           accent="emerald"

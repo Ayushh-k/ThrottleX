@@ -2,6 +2,7 @@ const Rental = require('../models/Rental');
 const Expense = require('../models/Expense');
 const Payment = require('../models/Payment');
 const Bike = require('../models/Bike');
+const Customer = require('../models/Customer');
 const Partner = require('../models/Partner');
 const CapitalInvestment = require('../models/CapitalInvestment');
 
@@ -546,16 +547,16 @@ class CalculationService {
     const settlementBalances = await settlementService.getPartnerBalances();
     const partnerPayable = settlementBalances.recommendations.reduce((sum, r) => sum + r.amount, 0);
 
-    const partnerPayableList = settlementBalances.recommendations.map((r) => {
-      const fromP = partners.find((p) => p._id.toString() === r.from.toString());
-      const toP = partners.find((p) => p._id.toString() === r.to.toString());
+    const partnerPayableList = (settlementBalances.recommendations || []).map((r) => {
+      const fromP = partners.find((p) => p._id && r.senderPartnerId && p._id.toString() === r.senderPartnerId.toString());
+      const toP = partners.find((p) => p._id && r.receiverPartnerId && p._id.toString() === r.receiverPartnerId.toString());
       return {
-        fromId: r.from,
-        toId: r.to,
-        fromName: fromP?.name || 'Partner',
-        toName: toP?.name || 'Partner',
-        amount: r.amount,
-        reason: r.reason || `Settlement transfer from ${fromP?.name || 'Partner'} to ${toP?.name || 'Partner'}`
+        fromId: r.senderPartnerId,
+        toId: r.receiverPartnerId,
+        fromName: r.senderName || fromP?.name || 'Partner',
+        toName: r.receiverName || toP?.name || 'Partner',
+        amount: r.amount || 0,
+        reason: r.label || `Settlement from ${r.senderName || 'Partner'} to ${r.receiverName || 'Partner'}`
       };
     });
 
