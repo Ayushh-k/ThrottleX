@@ -1,4 +1,11 @@
-const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+import { Capacitor } from '@capacitor/core';
+
+// On native Android app, point to production Vercel API; on web, use relative '/api'
+const API_BASE = (
+  Capacitor.isNativePlatform()
+    ? (import.meta.env.VITE_API_URL || 'https://throttlex-nine.vercel.app/api')
+    : '/api'
+).replace(/\/+$/, '');
 
 // In-memory Fast API Cache for GET requests (instant navigation, zero flicker)
 const requestCache = new Map();
