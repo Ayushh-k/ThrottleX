@@ -69,54 +69,86 @@ export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
       </div>
 
       {/* Controls & Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-brand-orange absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search by rental #, customer name, phone, or bike..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-brand-border bg-brand-card text-xs text-white placeholder-slate-400 focus:outline-none focus:border-brand-orange"
-          />
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-brand-orange absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search by rental #, customer name, phone, or bike..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-brand-border bg-brand-card text-xs text-white placeholder-slate-400 focus:outline-none focus:border-brand-orange"
+            />
+          </div>
+
+          {/* Plan Filter (All, Day-Wise, Hourly) */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-brand-card border border-brand-border text-xs overflow-x-auto">
+            {[
+              { id: 'all', label: 'All Plans' },
+              { id: 'daily', label: '📅 Daily' },
+              { id: 'hourly', label: '⏱️ Hourly' }
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setRentalTypeFilter(item.id)}
+                className={`px-3 py-1.5 rounded-lg font-semibold text-[11px] whitespace-nowrap transition-all ${
+                  rentalTypeFilter === item.id
+                    ? 'bg-purple-600 text-white shadow-glow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Plan Filter (All, Day-Wise, Hourly) */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-brand-card border border-brand-border text-xs overflow-x-auto">
-          {[
-            { id: 'all', label: 'All Plans' },
-            { id: 'daily', label: '📅 Daily' },
-            { id: 'hourly', label: '⏱️ Hourly' }
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setRentalTypeFilter(item.id)}
-              className={`px-3 py-1.5 rounded-lg font-semibold text-[11px] whitespace-nowrap transition-all ${
-                rentalTypeFilter === item.id
-                  ? 'bg-purple-600 text-white shadow-glow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
+        {/* Dual Filter Bars: Trip Status & Payment Status */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+          {/* Trip Status Filter */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-brand-card border border-brand-border text-xs overflow-x-auto">
+            {[
+              { id: 'all', label: 'All Trips' },
+              { id: 'active', label: '🟢 Active' },
+              { id: 'overdue', label: '⚠️ Time Overdue' },
+              { id: 'returned', label: '✅ Returned' },
+              { id: 'upcoming', label: '📅 Upcoming' }
+            ].map((st) => (
+              <button
+                key={st.id}
+                onClick={() => setStatusFilter(st.id)}
+                className={`px-3 py-1.5 rounded-lg font-semibold text-[11px] whitespace-nowrap transition-all ${
+                  statusFilter === st.id
+                    ? 'bg-brand-orange text-white shadow-glow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {st.label}
+              </button>
+            ))}
+          </div>
 
-        {/* Status Filter */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-brand-card border border-brand-border text-xs overflow-x-auto">
-          {['all', 'active', 'upcoming', 'returned', 'overdue'].map((st) => (
-            <button
-              key={st}
-              onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1.5 rounded-lg font-semibold uppercase text-[11px] whitespace-nowrap transition-all ${
-                statusFilter === st
-                  ? 'bg-brand-orange text-white'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {st}
-            </button>
-          ))}
+          {/* Payment Status Filter (Pending / Due vs Paid) */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-brand-card border border-brand-border text-xs overflow-x-auto">
+            {[
+              { id: 'all', label: 'All Payments' },
+              { id: 'pending', label: '🔴 Payment Due / Baaki' },
+              { id: 'paid', label: '🟢 Fully Paid' }
+            ].map((pt) => (
+              <button
+                key={pt.id}
+                onClick={() => setPaymentFilter(pt.id)}
+                className={`px-3 py-1.5 rounded-lg font-semibold text-[11px] whitespace-nowrap transition-all ${
+                  paymentFilter === pt.id
+                    ? 'bg-amber-500 text-slate-950 font-bold shadow-glow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {pt.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -154,7 +186,7 @@ export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
                       #{r.rentalNumber}
                     </span>
                     <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                      <StatusBadge status={r.status} size="xs" />
+                      <StatusBadge status={r.displayStatus || r.status} size="xs" />
                       <StatusBadge status={r.paymentStatus} size="xs" />
                     </div>
                   </div>
@@ -214,7 +246,7 @@ export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
 
                   {/* Touch Action Buttons */}
                   <div className="flex items-center gap-2 pt-1 flex-wrap">
-                    {r.status === 'active' && (
+                    {r.status !== 'returned' && r.status !== 'cancelled' && (
                       <button
                         onClick={() => onTriggerAction('return_bike', r)}
                         className="flex-1 py-2.5 min-h-[44px] text-xs font-bold text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 active:scale-95 rounded-xl border border-emerald-500/30 text-center transition-all"
@@ -323,7 +355,7 @@ export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
                         <StatusBadge status={r.paymentStatus} size="xs" />
                       </td>
                       <td className="py-3.5 px-3 text-right space-x-1.5 whitespace-nowrap">
-                        {r.status === 'active' && (
+                        {r.status !== 'returned' && r.status !== 'cancelled' && (
                           <button
                             onClick={() => onTriggerAction('return_bike', r)}
                             className="px-2.5 py-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg border border-emerald-500/20"

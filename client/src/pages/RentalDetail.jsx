@@ -19,7 +19,10 @@ import {
   PenTool,
   ShieldAlert,
   Check,
-  ExternalLink
+  ExternalLink,
+  Plus,
+  RotateCcw,
+  X
 } from 'lucide-react';
 import { api } from '../services/api';
 import { formatINR, formatDate, formatDateTime, formatKm } from '../utils/formatters';
@@ -31,6 +34,14 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAgreementModal, setShowAgreementModal] = useState(false);
+
+  // Extra Charges state
+  const [isAddChargeOpen, setIsAddChargeOpen] = useState(false);
+  const [chargeAmount, setChargeAmount] = useState('');
+  const [chargeReason, setChargeReason] = useState('');
+  const [savingCharge, setSavingCharge] = useState(false);
+  const [chargeError, setChargeError] = useState('');
+  const [reopeningRental, setReopeningRental] = useState(false);
 
   useEffect(() => {
     loadRental();
@@ -45,6 +56,50 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddCharge = async (e) => {
+    e.preventDefault();
+    setChargeError('');
+    const amt = Number(chargeAmount);
+    if (!amt || amt <= 0) {
+      setChargeError('Please enter a valid amount.');
+      return;
+    }
+    if (!chargeReason.trim()) {
+      setChargeError('Please enter a reason for the extra charge.');
+      return;
+    }
+    try {
+      setSavingCharge(true);
+      await api.addExtraCharge(rentalId, {
+        amount: amt,
+        reason: chargeReason.trim()
+      });
+      setIsAddChargeOpen(false);
+      setChargeAmount('');
+      setChargeReason('');
+      loadRental();
+    } catch (err) {
+      setChargeError(err.message || 'Error adding extra charge.');
+    } finally {
+      setSavingCharge(false);
+    }
+  };
+
+  const handleReopen = async () => {
+    if (!window.confirm('Are you sure you want to reopen this rental? The bike status will be changed back to rented.')) {
+      return;
+    }
+    try {
+      setReopeningRental(true);
+      await api.reopenRental(rentalId);
+      loadRental();
+    } catch (err) {
+      alert(err.message || 'Error reopening rental.');
+    } finally {
+      setReopeningRental(false);
     }
   };
 
@@ -123,6 +178,17 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
             <Printer className="w-4 h-4 text-brand-orange" /> Invoice PDF
           </button>
 
+          {/* Add Extra Charge button (always available so partner can adjust charges anytime) */}
+          <button
+            onClick={() => {
+              setChargeError('');
+              setIsAddChargeOpen(true);
+            }}
+            className="px-3.5 py-1.5 text-xs font-bold bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 rounded-xl border border-rose-500/30 flex items-center gap-1.5 transition-all shadow-glow-sm"
+          >
+            <Plus className="w-3.5 h-3.5" /> + Extra / Late Fee
+          </button>
+
           {rental.remainingAmount > 0 && (
             <button
               onClick={() => onTriggerAction('record_payment_for_rental', rental)}
@@ -132,12 +198,21 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
             </button>
           )}
 
-          {rental.status === 'active' && (
+          {rental.status !== 'returned' && rental.status !== 'cancelled' ? (
             <button
               onClick={() => onTriggerAction('return_bike', rental)}
               className="px-4 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-glow-sm flex items-center gap-1"
             >
               <CheckCircle2 className="w-4 h-4" /> Complete Return
+            </button>
+          ) : rental.status === 'returned' && (
+            <button
+              onClick={handleReopen}
+              disabled={reopeningRental}
+              className="px-3.5 py-1.5 text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 rounded-xl border border-amber-500/30 flex items-center gap-1.5 transition-all"
+              title="If bike has not actually returned yet, click to restore active trip status"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> {reopeningRental ? 'Reopening...' : 'Reopen Trip'}
             </button>
           )}
         </div>
@@ -475,6 +550,111 @@ export default function RentalDetail({ rentalId, onBack, onTriggerAction, refres
         rentalId={rental._id}
         onAgreementUpdated={loadRental}
       />
+
+      {/* Add Extra / Late Charge Modal */}
+      {isAddChargeOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in overflow-hidden">
+          <div className="relative w-full max-w-md bg-brand-card border-t sm:border border-brand-border rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-brand-border bg-brand-surface">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <Plus className="w-4 h-4 text-rose-400" /> Add Extra / Late / Damage Fee
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Rental #{rental.rentalNumber} • {rental.customer?.name}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddChargeOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-white/5"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {chargeError && (
+              <div className="mx-5 mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs">
+                {chargeError}
+              </div>
+            )}
+
+            <form onSubmit={handleAddCharge} className="p-5 space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Extra Amount (₹) *
+                </label>
+                <input
+                  type="number"
+                  placeholder="e.g. 200"
+                  value={chargeAmount}
+                  onChange={(e) => setChargeAmount(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-brand-border bg-brand-surface text-white text-sm font-bold focus:outline-none focus:border-brand-orange"
+                  required
+                  min="1"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Reason for Extra Charge *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Late Return (2 hrs) / Helmet damage / Traffic fine / Extra km"
+                  value={chargeReason}
+                  onChange={(e) => setChargeReason(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-brand-border bg-brand-surface text-white text-xs focus:outline-none focus:border-brand-orange"
+                  required
+                />
+                <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                  {['Late Return', 'Extra Fuel', 'Helmet Damage', 'Traffic Challan', 'Scratch / Dent'].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setChargeReason(preset)}
+                      className="text-[10px] px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 transition-colors"
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-brand-border/60 text-xs text-slate-300 space-y-1">
+                <div className="flex justify-between">
+                  <span>Current Remaining Due:</span>
+                  <span className="font-bold text-amber-400">{formatINR(rental.remainingAmount)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>New Balance after charge:</span>
+                  <span className="font-bold text-rose-400">
+                    {formatINR((rental.remainingAmount || 0) + (Number(chargeAmount) || 0))}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-brand-border/40">
+                <button
+                  type="button"
+                  onClick={() => setIsAddChargeOpen(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingCharge}
+                  className="px-5 py-2 text-xs font-bold bg-brand-orange hover:bg-orange-600 text-white rounded-xl shadow-glow-sm disabled:opacity-50"
+                >
+                  {savingCharge ? 'Adding...' : 'Add Extra Fee'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -126,6 +126,8 @@ export const api = {
   recordReturnInspection: (id, payload) => request(`/rentals/${id}/return-inspection`, { method: 'POST', body: JSON.stringify(payload) }),
   returnBike: (id, payload) => request(`/rentals/${id}/return`, { method: 'POST', body: JSON.stringify(payload) }),
   recordRentalPayment: (id, payload) => request(`/rentals/${id}/payment`, { method: 'POST', body: JSON.stringify(payload) }),
+  addExtraCharge: (id, payload) => request(`/rentals/${id}/extra-charge`, { method: 'POST', body: JSON.stringify(payload) }),
+  reopenRental: (id) => request(`/rentals/${id}/reopen`, { method: 'POST' }),
   cancelRental: (id) => request(`/rentals/${id}/cancel`, { method: 'POST' }),
 
   // Customers

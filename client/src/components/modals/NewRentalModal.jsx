@@ -675,13 +675,32 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
                 </div>
               )}
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Security Deposit (₹)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] text-slate-400 block">Security Deposit (₹)</label>
+                  <span className="text-[9px] text-emerald-400 font-medium">Refundable</span>
+                </div>
                 <input
                   type="number"
                   value={securityDeposit}
                   onChange={(e) => setSecurityDeposit(e.target.value)}
                   className="w-full px-3 py-1.5 rounded-lg text-sm border border-brand-border bg-brand-surface"
                 />
+                <div className="flex items-center gap-1 mt-1">
+                  {[0, 500, 1000, 2000].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => setSecurityDeposit(amt)}
+                      className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors ${
+                        Number(securityDeposit) === amt
+                          ? 'bg-brand-orange/20 border-brand-orange text-brand-orange font-bold'
+                          : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {amt === 0 ? '₹0' : `₹${amt}`}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div>
                 <label className="text-[11px] text-slate-400 block mb-1">Discount (₹)</label>
@@ -719,16 +738,57 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
               </div>
             </div>
 
+            {/* Smart reminder if deposit is entered but advance rent is zero */}
+            {Number(securityDeposit) > 0 && Number(initialPayment) === 0 && (
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex flex-wrap items-center justify-between gap-2">
+                <span>
+                  💡 <strong>Security Deposit: ₹{securityDeposit}</strong> entered, but <strong>Advance Rent is ₹0</strong> (Customer balance: <strong>₹{totalAmount}</strong>).
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setInitialPayment(totalAmount)}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 transition-colors shadow-glow-sm"
+                >
+                  Collect Full Rent (₹{totalAmount})
+                </button>
+              </div>
+            )}
+
             {/* Advance payment inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Advance Amount Received (₹)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] text-slate-400 block">Advance Rent Received (₹)</label>
+                  <button
+                    type="button"
+                    onClick={() => setInitialPayment(totalAmount)}
+                    className="text-[10px] text-emerald-400 hover:underline font-semibold"
+                  >
+                    Full ({formatINR(totalAmount)})
+                  </button>
+                </div>
                 <input
                   type="number"
                   value={initialPayment}
                   onChange={(e) => setInitialPayment(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface font-semibold text-emerald-400"
                 />
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setInitialPayment(totalAmount)}
+                    className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25 font-bold"
+                  >
+                    Full Rent (₹{totalAmount})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInitialPayment(0)}
+                    className="text-[10px] px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 hover:text-white"
+                  >
+                    ₹0 (Due Later)
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="text-[11px] text-slate-400 block mb-1">Payment Method</label>

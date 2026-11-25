@@ -100,9 +100,23 @@ exports.getAllRentals = async (req, res) => {
   try {
     const { status, paymentStatus, rentalType, bikeId, customerId, search, startDate, endDate } = req.query;
     const filter = {};
+    const now = new Date();
 
-    if (status && status !== 'all') filter.status = status;
-    if (paymentStatus && paymentStatus !== 'all') filter.paymentStatus = paymentStatus;
+    if (status === 'overdue') {
+      // Overdue trips: not returned and expectedEndDate has passed
+      filter.status = { $in: ['active', 'upcoming'] };
+      filter.expectedEndDate = { $lt: now };
+    } else if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    if (paymentStatus === 'pending' || paymentStatus === 'pending_due') {
+      // Any rental with pending payment due
+      filter.remainingAmount = { $gt: 0 };
+    } else if (paymentStatus && paymentStatus !== 'all') {
+      filter.paymentStatus = paymentStatus;
+    }
+
     if (rentalType && rentalType !== 'all') filter.rentalType = rentalType;
     if (bikeId && bikeId !== 'all') filter.bike = bikeId;
     if (customerId && customerId !== 'all') filter.customer = customerId;
@@ -123,8 +137,18 @@ exports.getAllRentals = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
+    // Dynamically mark overdue status if active/upcoming trip has passed its expected return date
+    const mappedRentals = rentals.map((r) => {
+      const isPastEnd = r.status !== 'returned' && r.status !== 'cancelled' && new Date(r.expectedEndDate) < now;
+      return {
+        ...r,
+        isOverdue: isPastEnd,
+        displayStatus: isPastEnd ? 'overdue' : r.status
+      };
+    });
+
     const targetRentals = search
-      ? rentals.filter((r) => {
+      ? mappedRentals.filter((r) => {
           const q = search.toLowerCase();
           return (
             r.rentalNumber?.toLowerCase().includes(q) ||
@@ -134,7 +158,7 @@ exports.getAllRentals = async (req, res) => {
             r.customer?.phone?.includes(q)
           );
         })
-      : rentals;
+      : mappedRentals;
 
     return res.json({ rentals: targetRentals });
   } catch (err) {
@@ -512,6 +536,97 @@ exports.recordRentalPayment = async (req, res) => {
   } catch (err) {
     console.error('recordRentalPayment error:', err);
     return res.status(500).json({ message: 'Error recording payment.' });
+  }
+};
+
+// Add Extra Charges (late fee, damages, penalties, challans, etc.)
+exports.addExtraCharge = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { amount, reason = 'Extra Charge', notes } = req.body;
+
+    const chargeAmount = Number(amount);
+    if (!chargeAmount || chargeAmount <= 0) {
+      return res.status(400).json({ message: 'Charge amount must be greater than ₹0.' });
+    }
+
+    const rental = await Rental.findById(id).populate('bike customer');
+    if (!rental) return res.status(404).json({ message: 'Rental not found.' });
+
+    rental.extraCharges = (rental.extraCharges || 0) + chargeAmount;
+    rental.totalAmount = (rental.totalAmount || 0) + chargeAmount;
+    rental.remainingAmount = (rental.remainingAmount || 0) + chargeAmount;
+
+    // Update paymentStatus if balance is now remaining
+    if (rental.remainingAmount > 0) {
+      rental.paymentStatus = rental.amountPaid > 0 ? 'partially_paid' : 'pending';
+    }
+
+    const reasonText = reason.trim();
+    rental.extraChargesReason = rental.extraChargesReason
+      ? `${rental.extraChargesReason}; ${reasonText} (₹${chargeAmount})`
+      : `${reasonText} (₹${chargeAmount})`;
+
+    if (notes) {
+      rental.notes = rental.notes ? `${rental.notes} | ${notes}` : notes;
+    }
+
+    await rental.save();
+
+    await ledgerService.recordAudit({
+      action: 'EXTRA_CHARGE_ADDED',
+      entityType: 'Rental',
+      entityId: rental._id,
+      userId: req.user?._id,
+      userName: req.user?.name || 'Partner',
+      details: `Added extra charge of ₹${chargeAmount} (${reasonText}) to Rental #${rental.rentalNumber}. New total: ₹${rental.totalAmount}, Due: ₹${rental.remainingAmount}.`
+    });
+
+    return res.json({
+      message: 'Extra charge added successfully.',
+      rental
+    });
+  } catch (err) {
+    console.error('addExtraCharge error:', err);
+    return res.status(500).json({ message: 'Error adding extra charge.' });
+  }
+};
+
+// Reopen / reactivate a rental that was mistakenly marked returned
+exports.reopenRental = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const rental = await Rental.findById(id).populate('bike customer');
+    if (!rental) return res.status(404).json({ message: 'Rental not found.' });
+
+    if (rental.status !== 'returned') {
+      return res.status(400).json({ message: 'Only returned rentals can be reopened.' });
+    }
+
+    rental.status = 'active';
+    rental.actualEndDate = null;
+    await rental.save();
+
+    if (rental.bike) {
+      await Bike.findByIdAndUpdate(rental.bike._id, { status: 'rented' });
+    }
+
+    await ledgerService.recordAudit({
+      action: 'RENTAL_REOPENED',
+      entityType: 'Rental',
+      entityId: rental._id,
+      userId: req.user?._id,
+      userName: req.user?.name || 'Partner',
+      details: `Reopened Rental #${rental.rentalNumber}. Trip active again, bike ${rental.bike?.name} status restored to rented.`
+    });
+
+    return res.json({
+      message: 'Rental reopened successfully. Trip active again.',
+      rental
+    });
+  } catch (err) {
+    console.error('reopenRental error:', err);
+    return res.status(500).json({ message: 'Error reopening rental.' });
   }
 };
 
