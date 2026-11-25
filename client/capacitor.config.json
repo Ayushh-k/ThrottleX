@@ -1,0 +1,15 @@
+{
+  "appId": "com.throttlex.app",
+  "appName": "THROTTLEX",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "plugins": {
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#080A0F"
+    }
+  }
+}

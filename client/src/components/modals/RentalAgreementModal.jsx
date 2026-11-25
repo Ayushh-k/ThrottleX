@@ -181,14 +181,41 @@ export default function RentalAgreementModal({ isOpen, onClose, rentalId, onAgre
   };
 
   const handlePrint = () => {
-    window.print();
+    try {
+      window.print();
+    } catch (e) {
+      console.warn('Print not supported in current environment', e);
+    }
   };
 
   const handleCopySummary = () => {
     if (!data?.summaryText) return;
-    navigator.clipboard.writeText(data.summaryText);
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(data.summaryText);
+      }
+    } catch (e) {
+      console.warn('Clipboard write error', e);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleShareAgreement = async () => {
+    if (navigator.share && data?.summaryText) {
+      try {
+        await navigator.share({
+          title: `Rental Agreement - ${data?.agreementNumber || ''}`,
+          text: data.summaryText,
+        });
+        return;
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.warn('Native share error:', err);
+        }
+      }
+    }
+    handleCopySummary();
   };
 
   if (!isOpen) return null;

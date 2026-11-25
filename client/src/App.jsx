@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LayoutDashboard, CalendarDays, Bike, Plus, Menu } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
+import { StatusBar, Style } from '@capacitor/status-bar';
 import { useAuth } from './context/AuthContext';
 import { api } from './services/api';
 
@@ -100,6 +103,165 @@ export default function App() {
         .catch(() => {});
     }
   }, [isAuthenticated, user, refreshKey]);
+
+  // Navigation state ref for Capacitor native back button listener
+  const navStateRef = useRef({
+    isMobileSidebarOpen,
+    isSearchOpen,
+    isNotificationsOpen,
+    isQuickActionOpen,
+    isNewRentalOpen,
+    isReturnBikeOpen,
+    isRecordPaymentOpen,
+    isAddExpenseOpen,
+    isAddBikeOpen,
+    isAddCustomerOpen,
+    isRecordSettlementOpen,
+    isAddFuelOpen,
+    isAddMaintenanceOpen,
+    currentTab,
+    selectedBikeId,
+    selectedRentalId,
+  });
+
+  useEffect(() => {
+    navStateRef.current = {
+      isMobileSidebarOpen,
+      isSearchOpen,
+      isNotificationsOpen,
+      isQuickActionOpen,
+      isNewRentalOpen,
+      isReturnBikeOpen,
+      isRecordPaymentOpen,
+      isAddExpenseOpen,
+      isAddBikeOpen,
+      isAddCustomerOpen,
+      isRecordSettlementOpen,
+      isAddFuelOpen,
+      isAddMaintenanceOpen,
+      currentTab,
+      selectedBikeId,
+      selectedRentalId,
+    };
+  }, [
+    isMobileSidebarOpen,
+    isSearchOpen,
+    isNotificationsOpen,
+    isQuickActionOpen,
+    isNewRentalOpen,
+    isReturnBikeOpen,
+    isRecordPaymentOpen,
+    isAddExpenseOpen,
+    isAddBikeOpen,
+    isAddCustomerOpen,
+    isRecordSettlementOpen,
+    isAddFuelOpen,
+    isAddMaintenanceOpen,
+    currentTab,
+    selectedBikeId,
+    selectedRentalId,
+  ]);
+
+  // Native Android Capacitor Setup (Status Bar & Hardware Back Button)
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    // Set Status Bar to dark matching THROTTLEX theme
+    StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+    StatusBar.setBackgroundColor({ color: '#080A0F' }).catch(() => {});
+
+    // Listen to Android hardware back button
+    let backListener = null;
+    const setupBackListener = async () => {
+      backListener = await CapApp.addListener('backButton', () => {
+        const s = navStateRef.current;
+
+        // 1. Close mobile sidebar if open
+        if (s.isMobileSidebarOpen) {
+          setIsMobileSidebarOpen(false);
+          return;
+        }
+        // 2. Close modals if any are open
+        if (s.isSearchOpen) {
+          setIsSearchOpen(false);
+          return;
+        }
+        if (s.isNotificationsOpen) {
+          setIsNotificationsOpen(false);
+          return;
+        }
+        if (s.isQuickActionOpen) {
+          setIsQuickActionOpen(false);
+          return;
+        }
+        if (s.isNewRentalOpen) {
+          setIsNewRentalOpen(false);
+          return;
+        }
+        if (s.isReturnBikeOpen) {
+          setIsReturnBikeOpen(false);
+          return;
+        }
+        if (s.isRecordPaymentOpen) {
+          setIsRecordPaymentOpen(false);
+          return;
+        }
+        if (s.isAddExpenseOpen) {
+          setIsAddExpenseOpen(false);
+          return;
+        }
+        if (s.isAddBikeOpen) {
+          setIsAddBikeOpen(false);
+          return;
+        }
+        if (s.isAddCustomerOpen) {
+          setIsAddCustomerOpen(false);
+          return;
+        }
+        if (s.isRecordSettlementOpen) {
+          setIsRecordSettlementOpen(false);
+          return;
+        }
+        if (s.isAddFuelOpen) {
+          setIsAddFuelOpen(false);
+          return;
+        }
+        if (s.isAddMaintenanceOpen) {
+          setIsAddMaintenanceOpen(false);
+          return;
+        }
+
+        // 3. Sub-views back to parent tab
+        if (s.currentTab === 'bike-profile') {
+          setSelectedBikeId(null);
+          setCurrentTab('bikes');
+          return;
+        }
+        if (s.currentTab === 'rental-detail') {
+          setSelectedRentalId(null);
+          setCurrentTab('rentals');
+          return;
+        }
+
+        // 4. Other tabs back to dashboard
+        if (s.currentTab !== 'dashboard') {
+          setCurrentTab('dashboard');
+          return;
+        }
+
+        // 5. At root dashboard with nothing open -> exit app
+        CapApp.exitApp();
+      });
+    };
+
+    setupBackListener();
+
+    return () => {
+      if (backListener && backListener.remove) {
+        backListener.remove();
+      }
+    };
+  }, []);
 
   // Keyboard shortcut Ctrl+K
   useEffect(() => {
