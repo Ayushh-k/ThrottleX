@@ -194,7 +194,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex bg-brand-dark text-slate-100 font-sans">
+    <div className="min-h-screen flex bg-brand-dark text-slate-100 font-sans w-full max-w-full overflow-x-hidden">
       {/* Sidebar Navigation */}
       <Sidebar
         currentTab={currentTab}
@@ -208,7 +208,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen w-full max-w-full overflow-x-hidden">
         {/* Navbar */}
         <Navbar
           onOpenSearch={() => setIsSearchOpen(true)}
