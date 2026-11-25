@@ -133,7 +133,7 @@ export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
           <div className="flex items-center gap-1 p-1 rounded-xl bg-brand-card border border-brand-border text-xs overflow-x-auto">
             {[
               { id: 'all', label: 'All Payments' },
-              { id: 'pending', label: '🔴 Payment Due / Baaki' },
+              { id: 'pending', label: '🔴 Payment Due' },
               { id: 'paid', label: '🟢 Fully Paid' }
             ].map((pt) => (
               <button
