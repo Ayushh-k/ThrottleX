@@ -38,6 +38,13 @@ jobs:
           distribution: 'temurin'
           java-version: 21
 
+      - name: Accept Licenses and Install Android SDK 36
+        run: |
+          set +e
+          yes | sdkmanager --licenses
+          set -e
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" || true
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
