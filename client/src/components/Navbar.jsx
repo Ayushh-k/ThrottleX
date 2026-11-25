@@ -29,7 +29,7 @@ export default function Navbar({
   const [profileOpen, setProfileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-30 h-16 w-full bg-brand-surface/90 dark:bg-brand-surface/90 backdrop-blur-md border-b border-brand-border px-3 sm:px-4 lg:px-6 flex items-center justify-between min-w-0 overflow-hidden">
+    <header className="sticky top-0 z-40 h-16 w-full bg-brand-surface/95 dark:bg-brand-surface/95 backdrop-blur-md border-b border-brand-border px-3 sm:px-4 lg:px-6 flex items-center justify-between min-w-0">
       {/* Left: Mobile Menu + Search Bar */}
       <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 mr-2 sm:mr-4">
         <button
@@ -135,24 +135,24 @@ export default function Navbar({
                 className="fixed inset-0 z-40"
                 onClick={() => setProfileOpen(false)}
               />
-              <div className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-1.5rem)] bg-brand-card dark:bg-brand-card border border-brand-border rounded-xl shadow-2xl p-2 z-50 animate-fade-in">
-                <div className="px-3 py-2 border-b border-brand-border/60">
-                  <p className="text-sm font-bold text-white truncate">{user?.name}</p>
-                  <p className="text-xs text-slate-400 truncate">{user?.email}</p>
-                  <span className="inline-block mt-1 text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-brand-orange/10 text-brand-orange border border-brand-orange/20">
-                    {user?.role}
+              <div className="absolute right-0 top-full mt-2 w-64 max-w-[calc(100vw-1.5rem)] bg-brand-card border border-brand-border rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] p-3 z-50 animate-fade-in">
+                <div className="px-3 py-2.5 border-b border-brand-border/60">
+                  <p className="text-sm font-bold text-white truncate">{user?.name || 'Ayush'}</p>
+                  <p className="text-xs text-slate-400 truncate mt-0.5">{user?.email || 'partner@throttlex.com'}</p>
+                  <span className="inline-block mt-2 text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-brand-orange/15 text-brand-orange border border-brand-orange/30">
+                    {user?.role === 'owner' ? 'Owner / Admin' : 'Partner'}
                   </span>
                 </div>
 
-                <div className="py-1">
+                <div className="pt-2">
                   <button
                     onClick={() => {
                       setProfileOpen(false);
                       logout();
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 min-h-[46px] text-xs font-bold text-rose-400 hover:text-white bg-rose-500/10 hover:bg-rose-500/20 active:scale-95 rounded-xl border border-rose-500/20 transition-all text-center"
                   >
-                    <LogOut className="w-4 h-4" /> Sign Out
+                    <LogOut className="w-4 h-4 text-rose-400" /> Sign Out
                   </button>
                 </div>
               </div>
