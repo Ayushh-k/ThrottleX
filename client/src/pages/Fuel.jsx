@@ -100,41 +100,84 @@ export default function FuelPage({ onTriggerAction, refreshKey }) {
             No fuel refills logged.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-brand-border text-slate-400 uppercase text-[10px]">
-                  <th className="py-3 px-3">Date</th>
-                  <th className="py-3 px-3">Motorcycle</th>
-                  <th className="py-3 px-3">Volume</th>
-                  <th className="py-3 px-3">Price / Litre</th>
-                  <th className="py-3 px-3">Odometer</th>
-                  <th className="py-3 px-3">Paid By (Partner)</th>
-                  <th className="py-3 px-3">Fuel Station</th>
-                  <th className="py-3 px-3 text-right">Total Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-brand-border/40">
-                {entries.map((f) => (
-                  <tr key={f._id} className="hover:bg-brand-surface/70">
-                    <td className="py-3 px-3 font-mono text-slate-300">{formatDate(f.date)}</td>
-                    <td className="py-3 px-3">
-                      <p className="font-semibold text-white">{f.bike?.name}</p>
-                      <p className="text-[10px] text-slate-400 font-mono">{f.bike?.registrationNumber}</p>
-                    </td>
-                    <td className="py-3 px-3 font-semibold text-white">{f.litres} L</td>
-                    <td className="py-3 px-3 text-slate-300 font-mono">₹{f.pricePerLitre}/L</td>
-                    <td className="py-3 px-3 font-mono text-white">{formatKm(f.odometer)}</td>
-                    <td className="py-3 px-3 font-bold text-brand-orange">{f.paidByPartner?.name}</td>
-                    <td className="py-3 px-3 text-slate-400">{f.fuelStation || '-'}</td>
-                    <td className="py-3 px-3 font-bold text-amber-400 font-display text-sm text-right">
+          <>
+            {/* Mobile Fuel Cards (<640px) */}
+            <div className="sm:hidden space-y-3">
+              {entries.map((f) => (
+                <div
+                  key={f._id}
+                  className="p-4 rounded-xl bg-brand-surface border border-brand-border space-y-2.5 shadow-sm"
+                >
+                  <div className="flex items-center justify-between gap-2 pb-2 border-b border-brand-border/60">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-[10px] font-bold text-amber-300">
+                        {f.litres} Litres
+                      </span>
+                      <span className="text-slate-400 font-mono text-[11px]">{formatDate(f.date)}</span>
+                    </div>
+                    <span className="font-bold text-amber-400 font-display text-sm">
                       {formatINR(f.amount)}
-                    </td>
+                    </span>
+                  </div>
+
+                  <div>
+                    <p className="font-bold text-white text-sm">{f.bike?.name}</p>
+                    <p className="text-[10px] text-slate-400 font-mono">{f.bike?.registrationNumber}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 p-2.5 rounded-lg bg-brand-card/80 border border-brand-border/60 text-xs">
+                    <div>
+                      <p className="text-[10px] text-slate-400 uppercase font-semibold">Odo & Rate</p>
+                      <p className="text-white font-mono text-[11px] mt-0.5">{formatKm(f.odometer)}</p>
+                      <p className="text-[10px] text-slate-400 font-mono mt-0.5">₹{f.pricePerLitre}/L</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400 uppercase font-semibold">Paid By</p>
+                      <p className="text-brand-orange font-bold text-[11px] mt-0.5">{f.paidByPartner?.name || 'Partner'}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5 truncate">{f.fuelStation || 'Station'}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table (>=640px) */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-brand-border text-slate-400 uppercase text-[10px]">
+                    <th className="py-3 px-3">Date</th>
+                    <th className="py-3 px-3">Motorcycle</th>
+                    <th className="py-3 px-3">Volume</th>
+                    <th className="py-3 px-3">Price / Litre</th>
+                    <th className="py-3 px-3">Odometer</th>
+                    <th className="py-3 px-3">Paid By (Partner)</th>
+                    <th className="py-3 px-3">Fuel Station</th>
+                    <th className="py-3 px-3 text-right">Total Amount</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-brand-border/40">
+                  {entries.map((f) => (
+                    <tr key={f._id} className="hover:bg-brand-surface/70">
+                      <td className="py-3 px-3 font-mono text-slate-300">{formatDate(f.date)}</td>
+                      <td className="py-3 px-3">
+                        <p className="font-semibold text-white">{f.bike?.name}</p>
+                        <p className="text-[10px] text-slate-400 font-mono">{f.bike?.registrationNumber}</p>
+                      </td>
+                      <td className="py-3 px-3 font-semibold text-white">{f.litres} L</td>
+                      <td className="py-3 px-3 text-slate-300 font-mono">₹{f.pricePerLitre}/L</td>
+                      <td className="py-3 px-3 font-mono text-white">{formatKm(f.odometer)}</td>
+                      <td className="py-3 px-3 font-bold text-brand-orange">{f.paidByPartner?.name}</td>
+                      <td className="py-3 px-3 text-slate-400">{f.fuelStation || '-'}</td>
+                      <td className="py-3 px-3 font-bold text-amber-400 font-display text-sm text-right">
+                        {formatINR(f.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

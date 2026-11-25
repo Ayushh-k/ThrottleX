@@ -49,32 +49,33 @@ export default function GlobalSearchModal({ isOpen, onClose, onNavigate }) {
     results.partners.length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-2xl bg-brand-card dark:bg-brand-card border border-brand-border rounded-xl shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-20 px-3 sm:px-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+      <div className="relative w-full max-w-2xl bg-brand-card dark:bg-brand-card border border-brand-border rounded-2xl shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
         {/* Search Input Bar */}
-        <div className="flex items-center px-4 py-3.5 border-b border-brand-border bg-brand-surface">
-          <Search className="w-5 h-5 text-brand-orange mr-3" />
+        <div className="flex items-center px-4 py-3 sm:py-3.5 border-b border-brand-border bg-brand-surface shrink-0">
+          <Search className="w-5 h-5 text-brand-orange mr-2.5 shrink-0" />
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search bikes, customers, rentals, expenses, partners... (e.g. Rahul, Hunter, Petrol)"
+            placeholder="Search bikes, riders, bookings, costs..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 bg-transparent text-white placeholder-slate-400 text-sm focus:outline-none"
+            className="flex-1 bg-transparent text-white placeholder-slate-400 text-sm focus:outline-none min-h-[40px]"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="p-1 text-slate-400 hover:text-white mr-1"
+              className="p-2 text-slate-400 hover:text-white mr-1 min-w-[36px] min-h-[36px] flex items-center justify-center"
+              aria-label="Clear search"
             >
               <X className="w-4 h-4" />
             </button>
           )}
           <button
             onClick={onClose}
-            className="px-2 py-1 text-xs font-mono bg-white/5 hover:bg-white/10 text-slate-300 rounded border border-white/10"
+            className="px-2.5 py-1.5 min-h-[36px] text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg border border-white/10 flex items-center justify-center"
           >
-            ESC
+            Esc
           </button>
         </div>
 

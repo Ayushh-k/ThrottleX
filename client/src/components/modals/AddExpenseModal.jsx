@@ -89,204 +89,231 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess, preselecte
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-lg bg-brand-card dark:bg-brand-card border border-brand-border rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between p-5 border-b border-brand-border bg-brand-surface">
-          <div>
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Receipt className="w-5 h-5 text-rose-400" /> Add Business Expense
-            </h3>
-            <p className="text-xs text-slate-400">Record out-of-pocket costs and fuel/service expenses</p>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in overflow-hidden">
+      <div className="relative w-full max-w-lg bg-brand-card dark:bg-brand-card border-t sm:border border-brand-border rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden">
+        {/* Mobile Drag Indicator Handle */}
+        <div className="sm:hidden w-10 h-1 bg-white/20 rounded-full mx-auto mt-2.5 mb-1" />
+
+        {/* Modal Header */}
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-brand-border bg-brand-surface shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+              <Receipt className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-bold text-white leading-tight">
+                Add Business Expense
+              </h3>
+              <p className="text-[11px] text-slate-400">Record fuel, service & out-of-pocket costs</p>
+            </div>
           </div>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-white/5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 text-slate-400 hover:text-white rounded-xl bg-white/5 active:bg-white/10 min-h-[40px] min-w-[40px] flex items-center justify-center transition-colors"
+            aria-label="Close"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
-          <div className="mx-6 mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" /> {error}
+          <div className="mx-4 sm:mx-6 mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2 shrink-0">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" /> {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Category *
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface text-white"
-                required
-              >
-                <option value="petrol">Petrol / Fuel</option>
-                <option value="service">Routine Service</option>
-                <option value="repair">Repair & Spares</option>
-                <option value="engine_oil">Engine Oil</option>
-                <option value="tyres">Tyres & Tubes</option>
-                <option value="insurance">Insurance Renewal</option>
-                <option value="cleaning">Washing & Detailing</option>
-                <option value="accessories">Accessories / Helmets</option>
-                <option value="parking">Parking / Toll</option>
-                <option value="challan">Traffic Challan / Fine</option>
-                <option value="transportation">Logistics / Transport</option>
-                <option value="miscellaneous">Miscellaneous</option>
-              </select>
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto flex flex-col">
+          <div className="p-4 sm:p-6 space-y-4 pb-28 sm:pb-6 flex-1">
+            {/* Category & Motorcycle */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Category *
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full px-3.5 py-2.5 min-h-[46px] rounded-xl text-sm border border-brand-border bg-brand-surface text-white focus:outline-none focus:border-brand-orange transition-all"
+                  required
+                >
+                  <option value="petrol">Petrol / Fuel</option>
+                  <option value="service">Routine Service</option>
+                  <option value="repair">Repair & Spares</option>
+                  <option value="engine_oil">Engine Oil</option>
+                  <option value="tyres">Tyres & Tubes</option>
+                  <option value="insurance">Insurance Renewal</option>
+                  <option value="cleaning">Washing & Detailing</option>
+                  <option value="accessories">Accessories / Helmets</option>
+                  <option value="parking">Parking / Toll</option>
+                  <option value="challan">Traffic Challan / Fine</option>
+                  <option value="transportation">Logistics / Transport</option>
+                  <option value="miscellaneous">Miscellaneous</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Associated Motorcycle
+                </label>
+                <select
+                  value={bikeId}
+                  onChange={(e) => setBikeId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 min-h-[46px] rounded-xl text-sm border border-brand-border bg-brand-surface text-white focus:outline-none focus:border-brand-orange transition-all"
+                >
+                  <option value="general">-- General Business Expense --</option>
+                  {bikes.map((b) => (
+                    <option key={b._id} value={b._id}>
+                      {b.name} ({b.registrationNumber})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Associated Motorcycle
-              </label>
-              <select
-                value={bikeId}
-                onChange={(e) => setBikeId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface text-white"
-              >
-                <option value="general">-- General Business Expense --</option>
-                {bikes.map((b) => (
-                  <option key={b._id} value={b._id}>
-                    {b.name} ({b.registrationNumber})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+            {/* Amount & Date */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Amount (₹) *
+                </label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="e.g. 700"
+                  className="w-full px-3.5 py-2.5 min-h-[46px] rounded-xl text-base font-bold border border-brand-border bg-brand-surface text-rose-400 placeholder-slate-500 focus:outline-none focus:border-brand-orange transition-all"
+                  required
+                />
+              </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Amount (₹) *
-              </label>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="e.g. 700"
-                className="w-full px-3 py-2 rounded-lg text-base font-bold border border-brand-border bg-brand-surface text-rose-400"
-                required
-              />
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Date *
+                </label>
+                <input
+                  type="date"
+                  value={expenseDate}
+                  onChange={(e) => setExpenseDate(e.target.value)}
+                  className="w-full px-3.5 py-2.5 min-h-[46px] rounded-xl text-sm border border-brand-border bg-brand-surface text-white focus:outline-none focus:border-brand-orange transition-all"
+                  required
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Date *
-              </label>
-              <input
-                type="date"
-                value={expenseDate}
-                onChange={(e) => setExpenseDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface text-white"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Paid By Partner - Crucial for settlement engine! */}
-          <div className="p-3.5 rounded-xl bg-brand-surface border border-brand-border space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-brand-orange uppercase tracking-wider block">
+            {/* Paid By Partner - Mobile Responsive Button Cards */}
+            <div className="p-3.5 rounded-xl bg-brand-surface border border-brand-border space-y-2">
+              <label className="text-[11px] font-bold text-brand-orange uppercase tracking-wider block">
                 Paid By (Which Partner paid out-of-pocket?) *
               </label>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {partners.map((p) => {
-                const pId = p.partnerId || p._id;
-                const isSelected = paidByPartnerId === pId;
-                const storedUser = localStorage.getItem('throttlex_user');
-                const currentUser = storedUser ? JSON.parse(storedUser) : null;
-                const isCurrentPartner = currentUser?.partnerId === pId;
-                return (
-                  <button
-                    key={pId}
-                    type="button"
-                    onClick={() => setPaidByPartnerId(pId)}
-                    className={`p-2.5 rounded-lg border text-xs font-semibold transition-all ${
-                      isSelected
-                        ? 'border-brand-orange bg-brand-orange/15 text-white shadow-glow-sm'
-                        : 'border-brand-border bg-brand-card text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {p.name} {isCurrentPartner && <span className="text-emerald-400 font-bold ml-1">(You)</span>}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Payment Method
-              </label>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface text-white"
-              >
-                <option value="upi">UPI (GPay / PhonePe / Paytm)</option>
-                <option value="cash">Cash</option>
-                <option value="bank_transfer">Bank Transfer</option>
-                <option value="card">Card</option>
-                <option value="other">Other</option>
-              </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {partners.map((p) => {
+                  const pId = p.partnerId || p._id;
+                  const isSelected = paidByPartnerId === pId;
+                  const storedUser = localStorage.getItem('throttlex_user');
+                  const currentUser = storedUser ? JSON.parse(storedUser) : null;
+                  const isCurrentPartner = currentUser?.partnerId === pId;
+                  return (
+                    <button
+                      key={pId}
+                      type="button"
+                      onClick={() => setPaidByPartnerId(pId)}
+                      className={`p-3 rounded-xl border text-xs font-bold transition-all min-h-[46px] flex items-center justify-between ${
+                        isSelected
+                          ? 'border-brand-orange bg-brand-orange/20 text-white shadow-glow-sm ring-1 ring-brand-orange'
+                          : 'border-brand-border bg-brand-card text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      <span className="truncate">{p.name}</span>
+                      {isCurrentPartner && (
+                        <span className="text-[10px] text-emerald-400 font-mono ml-1 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                          You
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
+            {/* Payment Method & Odometer */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Payment Method
+                </label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full px-3.5 py-2.5 min-h-[46px] rounded-xl text-sm border border-brand-border bg-brand-surface text-white focus:outline-none focus:border-brand-orange transition-all"
+                >
+                  <option value="upi">UPI (GPay / PhonePe / Paytm)</option>
+                  <option value="cash">Cash</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="card">Card</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Odometer (Optional)
+                </label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={odometer}
+                  onChange={(e) => setOdometer(e.target.value)}
+                  placeholder="Current km reading"
+                  className="w-full px-3.5 py-2.5 min-h-[46px] rounded-xl text-sm border border-brand-border bg-brand-surface text-white placeholder-slate-500 focus:outline-none focus:border-brand-orange transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Description */}
             <div>
               <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Odometer (Optional)
+                Description *
               </label>
               <input
-                type="number"
-                value={odometer}
-                onChange={(e) => setOdometer(e.target.value)}
-                placeholder="Current km reading"
-                className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface"
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g. Fuel refill"
+                className="w-full px-3.5 py-2.5 min-h-[46px] rounded-xl text-sm border border-brand-border bg-brand-surface text-white placeholder-slate-500 focus:outline-none focus:border-brand-orange transition-all"
+                required
+              />
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label className="text-xs font-semibold text-slate-300 block mb-1">Notes (Optional)</label>
+              <input
+                type="text"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Garage name, receipt bill # or remarks"
+                className="w-full px-3.5 py-2.5 min-h-[46px] rounded-xl text-sm border border-brand-border bg-brand-surface text-white placeholder-slate-500 focus:outline-none focus:border-brand-orange transition-all"
               />
             </div>
           </div>
 
-          <div>
-            <label className="text-xs font-semibold text-slate-300 block mb-1">
-              Description *
-            </label>
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. Fuel refill before trip / SpeedMoto general service"
-              className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface text-white"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold text-slate-300 block mb-1">Notes</label>
-            <input
-              type="text"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Garage name, receipt bill # or remarks"
-              className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface"
-            />
-          </div>
-
-          <div className="pt-3 border-t border-brand-border flex items-center justify-end gap-3">
+          {/* Sticky Mobile & Desktop Action Bar */}
+          <div className="sticky bottom-0 left-0 right-0 p-3 sm:p-4 bg-brand-surface/95 backdrop-blur-md border-t border-brand-border flex items-center justify-end gap-2.5 z-20 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lg">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm text-slate-300 hover:text-white rounded-lg bg-white/5"
+              className="flex-1 sm:flex-initial px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-300 hover:text-white rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 min-h-[46px] transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2.5 text-sm font-bold bg-rose-600 hover:bg-rose-500 text-white rounded-xl shadow-glow-sm"
+              className="flex-1 sm:flex-initial px-6 py-2.5 text-xs sm:text-sm font-bold bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white rounded-xl shadow-glow-sm min-h-[46px] flex items-center justify-center gap-2 transition-all disabled:opacity-50"
             >
-              {loading ? 'Saving...' : 'Record Expense'}
+              {loading ? 'Saving...' : 'Save Expense'}
             </button>
           </div>
         </form>

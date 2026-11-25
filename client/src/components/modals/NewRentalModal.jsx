@@ -315,58 +315,66 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm overflow-y-auto animate-fade-in">
-      <div className="relative w-full max-w-3xl bg-brand-card dark:bg-brand-card border border-brand-border rounded-2xl shadow-2xl overflow-hidden my-8">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-md overflow-hidden animate-fade-in">
+      <div className="relative w-full max-w-3xl bg-brand-card dark:bg-brand-card border-t sm:border border-brand-border rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[94vh] sm:max-h-[92vh] overflow-hidden">
+        {/* Mobile Handle */}
+        <div className="sm:hidden w-10 h-1 bg-white/20 rounded-full mx-auto mt-2.5 mb-1 shrink-0" />
+
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-brand-border bg-brand-surface">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-brand-border bg-brand-surface shrink-0">
           <div>
-            <h3 className="text-lg font-bold font-display text-white flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-bold font-display text-white flex items-center gap-2">
               <Calendar className="w-5 h-5 text-brand-orange" /> Create New Rental
             </h3>
-            <p className="text-xs text-slate-400">Book bike, calculate automated rates, record advance payment</p>
+            <p className="text-[11px] sm:text-xs text-slate-400">Book bike, calculate automated rates, record advance payment</p>
           </div>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-white/5">
+          <button
+            onClick={onClose}
+            className="p-2 text-slate-400 hover:text-white rounded-xl bg-white/5 min-h-[40px] min-w-[40px] flex items-center justify-center transition-colors"
+            aria-label="Close"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
-          <div className="mx-6 mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" /> {error}
+          <div className="mx-4 sm:mx-6 mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2 shrink-0">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" /> {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* Section 1: Bike Selection & Availability */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-              <BikeIcon className="w-4 h-4 text-brand-orange" /> Select Motorcycle
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              {bikes.map((b) => (
-                <div
-                  key={b._id}
-                  onClick={() => handleBikeChange(b._id)}
-                  className={`p-3 rounded-xl border cursor-pointer transition-all ${
-                    selectedBikeId === b._id
-                      ? 'border-brand-orange bg-brand-orange/10 text-white shadow-glow-sm'
-                      : 'border-brand-border bg-brand-surface/70 text-slate-300 hover:border-slate-500'
-                  }`}
-                >
-                  <p className="font-semibold text-sm truncate">{b.name}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{b.registrationNumber}</p>
-                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-xs">
-                    <div>
-                      <span className="font-bold text-brand-orange">{formatINR(b.defaultDailyRate)}/day</span>
-                      <span className="text-[11px] text-slate-400 ml-1.5 font-mono">
-                        ({formatINR(b.defaultHourlyRate || Math.round(b.defaultDailyRate / 8))}/hr)
-                      </span>
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto flex flex-col">
+          <div className="p-4 sm:p-6 space-y-5 pb-28 sm:pb-6 flex-1 overscroll-contain">
+            {/* Section 1: Bike Selection & Availability */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <BikeIcon className="w-4 h-4 text-brand-orange" /> Select Motorcycle
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5 max-h-48 sm:max-h-60 overflow-y-auto pr-1">
+                {bikes.map((b) => (
+                  <div
+                    key={b._id}
+                    onClick={() => handleBikeChange(b._id)}
+                    className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                      selectedBikeId === b._id
+                        ? 'border-brand-orange bg-brand-orange/10 text-white shadow-glow-sm ring-1 ring-brand-orange'
+                        : 'border-brand-border bg-brand-surface/70 text-slate-300 hover:border-slate-500'
+                    }`}
+                  >
+                    <p className="font-semibold text-sm truncate">{b.name}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{b.registrationNumber}</p>
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-xs">
+                      <div>
+                        <span className="font-bold text-brand-orange">{formatINR(b.defaultDailyRate)}/day</span>
+                        <span className="text-[11px] text-slate-400 ml-1.5 font-mono">
+                          ({formatINR(b.defaultHourlyRate || Math.round(b.defaultDailyRate / 8))}/hr)
+                        </span>
+                      </div>
+                      <span className="text-[10px] uppercase text-slate-400">{b.status}</span>
                     </div>
-                    <span className="text-[10px] uppercase text-slate-400">{b.status}</span>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
             {/* Availability Alert Banner */}
             {checkingAvailability ? (
@@ -762,19 +770,21 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
             </div>
           </div>
 
-          {/* Footer Submit */}
-          <div className="pt-4 border-t border-brand-border flex items-center justify-end gap-3">
+          </div>
+
+          {/* Sticky Mobile & Desktop Action Bar */}
+          <div className="sticky bottom-0 left-0 right-0 p-3 sm:p-4 bg-brand-surface/95 backdrop-blur-md border-t border-brand-border flex items-center justify-end gap-2.5 z-20 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lg">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm text-slate-300 hover:text-white rounded-lg bg-white/5 hover:bg-white/10"
+              className="flex-1 sm:flex-initial px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-300 hover:text-white rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 min-h-[46px] transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || isInvalidDateRange || (availabilityResult && !availabilityResult.available)}
-              className="px-6 py-2.5 text-sm font-bold bg-brand-orange hover:bg-brand-orange-hover text-white rounded-xl shadow-glow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-2 sm:flex-initial flex-1 px-6 py-2.5 text-xs sm:text-sm font-bold bg-brand-orange hover:bg-brand-orange-hover active:bg-orange-600 text-white rounded-xl shadow-glow min-h-[46px] flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Processing...' : 'Confirm & Create Rental'}
             </button>

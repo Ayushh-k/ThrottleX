@@ -175,8 +175,96 @@ export default function Customers({ onTriggerAction, refreshKey }) {
             No customers match the selected filter.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <>
+            {/* Mobile Customer Cards (<640px) */}
+            <div className="sm:hidden space-y-3">
+              {filteredCustomers.map((c) => {
+                const risk = c.riskStatus || 'verified';
+                return (
+                  <div
+                    key={c._id}
+                    className="p-4 rounded-xl bg-brand-surface border border-brand-border space-y-3 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between gap-2 pb-2 border-b border-brand-border/60">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {c.photoUrl ? (
+                          <img
+                            src={c.photoUrl}
+                            alt={c.name}
+                            className="w-10 h-10 rounded-xl object-cover border border-brand-orange/40 shrink-0"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-xl bg-brand-card border border-brand-border flex items-center justify-center text-slate-400 font-bold text-sm shrink-0">
+                            {c.name ? c.name[0].toUpperCase() : 'U'}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-bold text-white text-sm truncate">{c.name}</p>
+                          <p className="text-[10px] text-slate-400 font-mono">{c.phone}</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        {risk === 'verified' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-semibold">
+                            <CheckCircle2 className="w-3 h-3" /> Verified
+                          </span>
+                        )}
+                        {risk === 'pending' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-semibold">
+                            <AlertCircle className="w-3 h-3" /> Pending
+                          </span>
+                        )}
+                        {risk === 'risk' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[11px] font-semibold">
+                            <AlertTriangle className="w-3 h-3" /> High Risk
+                          </span>
+                        )}
+                        {risk === 'blocked' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[11px] font-bold">
+                            <Lock className="w-3 h-3" /> Blocked
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <p className="text-[10px] text-slate-400 uppercase font-semibold">DL Number</p>
+                        <p className="font-mono text-white text-[11px] mt-0.5 truncate">
+                          {c.dlNumber || 'On file'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-400 uppercase font-semibold">Trips & Spend</p>
+                        <p className="text-white text-[11px] mt-0.5 font-bold">
+                          {c.totalRentals || 0} trips • {formatINR(c.totalSpend)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-brand-border/40">
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase">Outstanding: </span>
+                        <span className="font-bold font-display text-amber-400 text-xs">
+                          {formatINR(c.outstanding)}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleOpenProfile(c)}
+                        className="px-4 py-2 min-h-[44px] text-xs font-bold text-white bg-brand-orange hover:bg-orange-600 active:scale-95 rounded-xl shadow-glow-sm flex items-center gap-1.5 transition-all"
+                      >
+                        <Eye className="w-4 h-4" /> View KYC Vault
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table (>=640px) */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-brand-border text-slate-400 uppercase text-[10px]">
                   <th className="py-3 px-3">Rider / Photo</th>
@@ -316,7 +404,8 @@ export default function Customers({ onTriggerAction, refreshKey }) {
                 })}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         )}
       </div>
 
@@ -330,11 +419,16 @@ export default function Customers({ onTriggerAction, refreshKey }) {
               setActiveDocViewer(null);
             }
           }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-fade-in overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-fade-in overflow-y-auto"
         >
-          <div className="relative w-full max-w-3xl bg-slate-900/75 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.7)] overflow-hidden my-8 flex flex-col max-h-[90vh]">
+          <div className="relative w-full max-w-3xl bg-slate-900/90 sm:bg-slate-900/75 backdrop-blur-2xl border border-white/20 rounded-t-3xl sm:rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.7)] overflow-hidden my-0 sm:my-8 flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+            {/* Mobile Pull Indicator */}
+            <div className="sm:hidden flex justify-center pt-2.5 pb-1 bg-white/[0.04]">
+              <div className="w-12 h-1.5 rounded-full bg-slate-700" />
+            </div>
+
             {/* Glassmorphic Modal Header */}
-            <div className="flex items-center justify-between p-5 border-b border-white/10 bg-white/[0.05] backdrop-blur-md">
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/10 bg-white/[0.05] backdrop-blur-md shrink-0">
               <div className="flex items-center gap-3">
                 {(profileData?.customer?.photoUrl || selectedCustomer.photoUrl) ? (
                   <img

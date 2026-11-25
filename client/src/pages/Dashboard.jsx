@@ -801,11 +801,16 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
           onClick={(e) => {
             if (e.target === e.currentTarget) setActiveCashModal(null);
           }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-fade-in overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-fade-in overflow-y-auto"
         >
-          <div className="relative w-full max-w-2xl bg-slate-900/90 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.7)] overflow-hidden my-6 flex flex-col max-h-[90vh]">
+          <div className="relative w-full max-w-2xl bg-slate-900/95 sm:bg-slate-900/90 backdrop-blur-2xl border border-white/20 rounded-t-3xl sm:rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.7)] overflow-hidden my-0 sm:my-6 flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+            {/* Mobile Pull Indicator */}
+            <div className="sm:hidden flex justify-center pt-2.5 pb-1 bg-white/[0.04]">
+              <div className="w-12 h-1.5 rounded-full bg-slate-700" />
+            </div>
+
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-white/10 bg-white/[0.04]">
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/10 bg-white/[0.04] shrink-0">
               <div className="flex items-center gap-3">
                 <div className={`p-2.5 rounded-xl border ${
                   activeCashModal === 'upi' ? 'bg-sky-500/15 border-sky-500/30 text-sky-400' :

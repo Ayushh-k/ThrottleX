@@ -39,7 +39,11 @@ export default function NotificationDrawer({ isOpen, onClose, onNavigate }) {
                 <CheckCheck className="w-3.5 h-3.5" /> Mark all read
               </button>
             )}
-            <button onClick={onClose} className="p-1 text-slate-400 hover:text-white">
+            <button
+              onClick={onClose}
+              className="p-2 text-slate-400 hover:text-white rounded-lg bg-white/5 min-w-[36px] min-h-[36px] flex items-center justify-center"
+              aria-label="Close notifications"
+            >
               <X className="w-5 h-5" />
             </button>
           </div>

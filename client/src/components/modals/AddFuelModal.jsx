@@ -79,27 +79,37 @@ export default function AddFuelModal({ isOpen, onClose, onSuccess, preselectedBi
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-md bg-brand-card dark:bg-brand-card border border-brand-border rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between p-5 border-b border-brand-border bg-brand-surface">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto animate-fade-in">
+      <div className="relative w-full max-w-md bg-brand-card dark:bg-brand-card border border-brand-border rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] sm:max-h-[90vh] flex flex-col">
+        {/* Mobile Pull/Drag Indicator */}
+        <div className="sm:hidden flex justify-center pt-2.5 pb-1 bg-brand-surface">
+          <div className="w-12 h-1.5 rounded-full bg-slate-700" />
+        </div>
+
+        {/* Modal Header */}
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-brand-border bg-brand-surface shrink-0">
           <div>
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
               <Fuel className="w-5 h-5 text-amber-400" /> Log Fuel Refill
             </h3>
             <p className="text-xs text-slate-400">Track fuel consumption, mileage, and cost per km</p>
           </div>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-white/5">
+          <button
+            onClick={onClose}
+            className="p-2 text-slate-400 hover:text-white rounded-xl bg-white/5 min-w-[36px] min-h-[36px] flex items-center justify-center"
+            aria-label="Close"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
-          <div className="mx-6 mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+          <div className="mx-4 sm:mx-6 mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2 shrink-0">
             <AlertCircle className="w-4 h-4 shrink-0" /> {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 pb-28 sm:pb-6">
           <div>
             <label className="text-xs font-semibold text-slate-300 block mb-1">Motorcycle *</label>
             <select
@@ -109,7 +119,7 @@ export default function AddFuelModal({ isOpen, onClose, onSuccess, preselectedBi
                 const b = bikes.find((x) => x._id === e.target.value);
                 if (b) setOdometer(b.currentOdometer || 0);
               }}
-              className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface text-white"
+              className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl text-sm border border-brand-border bg-brand-surface text-white focus:outline-none focus:border-brand-orange"
               required
             >
               {bikes.map((b) => (
@@ -120,19 +130,20 @@ export default function AddFuelModal({ isOpen, onClose, onSuccess, preselectedBi
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-semibold text-slate-300 block mb-1">Litres *</label>
               <input
                 type="number"
                 step="0.1"
+                inputMode="decimal"
                 value={litres}
                 onChange={(e) => {
                   setLitres(e.target.value);
                   handleLitresOrAmountChange(e.target.value, amount);
                 }}
                 placeholder="e.g. 5.5"
-                className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface text-white"
+                className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl text-sm border border-brand-border bg-brand-surface text-white focus:outline-none focus:border-brand-orange"
                 required
               />
             </div>
@@ -140,48 +151,70 @@ export default function AddFuelModal({ isOpen, onClose, onSuccess, preselectedBi
               <label className="text-xs font-semibold text-slate-300 block mb-1">Total Cost (₹) *</label>
               <input
                 type="number"
+                inputMode="numeric"
                 value={amount}
                 onChange={(e) => {
                   setAmount(e.target.value);
                   handleLitresOrAmountChange(litres, e.target.value);
                 }}
                 placeholder="e.g. 550"
-                className="w-full px-3 py-2 rounded-lg text-sm font-bold border border-brand-border bg-brand-surface text-amber-400"
+                className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl text-sm font-bold border border-brand-border bg-brand-surface text-amber-400 focus:outline-none focus:border-brand-orange"
                 required
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-semibold text-slate-300 block mb-1">
                 Current Odometer (km) *
               </label>
               <input
                 type="number"
+                inputMode="numeric"
                 value={odometer}
                 onChange={(e) => setOdometer(e.target.value)}
                 placeholder="8450"
-                className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface text-white"
+                className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl text-sm border border-brand-border bg-brand-surface text-white focus:outline-none focus:border-brand-orange"
                 required
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Paid By Partner *
-              </label>
-              <select
-                value={paidByPartnerId}
-                onChange={(e) => setPaidByPartnerId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface text-white"
+              <label className="text-xs font-semibold text-slate-300 block mb-1">Date</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl text-sm border border-brand-border bg-brand-surface text-white focus:outline-none focus:border-brand-orange"
                 required
-              >
-                {partners.map((p) => (
-                  <option key={p.partnerId || p._id} value={p.partnerId || p._id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+              />
+            </div>
+          </div>
+
+          {/* Paid By Partner Buttons */}
+          <div className="p-3.5 rounded-xl bg-brand-surface border border-brand-border space-y-2">
+            <label className="text-[11px] font-bold text-brand-orange uppercase tracking-wider block">
+              Paid By (Which Partner paid out-of-pocket?) *
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {partners.map((p) => {
+                const pId = p.partnerId || p._id;
+                const isSelected = paidByPartnerId === pId;
+                return (
+                  <button
+                    key={pId}
+                    type="button"
+                    onClick={() => setPaidByPartnerId(pId)}
+                    className={`p-3 rounded-xl border text-xs font-bold transition-all min-h-[46px] flex items-center justify-between ${
+                      isSelected
+                        ? 'border-brand-orange bg-brand-orange/20 text-white shadow-glow-sm ring-1 ring-brand-orange'
+                        : 'border-brand-border bg-brand-card text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    <span className="truncate">{p.name}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -191,23 +224,24 @@ export default function AddFuelModal({ isOpen, onClose, onSuccess, preselectedBi
               type="text"
               value={fuelStation}
               onChange={(e) => setFuelStation(e.target.value)}
-              placeholder="e.g. Indian Oil, South Ext."
-              className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface"
+              placeholder="e.g. Indian Oil, Civil Lines"
+              className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl text-sm border border-brand-border bg-brand-surface text-white placeholder-slate-500 focus:outline-none focus:border-brand-orange"
             />
           </div>
 
-          <div className="pt-3 border-t border-brand-border flex items-center justify-end gap-3">
+          {/* Sticky Bottom Action Bar for Mobile & Desktop */}
+          <div className="sticky bottom-0 z-10 -mx-4 sm:-mx-6 -mb-4 sm:-mb-6 px-4 sm:px-6 py-3 bg-brand-surface/95 backdrop-blur-md border-t border-brand-border flex items-center justify-end gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lg">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm text-slate-300 hover:text-white rounded-lg bg-white/5"
+              className="flex-1 sm:flex-none px-4 py-3 sm:py-2.5 min-h-[46px] text-sm font-semibold text-slate-300 hover:text-white rounded-xl bg-white/5 active:scale-95 transition-all text-center"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2.5 text-sm font-bold bg-amber-600 hover:bg-amber-500 text-white rounded-xl shadow-glow-sm"
+              className="flex-1 sm:flex-none px-6 py-3 sm:py-2.5 min-h-[46px] text-sm font-bold bg-amber-600 hover:bg-amber-500 text-white rounded-xl shadow-glow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
             >
               {loading ? 'Logging...' : 'Log Fuel Entry'}
             </button>

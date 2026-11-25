@@ -156,30 +156,37 @@ export default function ReturnBikeModal({ isOpen, onClose, rental, onSuccess }) 
   const currentOutstanding = (rental.remainingAmount || 0) + totalAddedCharges;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-fade-in overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-brand-card border border-brand-border rounded-2xl shadow-2xl overflow-hidden my-6 max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-5 bg-black/80 backdrop-blur-md animate-fade-in overflow-hidden">
+      <div className="relative w-full max-w-2xl bg-brand-card border-t sm:border border-brand-border rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[94vh] sm:max-h-[92vh] flex flex-col">
+        {/* Mobile Handle */}
+        <div className="sm:hidden w-10 h-1 bg-white/20 rounded-full mx-auto mt-2.5 mb-1 shrink-0" />
+
         {/* Header */}
-        <div className="flex items-center justify-between p-4 px-6 border-b border-brand-border bg-brand-surface">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-brand-border bg-brand-surface shrink-0">
           <div>
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-emerald-400" /> Return Inspection & Check-In
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-[11px] sm:text-xs text-slate-400">
               #{rental.rentalNumber} • {rental.bike?.name} ({rental.bike?.registrationNumber}) • Hirer: {rental.customer?.name}
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-white/5">
+          <button
+            onClick={onClose}
+            className="p-2 text-slate-400 hover:text-white rounded-xl bg-white/5 min-h-[40px] min-w-[40px] flex items-center justify-center transition-colors"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
-          <div className="mx-6 mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
+          <div className="mx-4 sm:mx-6 mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs shrink-0">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto flex flex-col">
+          <div className="p-4 sm:p-6 space-y-4 pb-28 sm:pb-6 flex-1 overscroll-contain">
           {/* Summary Strip */}
           <div className="p-3 rounded-xl bg-brand-surface border border-brand-border grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
             <div>
@@ -430,21 +437,24 @@ export default function ReturnBikeModal({ isOpen, onClose, rental, onSuccess }) 
             </span>
           </div>
 
-          <div className="pt-3 border-t border-brand-border flex items-center justify-end gap-3">
+          </div>
+
+          {/* Sticky Mobile & Desktop Action Bar */}
+          <div className="sticky bottom-0 left-0 right-0 p-3 sm:p-4 bg-brand-surface/95 backdrop-blur-md border-t border-brand-border flex items-center justify-end gap-2.5 z-20 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lg">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm text-slate-300 hover:text-white rounded-lg bg-white/5"
+              className="flex-1 sm:flex-initial px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-300 hover:text-white rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 min-h-[46px] transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2.5 text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-glow-sm flex items-center gap-1.5 transition-all"
+              className="flex-2 sm:flex-initial flex-1 px-5 py-2.5 text-xs sm:text-sm font-bold bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xl shadow-glow-sm flex items-center justify-center gap-2 min-h-[46px] transition-all disabled:opacity-50"
             >
-              <CheckCircle2 className="w-4 h-4" />
-              {loading ? 'Processing Clearance...' : 'Complete Return & Make Available'}
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{loading ? 'Processing...' : 'Complete Return & Make Available'}</span>
             </button>
           </div>
         </form>

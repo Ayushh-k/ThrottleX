@@ -155,60 +155,117 @@ export default function Expenses({ onTriggerAction, refreshKey }) {
             <p className="text-xs text-slate-400 mt-1">Record business outlays to keep accounts accurate.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-brand-border text-slate-400 uppercase text-[10px]">
-                  <th className="py-3 px-3">Date</th>
-                  <th className="py-3 px-3">Category</th>
-                  <th className="py-3 px-3">Description</th>
-                  <th className="py-3 px-3">Motorcycle</th>
-                  <th className="py-3 px-3">Paid By (Partner)</th>
-                  <th className="py-3 px-3">Method</th>
-                  <th className="py-3 px-3 text-right">Amount</th>
-                  <th className="py-3 px-3 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-brand-border/40">
-                {expenses.map((e) => (
-                  <tr key={e._id} className="hover:bg-brand-surface/70 transition-colors">
-                    <td className="py-3 px-3 text-slate-300 font-mono">{formatDate(e.expenseDate)}</td>
-                    <td className="py-3 px-3 uppercase font-semibold text-white">
-                      <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px]">
+          <>
+            {/* Mobile Cards View (<640px) */}
+            <div className="sm:hidden space-y-3">
+              {expenses.map((e) => (
+                <div
+                  key={e._id}
+                  className="p-4 rounded-xl bg-brand-surface border border-brand-border space-y-2.5 shadow-sm"
+                >
+                  <div className="flex items-center justify-between gap-2 pb-2 border-b border-brand-border/60">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] uppercase font-bold text-white">
                         {e.category}
                       </span>
-                    </td>
-                    <td className="py-3 px-3 font-semibold text-white max-w-xs truncate">{e.description}</td>
-                    <td className="py-3 px-3 text-slate-300">
-                      {e.bike ? (
-                        <span>
-                          {e.bike.name} <span className="text-[10px] text-slate-500 font-mono block">{e.bike.registrationNumber}</span>
-                        </span>
-                      ) : (
-                        <span className="text-slate-500 italic">General Business</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3 font-bold text-brand-orange">
-                      {e.paidByPartner?.name || 'Partner'}
-                    </td>
-                    <td className="py-3 px-3 uppercase text-slate-400 text-[11px]">{e.paymentMethod}</td>
-                    <td className="py-3 px-3 font-bold font-display text-rose-400 text-sm text-right">
+                      <span className="text-slate-400 font-mono text-[11px]">{formatDate(e.expenseDate)}</span>
+                    </div>
+
+                    <button
+                      onClick={() => handleDelete(e._id)}
+                      className="p-2 text-slate-400 hover:text-rose-400 active:scale-95 rounded-lg bg-white/5 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+                      title="Delete expense"
+                      aria-label="Delete expense"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="font-semibold text-white text-sm flex-1">{e.description}</p>
+                    <p className="font-bold font-display text-rose-400 text-base shrink-0">
                       -{formatINR(e.amount)}
-                    </td>
-                    <td className="py-3 px-3 text-right">
-                      <button
-                        onClick={() => handleDelete(e._id)}
-                        className="p-1.5 text-slate-500 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition-colors"
-                        title="Delete expense"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 p-2.5 rounded-lg bg-brand-card/80 border border-brand-border/60 text-xs">
+                    <div>
+                      <p className="text-[10px] text-slate-400 uppercase font-semibold">Motorcycle</p>
+                      <p className="text-slate-200 mt-0.5 font-medium truncate">
+                        {e.bike ? e.bike.name : 'General Business'}
+                      </p>
+                      {e.bike && (
+                        <p className="text-[10px] text-slate-400 font-mono">{e.bike.registrationNumber}</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400 uppercase font-semibold">Paid By</p>
+                      <p className="text-brand-orange font-bold mt-0.5 truncate">
+                        {e.paidByPartner?.name || 'Partner'}
+                      </p>
+                      <p className="text-[10px] uppercase text-slate-400 font-mono">{e.paymentMethod}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table (>=640px) */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-brand-border text-slate-400 uppercase text-[10px]">
+                    <th className="py-3 px-3">Date</th>
+                    <th className="py-3 px-3">Category</th>
+                    <th className="py-3 px-3">Description</th>
+                    <th className="py-3 px-3">Motorcycle</th>
+                    <th className="py-3 px-3">Paid By (Partner)</th>
+                    <th className="py-3 px-3">Method</th>
+                    <th className="py-3 px-3 text-right">Amount</th>
+                    <th className="py-3 px-3 text-right">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-brand-border/40">
+                  {expenses.map((e) => (
+                    <tr key={e._id} className="hover:bg-brand-surface/70 transition-colors">
+                      <td className="py-3 px-3 text-slate-300 font-mono">{formatDate(e.expenseDate)}</td>
+                      <td className="py-3 px-3 uppercase font-semibold text-white">
+                        <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px]">
+                          {e.category}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 font-semibold text-white max-w-xs truncate">{e.description}</td>
+                      <td className="py-3 px-3 text-slate-300">
+                        {e.bike ? (
+                          <span>
+                            {e.bike.name} <span className="text-[10px] text-slate-500 font-mono block">{e.bike.registrationNumber}</span>
+                          </span>
+                        ) : (
+                          <span className="text-slate-500 italic">General Business</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 font-bold text-brand-orange">
+                        {e.paidByPartner?.name || 'Partner'}
+                      </td>
+                      <td className="py-3 px-3 uppercase text-slate-400 text-[11px]">{e.paymentMethod}</td>
+                      <td className="py-3 px-3 font-bold font-display text-rose-400 text-sm text-right">
+                        -{formatINR(e.amount)}
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <button
+                          onClick={() => handleDelete(e._id)}
+                          className="p-1.5 text-slate-500 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition-colors"
+                          title="Delete expense"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -27,37 +27,37 @@ export default function MetricCard({
   return (
     <div
       onClick={onClick}
-      className={`group relative bg-brand-card dark:bg-brand-card border border-brand-border/60 rounded-xl p-5 shadow-card-dark transition-all duration-200 ${
+      className={`group relative bg-brand-card dark:bg-brand-card border border-brand-border/60 rounded-xl p-3.5 sm:p-5 shadow-card-dark transition-all duration-200 min-w-0 overflow-hidden ${
         onClick ? 'cursor-pointer hover:-translate-y-0.5' : ''
       } ${accentGlow}`}
     >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-400">
+      <div className="flex items-start justify-between gap-1">
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] sm:text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-400 truncate">
             {title}
           </p>
-          <h3 className="mt-2 text-2xl lg:text-3xl font-bold font-display tracking-tight text-white dark:text-white">
+          <h3 className="mt-1 sm:mt-2 text-lg sm:text-2xl lg:text-3xl font-bold font-display tracking-tight text-white dark:text-white truncate">
             {value}
           </h3>
         </div>
 
         {Icon && (
-          <div className={`p-2.5 rounded-lg border border-white/5 ${iconBg}`}>
-            <Icon className="w-5 h-5" />
+          <div className={`p-2 sm:p-2.5 rounded-lg border border-white/5 shrink-0 ${iconBg}`}>
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         )}
       </div>
 
       {(subtitle || trend) && (
-        <div className="mt-3 flex items-center justify-between text-xs">
+        <div className="mt-2 sm:mt-3 flex items-center justify-between text-xs gap-1 min-w-0">
           {subtitle && (
-            <span className="text-slate-400 dark:text-slate-400 truncate max-w-[70%]">
+            <span className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-400 truncate flex-1 min-w-0">
               {subtitle}
             </span>
           )}
           {trend && (
             <span
-              className={`font-medium px-1.5 py-0.5 rounded text-[11px] ${
+              className={`font-medium px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] shrink-0 ${
                 trendPositive
                   ? 'bg-emerald-500/10 text-emerald-400'
                   : 'bg-rose-500/10 text-rose-400'

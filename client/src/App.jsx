@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { LayoutDashboard, CalendarDays, Bike, Plus, Menu } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { api } from './services/api';
 
@@ -218,7 +219,7 @@ export default function App() {
         />
 
         {/* Dynamic Page Routing */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 lg:pb-8">
           {currentTab === 'dashboard' && (
             <Dashboard
               onNavigate={handleNavigate}
@@ -323,6 +324,80 @@ export default function App() {
             <SettingsPage refreshKey={refreshKey} />
           )}
         </main>
+
+        {/* Mobile Sticky Bottom Navigation Bar */}
+        <nav
+          aria-label="Mobile Navigation"
+          className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-brand-surface/95 backdrop-blur-xl border-t border-brand-border pb-[max(0.5rem,env(safe-area-inset-bottom))] px-3 pt-1.5 shadow-[0_-8px_25px_rgba(0,0,0,0.5)]"
+        >
+          <div className="flex items-center justify-around max-w-lg mx-auto">
+            {/* Dashboard */}
+            <button
+              onClick={() => setCurrentTab('dashboard')}
+              className={`flex flex-col items-center justify-center flex-1 py-1 min-h-[48px] rounded-xl transition-all ${
+                currentTab === 'dashboard'
+                  ? 'text-brand-orange font-bold'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <LayoutDashboard className={`w-5 h-5 ${currentTab === 'dashboard' ? 'stroke-[2.5]' : ''}`} />
+              <span className="text-[10px] mt-0.5">Dashboard</span>
+            </button>
+
+            {/* Rentals */}
+            <button
+              onClick={() => {
+                setSelectedRentalId(null);
+                setCurrentTab('rentals');
+              }}
+              className={`flex flex-col items-center justify-center flex-1 py-1 min-h-[48px] rounded-xl transition-all ${
+                currentTab === 'rentals' || currentTab === 'rental-detail'
+                  ? 'text-brand-orange font-bold'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <CalendarDays className={`w-5 h-5 ${currentTab === 'rentals' || currentTab === 'rental-detail' ? 'stroke-[2.5]' : ''}`} />
+              <span className="text-[10px] mt-0.5">Rentals</span>
+            </button>
+
+            {/* Center Quick Action Floating Action Button */}
+            <div className="flex flex-col items-center justify-center flex-1 -mt-5">
+              <button
+                onClick={() => setIsQuickActionOpen(true)}
+                className="w-12 h-12 rounded-full bg-brand-orange hover:bg-orange-600 text-white shadow-glow flex items-center justify-center active:scale-95 transition-transform border-2 border-brand-surface"
+                aria-label="Quick Actions"
+              >
+                <Plus className="w-6 h-6 stroke-[3]" />
+              </button>
+              <span className="text-[10px] text-brand-orange font-bold mt-1">Actions</span>
+            </div>
+
+            {/* Bikes */}
+            <button
+              onClick={() => {
+                setSelectedBikeId(null);
+                setCurrentTab('bikes');
+              }}
+              className={`flex flex-col items-center justify-center flex-1 py-1 min-h-[48px] rounded-xl transition-all ${
+                currentTab === 'bikes' || currentTab === 'bike-profile'
+                  ? 'text-brand-orange font-bold'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Bike className={`w-5 h-5 ${currentTab === 'bikes' || currentTab === 'bike-profile' ? 'stroke-[2.5]' : ''}`} />
+              <span className="text-[10px] mt-0.5">Bikes</span>
+            </button>
+
+            {/* More / Menu Drawer */}
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="flex flex-col items-center justify-center flex-1 py-1 min-h-[48px] rounded-xl text-slate-400 hover:text-white transition-all"
+            >
+              <Menu className="w-5 h-5" />
+              <span className="text-[10px] mt-0.5">More</span>
+            </button>
+          </div>
+        </nav>
       </div>
 
       {/* Global Modals */}

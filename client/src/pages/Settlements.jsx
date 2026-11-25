@@ -515,25 +515,19 @@ export default function Settlements({ onTriggerAction, refreshKey }) {
         {filteredHistory.length === 0 ? (
           <p className="py-10 text-center text-xs text-slate-400">No previous settlements found.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-brand-border text-slate-400 uppercase text-[10px]">
-                  <th className="py-3 px-3">Settlement #</th>
-                  <th className="py-3 px-3">Type</th>
-                  <th className="py-3 px-3">Date</th>
-                  <th className="py-3 px-3">Paid By (Sender)</th>
-                  <th className="py-3 px-3">Received By</th>
-                  <th className="py-3 px-3">Method</th>
-                  <th className="py-3 px-3">Reference / Notes</th>
-                  <th className="py-3 px-3 text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-brand-border/40">
-                {filteredHistory.map((s) => (
-                  <tr key={s._id} className="hover:bg-brand-surface/70">
-                    <td className="py-3.5 px-3 font-mono font-bold text-white">#{s.settlementNumber}</td>
-                    <td className="py-3.5 px-3">
+          <>
+            {/* Mobile Cards (<640px) */}
+            <div className="sm:hidden space-y-3">
+              {filteredHistory.map((s) => (
+                <div
+                  key={s._id}
+                  className="p-4 rounded-xl bg-brand-surface border border-brand-border space-y-2.5 shadow-sm"
+                >
+                  <div className="flex items-center justify-between gap-2 pb-2 border-b border-brand-border/60">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-white text-xs">
+                        #{s.settlementNumber}
+                      </span>
                       {s.settlementType === 'expense' ? (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30">
                           Expense
@@ -543,20 +537,75 @@ export default function Settlements({ onTriggerAction, refreshKey }) {
                           Rent
                         </span>
                       )}
-                    </td>
-                    <td className="py-3.5 px-3 font-mono text-slate-300">{formatDate(s.settlementDate)}</td>
-                    <td className="py-3.5 px-3 font-semibold text-rose-400">{s.senderPartner?.name}</td>
-                    <td className="py-3.5 px-3 font-semibold text-emerald-400">{s.receiverPartner?.name}</td>
-                    <td className="py-3.5 px-3 uppercase text-slate-300">{s.paymentMethod}</td>
-                    <td className="py-3.5 px-3 text-slate-400">{s.reference || s.notes || '-'}</td>
-                    <td className="py-3.5 px-3 font-bold font-display text-brand-orange text-sm text-right">
+                    </div>
+                    <span className="font-mono text-slate-400 text-[11px]">{formatDate(s.settlementDate)}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-white">
+                      <span className="text-rose-400">{s.senderPartner?.name}</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-brand-orange shrink-0" />
+                      <span className="text-emerald-400">{s.receiverPartner?.name}</span>
+                    </div>
+                    <p className="font-bold font-display text-brand-orange text-base">
                       {formatINR(s.amount)}
-                    </td>
+                    </p>
+                  </div>
+
+                  <div className="p-2 rounded-lg bg-brand-card/80 border border-brand-border/60 flex items-center justify-between text-xs">
+                    <span className="uppercase text-[10px] text-slate-400 font-mono">{s.paymentMethod}</span>
+                    <span className="text-slate-400 text-[11px] truncate max-w-[200px]">
+                      {s.reference || s.notes || '-'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table (>=640px) */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-brand-border text-slate-400 uppercase text-[10px]">
+                    <th className="py-3 px-3">Settlement #</th>
+                    <th className="py-3 px-3">Type</th>
+                    <th className="py-3 px-3">Date</th>
+                    <th className="py-3 px-3">Paid By (Sender)</th>
+                    <th className="py-3 px-3">Received By</th>
+                    <th className="py-3 px-3">Method</th>
+                    <th className="py-3 px-3">Reference / Notes</th>
+                    <th className="py-3 px-3 text-right">Amount</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-brand-border/40">
+                  {filteredHistory.map((s) => (
+                    <tr key={s._id} className="hover:bg-brand-surface/70">
+                      <td className="py-3.5 px-3 font-mono font-bold text-white">#{s.settlementNumber}</td>
+                      <td className="py-3.5 px-3">
+                        {s.settlementType === 'expense' ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                            Expense
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                            Rent
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-3 font-mono text-slate-300">{formatDate(s.settlementDate)}</td>
+                      <td className="py-3.5 px-3 font-semibold text-rose-400">{s.senderPartner?.name}</td>
+                      <td className="py-3.5 px-3 font-semibold text-emerald-400">{s.receiverPartner?.name}</td>
+                      <td className="py-3.5 px-3 uppercase text-slate-300">{s.paymentMethod}</td>
+                      <td className="py-3.5 px-3 text-slate-400">{s.reference || s.notes || '-'}</td>
+                      <td className="py-3.5 px-3 font-bold font-display text-brand-orange text-sm text-right">
+                        {formatINR(s.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

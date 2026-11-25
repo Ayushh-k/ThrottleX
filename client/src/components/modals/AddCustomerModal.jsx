@@ -106,57 +106,64 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-brand-card border border-brand-border rounded-2xl shadow-2xl overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-md overflow-hidden animate-fade-in">
+      <div className="relative w-full max-w-2xl bg-brand-card border-t sm:border border-brand-border rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[94vh] sm:max-h-[92vh] overflow-hidden">
+        {/* Mobile Handle */}
+        <div className="sm:hidden w-10 h-1 bg-white/20 rounded-full mx-auto mt-2.5 mb-1 shrink-0" />
+
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-brand-border bg-brand-surface">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-brand-border bg-brand-surface shrink-0">
           <div>
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-brand-orange" /> Customer KYC Vault Profile
             </h3>
-            <p className="text-xs text-slate-400">
-              Save verified ID documents, driving licence expiry, risk status, and emergency guarantor
+            <p className="text-[11px] sm:text-xs text-slate-400">
+              Save verified ID documents, driving licence expiry, risk status & guarantor
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-white/5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 text-slate-400 hover:text-white rounded-xl bg-white/5 min-h-[40px] min-w-[40px] flex items-center justify-center transition-colors"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-brand-border bg-brand-surface/50 text-xs">
+        <div className="flex border-b border-brand-border bg-brand-surface/50 text-xs shrink-0">
           <button
             type="button"
             onClick={() => setActiveTab('basic')}
-            className={`flex-1 py-2.5 font-semibold text-center border-b-2 transition-all ${
+            className={`flex-1 py-3 font-semibold text-center border-b-2 transition-all min-h-[44px] ${
               activeTab === 'basic'
                 ? 'border-brand-orange text-brand-orange bg-brand-orange/5'
                 : 'border-transparent text-slate-400 hover:text-white'
             }`}
           >
-            1. Personal Info
+            1. Personal
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('kyc_docs')}
-            className={`flex-1 py-2.5 font-semibold text-center border-b-2 transition-all ${
+            className={`flex-1 py-3 font-semibold text-center border-b-2 transition-all min-h-[44px] ${
               activeTab === 'kyc_docs'
                 ? 'border-brand-orange text-brand-orange bg-brand-orange/5'
                 : 'border-transparent text-slate-400 hover:text-white'
             }`}
           >
-            2. KYC Documents & Risk Status
+            2. KYC Docs
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('guarantor')}
-            className={`flex-1 py-2.5 font-semibold text-center border-b-2 transition-all ${
+            className={`flex-1 py-3 font-semibold text-center border-b-2 transition-all min-h-[44px] ${
               activeTab === 'guarantor'
                 ? 'border-brand-orange text-brand-orange bg-brand-orange/5'
                 : 'border-transparent text-slate-400 hover:text-white'
             }`}
           >
-            3. Guarantor & Reference
+            3. Guarantor
           </button>
         </div>
 
@@ -166,7 +173,8 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess }) {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto flex flex-col">
+          <div className="p-4 sm:p-6 space-y-4 pb-28 sm:pb-6 flex-1 overscroll-contain">
           {/* TAB 1: BASIC INFO */}
           {activeTab === 'basic' && (
             <div className="space-y-3">
@@ -282,16 +290,6 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess }) {
                     <p className="text-[10px] text-slate-500 mt-1">Upload recent passport photo or capture live</p>
                   </div>
                 </div>
-              </div>
-
-              <div className="flex justify-end pt-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('kyc_docs')}
-                  className="px-4 py-2 rounded-xl bg-brand-orange hover:bg-orange-600 text-white text-xs font-bold transition-all"
-                >
-                  Next: KYC Documents →
-                </button>
               </div>
             </div>
           )}
@@ -443,23 +441,6 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess }) {
                   {aadhaarBackPhotoUrl && <img src={aadhaarBackPhotoUrl} alt="ID Back" className="mt-2 h-16 rounded border border-brand-orange object-cover" />}
                 </div>
               </div>
-
-              <div className="flex justify-between pt-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('basic')}
-                  className="px-4 py-2 rounded-xl border border-brand-border text-slate-300 text-xs font-semibold"
-                >
-                  ← Back: Personal Info
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('guarantor')}
-                  className="px-4 py-2 rounded-xl bg-brand-orange hover:bg-orange-600 text-white text-xs font-bold transition-all"
-                >
-                  Next: Guarantor Info →
-                </button>
-              </div>
             </div>
           )}
 
@@ -526,25 +507,48 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess }) {
                   className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface text-white"
                 />
               </div>
+            </div>
+          )}
+          </div>
 
-              <div className="flex justify-between pt-3 border-t border-brand-border">
+          {/* Sticky Mobile & Desktop Action Bar */}
+          <div className="sticky bottom-0 left-0 right-0 p-3 sm:p-4 bg-brand-surface/95 backdrop-blur-md border-t border-brand-border flex items-center justify-between gap-2.5 z-20 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lg">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-300 hover:text-white rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 min-h-[46px] transition-all"
+            >
+              Cancel
+            </button>
+            <div className="flex items-center gap-2">
+              {activeTab !== 'basic' && (
                 <button
                   type="button"
-                  onClick={() => setActiveTab('kyc_docs')}
-                  className="px-4 py-2 rounded-xl border border-brand-border text-slate-300 text-xs font-semibold"
+                  onClick={() => setActiveTab(activeTab === 'guarantor' ? 'kyc_docs' : 'basic')}
+                  className="px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-300 hover:text-white rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 min-h-[46px] transition-all"
                 >
-                  ← Back: KYC Docs
+                  ← Back
                 </button>
+              )}
+              {activeTab !== 'guarantor' ? (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab(activeTab === 'basic' ? 'kyc_docs' : 'guarantor')}
+                  className="px-5 py-2.5 text-xs sm:text-sm font-bold bg-brand-orange hover:bg-brand-orange-hover active:bg-orange-600 text-white rounded-xl shadow-glow min-h-[46px] transition-all"
+                >
+                  Next Step →
+                </button>
+              ) : (
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-6 py-2.5 rounded-xl bg-brand-orange hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-glow-sm disabled:opacity-50"
+                  className="px-6 py-2.5 text-xs sm:text-sm font-bold bg-brand-orange hover:bg-brand-orange-hover active:bg-orange-600 text-white rounded-xl shadow-glow min-h-[46px] flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                 >
                   {loading ? 'Saving Profile...' : 'Save Customer & KYC Vault'}
                 </button>
-              </div>
+              )}
             </div>
-          )}
+          </div>
         </form>
       </div>
     </div>

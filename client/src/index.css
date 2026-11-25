@@ -21,10 +21,20 @@
     --text-muted: #94A3B8;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     background-color: var(--bg-main);
     color: var(--text-primary);
     overflow-x: hidden;
+    min-height: 100vh;
   }
 }
 
