@@ -53,7 +53,22 @@ export default function App() {
 
   // Global Refresh Key to trigger reactive dashboard re-fetch
   const [refreshKey, setRefreshKey] = useState(0);
-  const triggerRefresh = () => setRefreshKey((prev) => prev + 1);
+  const triggerRefresh = () => {
+    if (api.clearCache) api.clearCache();
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  // Visited tabs tracker for instant 0ms tab switching and back-navigation (Keep-Alive)
+  const [visitedTabs, setVisitedTabs] = useState(() => new Set(['dashboard']));
+
+  useEffect(() => {
+    setVisitedTabs((prev) => {
+      if (prev.has(currentTab)) return prev;
+      const next = new Set(prev);
+      next.add(currentTab);
+      return next;
+    });
+  }, [currentTab]);
 
   // Modal Visibility States
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -380,22 +395,26 @@ export default function App() {
           partnerBalance={partnerBalance}
         />
 
-        {/* Dynamic Page Routing */}
+        {/* Dynamic Page Routing with Keep-Alive for Instant 0ms Back Navigation */}
         <main className="flex-1 p-3.5 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 lg:pb-8">
-          {currentTab === 'dashboard' && (
-            <Dashboard
-              onNavigate={handleNavigate}
-              onTriggerAction={handleTriggerAction}
-              refreshKey={refreshKey}
-            />
+          {visitedTabs.has('dashboard') && (
+            <div className={currentTab === 'dashboard' ? 'block' : 'hidden'}>
+              <Dashboard
+                onNavigate={handleNavigate}
+                onTriggerAction={handleTriggerAction}
+                refreshKey={refreshKey}
+              />
+            </div>
           )}
 
-          {currentTab === 'bikes' && (
-            <Bikes
-              onNavigate={handleNavigate}
-              onTriggerAction={handleTriggerAction}
-              refreshKey={refreshKey}
-            />
+          {visitedTabs.has('bikes') && (
+            <div className={currentTab === 'bikes' ? 'block' : 'hidden'}>
+              <Bikes
+                onNavigate={handleNavigate}
+                onTriggerAction={handleTriggerAction}
+                refreshKey={refreshKey}
+              />
+            </div>
           )}
 
           {currentTab === 'bike-profile' && (
@@ -407,12 +426,14 @@ export default function App() {
             />
           )}
 
-          {currentTab === 'rentals' && (
-            <Rentals
-              onNavigate={handleNavigate}
-              onTriggerAction={handleTriggerAction}
-              refreshKey={refreshKey}
-            />
+          {visitedTabs.has('rentals') && (
+            <div className={currentTab === 'rentals' ? 'block' : 'hidden'}>
+              <Rentals
+                onNavigate={handleNavigate}
+                onTriggerAction={handleTriggerAction}
+                refreshKey={refreshKey}
+              />
+            </div>
           )}
 
           {currentTab === 'rental-detail' && (
@@ -424,66 +445,86 @@ export default function App() {
             />
           )}
 
-          {currentTab === 'customers' && (
-            <Customers
-              onTriggerAction={handleTriggerAction}
-              refreshKey={refreshKey}
-            />
+          {visitedTabs.has('customers') && (
+            <div className={currentTab === 'customers' ? 'block' : 'hidden'}>
+              <Customers
+                onTriggerAction={handleTriggerAction}
+                refreshKey={refreshKey}
+              />
+            </div>
           )}
 
-          {currentTab === 'expenses' && (
-            <Expenses
-              onTriggerAction={handleTriggerAction}
-              refreshKey={refreshKey}
-            />
+          {visitedTabs.has('expenses') && (
+            <div className={currentTab === 'expenses' ? 'block' : 'hidden'}>
+              <Expenses
+                onTriggerAction={handleTriggerAction}
+                refreshKey={refreshKey}
+              />
+            </div>
           )}
 
-          {currentTab === 'maintenance' && (
-            <Maintenance
-              onTriggerAction={handleTriggerAction}
-              refreshKey={refreshKey}
-            />
+          {visitedTabs.has('maintenance') && (
+            <div className={currentTab === 'maintenance' ? 'block' : 'hidden'}>
+              <Maintenance
+                onTriggerAction={handleTriggerAction}
+                refreshKey={refreshKey}
+              />
+            </div>
           )}
 
-          {currentTab === 'fuel' && (
-            <FuelPage
-              onTriggerAction={handleTriggerAction}
-              refreshKey={refreshKey}
-            />
+          {visitedTabs.has('fuel') && (
+            <div className={currentTab === 'fuel' ? 'block' : 'hidden'}>
+              <FuelPage
+                onTriggerAction={handleTriggerAction}
+                refreshKey={refreshKey}
+              />
+            </div>
           )}
 
-          {currentTab === 'partners' && (
-            <Partners
-              onNavigate={handleNavigate}
-              onTriggerAction={handleTriggerAction}
-              refreshKey={refreshKey}
-            />
+          {visitedTabs.has('partners') && (
+            <div className={currentTab === 'partners' ? 'block' : 'hidden'}>
+              <Partners
+                onNavigate={handleNavigate}
+                onTriggerAction={handleTriggerAction}
+                refreshKey={refreshKey}
+              />
+            </div>
           )}
 
-          {currentTab === 'settlements' && (
-            <Settlements
-              onTriggerAction={handleTriggerAction}
-              refreshKey={refreshKey}
-            />
+          {visitedTabs.has('settlements') && (
+            <div className={currentTab === 'settlements' ? 'block' : 'hidden'}>
+              <Settlements
+                onTriggerAction={handleTriggerAction}
+                refreshKey={refreshKey}
+              />
+            </div>
           )}
 
-          {currentTab === 'ledger' && (
-            <Ledger refreshKey={refreshKey} />
+          {visitedTabs.has('ledger') && (
+            <div className={currentTab === 'ledger' ? 'block' : 'hidden'}>
+              <Ledger refreshKey={refreshKey} />
+            </div>
           )}
 
-          {currentTab === 'calendar' && (
-            <RentalCalendar
-              onNavigate={handleNavigate}
-              refreshKey={refreshKey}
-            />
+          {visitedTabs.has('calendar') && (
+            <div className={currentTab === 'calendar' ? 'block' : 'hidden'}>
+              <RentalCalendar
+                onNavigate={handleNavigate}
+                refreshKey={refreshKey}
+              />
+            </div>
           )}
 
-          {currentTab === 'reports' && (
-            <Reports refreshKey={refreshKey} />
+          {visitedTabs.has('reports') && (
+            <div className={currentTab === 'reports' ? 'block' : 'hidden'}>
+              <Reports refreshKey={refreshKey} />
+            </div>
           )}
 
-          {currentTab === 'settings' && (
-            <SettingsPage refreshKey={refreshKey} />
+          {visitedTabs.has('settings') && (
+            <div className={currentTab === 'settings' ? 'block' : 'hidden'}>
+              <SettingsPage refreshKey={refreshKey} />
+            </div>
           )}
         </main>
 

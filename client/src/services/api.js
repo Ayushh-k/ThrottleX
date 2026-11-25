@@ -1,5 +1,13 @@
 const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
 
+// In-memory Fast API Cache for GET requests (instant navigation, zero flicker)
+const requestCache = new Map();
+const CACHE_TTL_MS = 30 * 1000; // 30 seconds TTL
+
+export function clearApiCache() {
+  requestCache.clear();
+}
+
 function getAuthHeader() {
   const token = localStorage.getItem('throttlex_token');
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -7,6 +15,16 @@ function getAuthHeader() {
 
 async function request(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
+  const isGet = !options.method || options.method.toUpperCase() === 'GET';
+
+  // Return instantly from in-memory cache if available
+  if (isGet && !options.skipCache) {
+    const cached = requestCache.get(url);
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
+      return cached.data;
+    }
+  }
+
   const headers = {
     'Content-Type': 'application/json',
     ...getAuthHeader(),
@@ -51,10 +69,18 @@ async function request(endpoint, options = {}) {
     throw new Error(errorMsg);
   }
 
+  // Cache GET responses; flush cache on any mutation (POST, PUT, DELETE, PATCH)
+  if (isGet) {
+    requestCache.set(url, { data, timestamp: Date.now() });
+  } else {
+    requestCache.clear();
+  }
+
   return data;
 }
 
 export const api = {
+  clearCache: clearApiCache,
   // Auth
   login: (credentials) => request('/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),
   register: (payload) => request('/auth/register', { method: 'POST', body: JSON.stringify(payload) }),
