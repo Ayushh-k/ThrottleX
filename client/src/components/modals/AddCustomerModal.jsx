@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, UserPlus, AlertCircle, ShieldCheck, Upload, Calendar, Camera, AlertTriangle, User } from 'lucide-react';
 import { api } from '../../services/api';
 
-export default function AddCustomerModal({ isOpen, onClose, onSuccess }) {
+export default function AddCustomerModal({ isOpen, onClose, onSuccess, zIndex = 'z-50' }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('basic'); // 'basic' | 'kyc_docs' | 'guarantor'
@@ -56,17 +56,34 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     setError('');
+
+    // Guard: Do not allow submission if user is not on the final guarantor step
+    if (activeTab !== 'guarantor') {
+      if (activeTab === 'basic') {
+        if (!name.trim() || !phone.trim()) {
+          setError('Customer name and phone number are required.');
+          return;
+        }
+        setError('');
+        setActiveTab('kyc_docs');
+      } else if (activeTab === 'kyc_docs') {
+        setError('');
+        setActiveTab('guarantor');
+      }
+      return;
+    }
 
     if (!name.trim() || !phone.trim()) {
       setError('Customer name and phone number are required.');
+      setActiveTab('basic');
       return;
     }
 
     try {
       setLoading(true);
-      await api.createCustomer({
+      const res = await api.createCustomer({
         name: name.trim(),
         phone: phone.trim(),
         email: email.trim(),
@@ -96,7 +113,9 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess }) {
         notes: notes.trim()
       });
 
-      onSuccess();
+      if (onSuccess) {
+        onSuccess(res.customer || res);
+      }
       onClose();
     } catch (err) {
       setError(err.message || 'Error creating customer.');
@@ -106,7 +125,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-md overflow-hidden animate-fade-in">
+    <div className={`fixed inset-0 ${zIndex} flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-md overflow-hidden animate-fade-in`}>
       <div className="relative w-full max-w-2xl bg-brand-card border-t sm:border border-brand-border rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[94vh] sm:max-h-[92vh] overflow-hidden">
         {/* Mobile Handle */}
         <div className="sm:hidden w-10 h-1 bg-white/20 rounded-full mx-auto mt-2.5 mb-1 shrink-0" />
@@ -523,6 +542,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess }) {
             <div className="flex items-center gap-2">
               {activeTab !== 'basic' && (
                 <button
+                  key="btn-tab-back"
                   type="button"
                   onClick={() => setActiveTab(activeTab === 'guarantor' ? 'kyc_docs' : 'basic')}
                   className="px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-300 hover:text-white rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 min-h-[46px] transition-all"
@@ -530,16 +550,41 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess }) {
                   ← Back
                 </button>
               )}
-              {activeTab !== 'guarantor' ? (
+              {activeTab === 'basic' && (
                 <button
+                  key="btn-next-to-kyc"
                   type="button"
-                  onClick={() => setActiveTab(activeTab === 'basic' ? 'kyc_docs' : 'guarantor')}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (!name.trim() || !phone.trim()) {
+                      setError('Customer name and phone number are required.');
+                      return;
+                    }
+                    setError('');
+                    setActiveTab('kyc_docs');
+                  }}
                   className="px-5 py-2.5 text-xs sm:text-sm font-bold bg-brand-orange hover:bg-brand-orange-hover active:bg-orange-600 text-white rounded-xl shadow-glow min-h-[46px] transition-all"
                 >
-                  Next Step →
+                  Next: KYC Docs →
                 </button>
-              ) : (
+              )}
+              {activeTab === 'kyc_docs' && (
                 <button
+                  key="btn-next-to-guarantor"
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setError('');
+                    setActiveTab('guarantor');
+                  }}
+                  className="px-5 py-2.5 text-xs sm:text-sm font-bold bg-brand-orange hover:bg-brand-orange-hover active:bg-orange-600 text-white rounded-xl shadow-glow min-h-[46px] transition-all"
+                >
+                  Next: Guarantor Details →
+                </button>
+              )}
+              {activeTab === 'guarantor' && (
+                <button
+                  key="btn-save-customer-profile"
                   type="submit"
                   disabled={loading}
                   className="px-6 py-2.5 text-xs sm:text-sm font-bold bg-brand-orange hover:bg-brand-orange-hover active:bg-orange-600 text-white rounded-xl shadow-glow min-h-[46px] flex items-center justify-center gap-2 transition-all disabled:opacity-50"

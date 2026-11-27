@@ -200,9 +200,16 @@ exports.createRental = async (req, res) => {
       customerName,
       customerPhone,
       customerEmail,
+      customerFatherName,
       customerDlNumber,
       customerAddress,
       customerEmergencyContact,
+      customerIdProofType = 'Aadhaar',
+      customerIdProofNumber,
+      customerGuarantor,
+      guarantorName,
+      guarantorPhone,
+      guarantorRelation,
       startDate,
       expectedEndDate,
       rentalType = 'daily',
@@ -250,13 +257,25 @@ exports.createRental = async (req, res) => {
     } else if (customerPhone) {
       customer = await Customer.findOne({ phone: customerPhone.trim() });
       if (!customer && customerName) {
+        const guarantorData = customerGuarantor || (guarantorName ? {
+          name: guarantorName.trim(),
+          phone: (guarantorPhone || '').trim(),
+          relation: (guarantorRelation || '').trim(),
+          confirmed: true
+        } : {});
+
         customer = await Customer.create({
           name: customerName.trim(),
           phone: customerPhone.trim(),
           email: customerEmail || '',
-          dlNumber: customerDlNumber || '',
+          fatherName: customerFatherName || '',
+          dlNumber: (customerDlNumber || '').trim().toUpperCase(),
           address: customerAddress || '',
-          emergencyContact: customerEmergencyContact || ''
+          emergencyContact: customerEmergencyContact || guarantorPhone || '',
+          idProofType: customerIdProofType || 'Aadhaar',
+          idProofNumber: (customerIdProofNumber || '').trim().toUpperCase(),
+          guarantor: guarantorData,
+          riskStatus: 'verified'
         });
       }
     }

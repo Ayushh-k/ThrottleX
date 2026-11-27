@@ -3,6 +3,7 @@ const settlementService = require('../services/settlementService');
 const notificationService = require('../services/notificationService');
 const Bike = require('../models/Bike');
 const Rental = require('../models/Rental');
+const Expense = require('../models/Expense');
 const Transaction = require('../models/Transaction');
 
 exports.getDashboardData = async (req, res) => {
@@ -33,6 +34,15 @@ exports.getDashboardData = async (req, res) => {
         }).lean();
 
         const monthRevenue = monthRentals.reduce((sum, r) => sum + (r.totalAmount || 0), 0);
+        
+        // Month expenses for this specific bike
+        const monthExpenses = await Expense.find({
+          bike: bike._id,
+          expenseDate: { $gte: startOfCurrentMonth }
+        }).lean();
+        const thisMonthExpenses = monthExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+        const thisMonthProfit = monthRevenue - thisMonthExpenses;
+
         const allTimeStats = await calculationService.getBikeFinancials(bike._id);
 
         return {
@@ -49,6 +59,8 @@ exports.getDashboardData = async (req, res) => {
           currentOdometer: bike.currentOdometer,
           thisMonthRentals: monthRentals.length,
           thisMonthRevenue: monthRevenue,
+          thisMonthExpenses,
+          thisMonthProfit,
           allTimeRevenue: allTimeStats.totalRevenue,
           allTimeExpenses: allTimeStats.totalExpenses,
           allTimeProfit: allTimeStats.netProfit,

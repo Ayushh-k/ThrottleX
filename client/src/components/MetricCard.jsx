@@ -24,26 +24,36 @@ export default function MetricCard({
     rose: 'bg-rose-500/10 text-rose-400'
   }[accent] || 'bg-brand-orange/10 text-brand-orange';
 
+  const valStr = value != null ? String(value) : '';
+  const isLongValue = valStr.length > 7;
+
   return (
     <div
       onClick={onClick}
-      className={`group relative bg-brand-card dark:bg-brand-card border border-brand-border/60 rounded-xl p-3.5 sm:p-5 shadow-card-dark transition-all duration-200 min-w-0 overflow-hidden ${
+      title={valStr}
+      className={`group relative bg-brand-card dark:bg-brand-card border border-brand-border/60 rounded-xl p-3 sm:p-4 lg:p-5 shadow-card-dark transition-all duration-200 min-w-0 overflow-hidden ${
         onClick ? 'cursor-pointer hover:-translate-y-0.5' : ''
       } ${accentGlow}`}
     >
-      <div className="flex items-start justify-between gap-1">
+      <div className="flex items-start justify-between gap-1.5">
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] sm:text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-400 truncate">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-400 truncate">
             {title}
           </p>
-          <h3 className="mt-1 sm:mt-2 text-lg sm:text-2xl lg:text-3xl font-bold font-display tracking-tight text-white dark:text-white truncate">
+          <h3
+            className={`mt-1 sm:mt-1.5 font-bold font-display tracking-tight text-white dark:text-white whitespace-nowrap overflow-x-auto no-scrollbar ${
+              isLongValue
+                ? 'text-base sm:text-lg lg:text-xl xl:text-2xl'
+                : 'text-lg sm:text-xl lg:text-2xl xl:text-3xl'
+            }`}
+          >
             {value}
           </h3>
         </div>
 
         {Icon && (
-          <div className={`p-2 sm:p-2.5 rounded-lg border border-white/5 shrink-0 ${iconBg}`}>
-            <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className={`p-1.5 sm:p-2 lg:p-2.5 rounded-lg border border-white/5 shrink-0 ${iconBg}`}>
+            <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
           </div>
         )}
       </div>

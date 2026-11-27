@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, AlertCircle, CheckCircle2, Clock, IndianRupee, Bike as BikeIcon, User, Plus, Zap } from 'lucide-react';
+import { X, Calendar, AlertCircle, CheckCircle2, Clock, IndianRupee, Bike as BikeIcon, User, Plus, Zap, ShieldCheck } from 'lucide-react';
 import { api } from '../../services/api';
 import { formatINR, calculateDays, calculateHours, toLocalISOString, formatTime, formatDateTime } from '../../utils/formatters';
+import AddCustomerModal from './AddCustomerModal';
 
 export default function NewRentalModal({ isOpen, onClose, onSuccess, preselectedBikeId = null }) {
   const [bikes, setBikes] = useState([]);
@@ -15,10 +16,18 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
   // Form State
   const [selectedBikeId, setSelectedBikeId] = useState(preselectedBikeId || '');
   const [isNewCustomer, setIsNewCustomer] = useState(false);
+  const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerFatherName, setCustomerFatherName] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
   const [customerDl, setCustomerDl] = useState('');
+  const [customerIdProofType, setCustomerIdProofType] = useState('Aadhaar');
+  const [customerIdProofNumber, setCustomerIdProofNumber] = useState('');
+  const [guarantorName, setGuarantorName] = useState('');
+  const [guarantorPhone, setGuarantorPhone] = useState('');
+  const [guarantorRelation, setGuarantorRelation] = useState('');
 
   const now = new Date();
   const defaultStart = toLocalISOString(now);
@@ -286,7 +295,14 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
         customerId: isNewCustomer ? null : selectedCustomerId,
         customerName: isNewCustomer ? customerName : undefined,
         customerPhone: isNewCustomer ? customerPhone : undefined,
+        customerFatherName: isNewCustomer ? customerFatherName : undefined,
+        customerAddress: isNewCustomer ? customerAddress : undefined,
         customerDlNumber: isNewCustomer ? customerDl : undefined,
+        customerIdProofType: isNewCustomer ? customerIdProofType : undefined,
+        customerIdProofNumber: isNewCustomer ? customerIdProofNumber : undefined,
+        guarantorName: isNewCustomer ? guarantorName : undefined,
+        guarantorPhone: isNewCustomer ? guarantorPhone : undefined,
+        guarantorRelation: isNewCustomer ? guarantorRelation : undefined,
         startDate: new Date(startDate).toISOString(),
         expectedEndDate: new Date(expectedEndDate).toISOString(),
         rentalType,
@@ -589,57 +605,198 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
 
           {/* Section 3: Customer Information */}
           <div className="space-y-3 pt-2 border-t border-brand-border/60">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                 <User className="w-4 h-4 text-sky-400" /> Customer Information
               </label>
-              <button
-                type="button"
-                onClick={() => setIsNewCustomer(!isNewCustomer)}
-                className="text-xs text-brand-orange hover:underline flex items-center gap-1"
-              >
-                <Plus className="w-3.5 h-3.5" /> {isNewCustomer ? 'Select Existing Customer' : 'Add New Customer'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddCustomerModalOpen(true)}
+                  className="px-2.5 py-1 text-xs font-semibold bg-brand-orange/15 hover:bg-brand-orange/25 text-brand-orange rounded-lg border border-brand-orange/30 flex items-center gap-1 transition-all shadow-glow-sm"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" /> Full KYC & Guarantor Vault
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsNewCustomer(!isNewCustomer)}
+                  className="text-xs text-slate-400 hover:text-white underline flex items-center gap-1"
+                >
+                  {isNewCustomer ? 'Select Existing' : '+ Inline Form'}
+                </button>
+              </div>
             </div>
 
             {!isNewCustomer ? (
-              <select
-                value={selectedCustomerId}
-                onChange={(e) => setSelectedCustomerId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface text-white"
-              >
-                <option value="">-- Select from {customers.length} registered customers --</option>
-                {customers.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.name} ({c.phone}) - DL: {c.dlNumber || 'N/A'}
-                  </option>
-                ))}
-              </select>
+              <div className="space-y-2">
+                <select
+                  value={selectedCustomerId}
+                  onChange={(e) => setSelectedCustomerId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface text-white"
+                >
+                  <option value="">-- Select from {customers.length} registered customers --</option>
+                  {customers.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.name} ({c.phone}) - DL: {c.dlNumber || 'N/A'} {c.guarantor?.name ? `• Gur: ${c.guarantor.name}` : ''}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Selected Customer Verification Badge */}
+                {selectedCustomerId && (() => {
+                  const sc = customers.find((c) => c._id === selectedCustomerId);
+                  if (!sc) return null;
+                  return (
+                    <div className="p-3 rounded-xl bg-brand-surface border border-brand-border flex items-center justify-between text-xs gap-3 animate-fade-in">
+                      <div className="flex items-center gap-2.5">
+                        {sc.photoUrl ? (
+                          <img src={sc.photoUrl} alt="" className="w-9 h-9 rounded-full object-cover border border-brand-orange" />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-brand-orange/10 text-brand-orange flex items-center justify-center font-bold">
+                            {sc.name?.slice(0, 1) || 'C'}
+                          </div>
+                        )}
+                        <div>
+                          <div className="font-bold text-white flex items-center gap-1.5">
+                            {sc.name}
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                              {sc.riskStatus === 'verified' ? '🟢 Verified' : sc.riskStatus || 'Verified'}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-slate-400 font-mono">
+                            📞 {sc.phone} • DL: <strong className="text-slate-200">{sc.dlNumber || 'On file'}</strong>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right text-[11px] text-slate-400">
+                        {sc.guarantor?.name ? (
+                          <div>
+                            <span className="text-slate-500 text-[10px] uppercase block">Guarantor</span>
+                            <strong className="text-emerald-400">{sc.guarantor.name}</strong> ({sc.guarantor.relation || 'Ref'})
+                          </div>
+                        ) : (
+                          <span className="text-slate-500 text-[10px]">No Guarantor</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <input
-                  type="text"
-                  placeholder="Full Name *"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface"
-                  required
-                />
-                <input
-                  type="tel"
-                  placeholder="Phone Number *"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface"
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Driving Licence No."
-                  value={customerDl}
-                  onChange={(e) => setCustomerDl(e.target.value)}
-                  className="px-3 py-2 rounded-lg text-sm border border-brand-border bg-brand-surface"
-                />
+              <div className="p-3.5 rounded-xl bg-brand-surface/70 border border-brand-border space-y-3 animate-fade-in">
+                {/* 1. Personal Details */}
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-brand-orange block mb-1.5">
+                    1. Personal Details
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <input
+                      type="text"
+                      placeholder="Full Name *"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg text-sm border border-brand-border bg-brand-card text-white"
+                      required
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Phone Number *"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg text-sm border border-brand-border bg-brand-card text-white font-mono"
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="Father's Name"
+                      value={customerFatherName}
+                      onChange={(e) => setCustomerFatherName(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg text-sm border border-brand-border bg-brand-card text-white"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Residential Address"
+                      value={customerAddress}
+                      onChange={(e) => setCustomerAddress(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg text-sm border border-brand-border bg-brand-card text-white"
+                    />
+                  </div>
+                </div>
+
+                {/* 2. KYC Details */}
+                <div className="pt-2 border-t border-brand-border/40">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-sky-400 block mb-1.5">
+                    2. KYC & Driving Licence
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <input
+                      type="text"
+                      placeholder="Driving Licence (DL) No."
+                      value={customerDl}
+                      onChange={(e) => setCustomerDl(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg text-sm border border-brand-border bg-brand-card text-white font-mono uppercase"
+                    />
+                    <select
+                      value={customerIdProofType}
+                      onChange={(e) => setCustomerIdProofType(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg text-sm border border-brand-border bg-brand-card text-white"
+                    >
+                      <option value="Aadhaar">Aadhaar Card</option>
+                      <option value="Passport">Passport</option>
+                      <option value="Voter ID">Voter ID</option>
+                      <option value="College ID">College ID</option>
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="ID Proof Number"
+                      value={customerIdProofNumber}
+                      onChange={(e) => setCustomerIdProofNumber(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg text-sm border border-brand-border bg-brand-card text-white uppercase font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* 3. Guarantor Details */}
+                <div className="pt-2 border-t border-brand-border/40">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 block mb-1.5">
+                    3. Guarantor / Reference Contact
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <input
+                      type="text"
+                      placeholder="Guarantor Name"
+                      value={guarantorName}
+                      onChange={(e) => setGuarantorName(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg text-sm border border-brand-border bg-brand-card text-white"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Relationship (Father/Brother/Friend)"
+                      value={guarantorRelation}
+                      onChange={(e) => setGuarantorRelation(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg text-sm border border-brand-border bg-brand-card text-white"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Guarantor Phone"
+                      value={guarantorPhone}
+                      onChange={(e) => setGuarantorPhone(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg text-sm border border-brand-border bg-brand-card text-white font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* Quick Vault Shortcut banner */}
+                <div className="pt-1 flex items-center justify-between text-xs text-slate-400">
+                  <span>Want to upload photos or DL copy?</span>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddCustomerModalOpen(true)}
+                    className="text-brand-orange hover:underline font-semibold flex items-center gap-1"
+                  >
+                    Open Document Upload Modal →
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -851,6 +1008,22 @@ export default function NewRentalModal({ isOpen, onClose, onSuccess, preselected
           </div>
         </form>
       </div>
+
+      {/* Embedded Customer KYC Vault Modal with elevated z-index */}
+      {isAddCustomerModalOpen && (
+        <AddCustomerModal
+          isOpen={isAddCustomerModalOpen}
+          onClose={() => setIsAddCustomerModalOpen(false)}
+          onSuccess={(newCust) => {
+            if (newCust && newCust._id) {
+              setCustomers((prev) => [newCust, ...prev.filter((c) => c._id !== newCust._id)]);
+              setSelectedCustomerId(newCust._id);
+              setIsNewCustomer(false);
+            }
+          }}
+          zIndex="z-[70]"
+        />
+      )}
     </div>
   );
 }
