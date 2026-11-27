@@ -29,7 +29,7 @@ export default function Navbar({
   const [profileOpen, setProfileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 h-16 w-full bg-brand-surface/95 dark:bg-brand-surface/95 backdrop-blur-md border-b border-brand-border px-3 sm:px-4 lg:px-6 flex items-center justify-between min-w-0">
+    <header className="shrink-0 sticky top-0 z-40 h-16 w-full bg-brand-surface/95 dark:bg-brand-surface/95 backdrop-blur-md border-b border-brand-border px-3 sm:px-4 lg:px-6 flex items-center justify-between min-w-0">
       {/* Left: Mobile Menu + Search Bar */}
       <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 mr-2 sm:mr-4">
         <button

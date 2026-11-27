@@ -97,7 +97,7 @@ export default function Sidebar({ currentTab, onSelectTab, isMobileOpen, onClose
   return (
     <>
       {/* Desktop Persistent Sidebar */}
-      <aside className="hidden lg:block w-64 shrink-0 h-screen sticky top-0 z-40">
+      <aside className="hidden lg:block w-64 shrink-0 h-full z-40">
         {content}
       </aside>
 
