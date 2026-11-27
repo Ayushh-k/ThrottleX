@@ -41,10 +41,10 @@ export default function MetricCard({
             {title}
           </p>
           <h3
-            className={`mt-1 sm:mt-1.5 font-bold font-display tracking-tight text-white dark:text-white whitespace-nowrap overflow-x-auto no-scrollbar ${
+            className={`mt-1 sm:mt-1.5 font-bold font-display tracking-tight text-white dark:text-white whitespace-nowrap overflow-hidden ${
               isLongValue
                 ? 'text-base sm:text-lg lg:text-xl xl:text-2xl'
-                : 'text-lg sm:text-xl lg:text-2xl xl:text-3xl'
+                : 'text-lg sm:text-xl lg:text-2xl'
             }`}
           >
             {value}

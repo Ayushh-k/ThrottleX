@@ -44,6 +44,13 @@ class CalculationService {
     const expenses = await Expense.find(expenseFilter).lean();
     const totalExpenses = expenses.reduce((acc, e) => acc + (e.amount || 0), 0);
 
+    // 2b. Expenses specifically paid out of collected rent income
+    const rentExpensesList = expenses.filter(
+      (e) => e.paidFromRent === true || e.expenseSource === 'rent_income'
+    );
+    const totalRentExpenses = rentExpensesList.reduce((acc, e) => acc + (e.amount || 0), 0);
+    const netRentBalance = totalAmountCollected - totalRentExpenses;
+
     // 3. Net Profit
     const netProfit = totalRentalRevenue - totalExpenses;
     const profitMargin = totalRentalRevenue > 0 ? ((netProfit / totalRentalRevenue) * 100).toFixed(1) : 0;
@@ -65,6 +72,8 @@ class CalculationService {
       totalRevenue: totalRentalRevenue,
       totalAmountCollected,
       totalExpenses,
+      totalRentExpenses,
+      netRentBalance,
       netProfit,
       profitMargin: Number(profitMargin),
       totalReceivable: totalAmountReceivable,

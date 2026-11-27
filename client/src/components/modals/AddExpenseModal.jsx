@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Receipt, AlertCircle, IndianRupee } from 'lucide-react';
+import { X, Receipt, AlertCircle, IndianRupee, Coins } from 'lucide-react';
 import { api } from '../../services/api';
 
 export default function AddExpenseModal({ isOpen, onClose, onSuccess, preselectedBikeId = null }) {
@@ -9,6 +9,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess, preselecte
   const [error, setError] = useState('');
 
   const [bikeId, setBikeId] = useState(preselectedBikeId || 'general');
+  const [expenseSource, setExpenseSource] = useState('rent_income'); // 'rent_income' | 'general_fleet'
   const [category, setCategory] = useState('petrol');
   const [amount, setAmount] = useState('');
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().slice(0, 10));
@@ -72,6 +73,8 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess, preselecte
         category,
         amount: Number(amount),
         expenseDate,
+        expenseSource,
+        paidFromRent: expenseSource === 'rent_income',
         paidByPartnerId,
         paymentMethod,
         description: description.trim(),
@@ -127,6 +130,43 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess, preselecte
           <div className="p-4 sm:p-6 space-y-4 pb-28 sm:pb-6 flex-1">
             {/* Category & Motorcycle */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Funding Source / Expense Nature */}
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                  Expense Type / Funding Source *
+                </label>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setExpenseSource('rent_income')}
+                    className={`p-2.5 rounded-xl border text-left transition-all ${
+                      expenseSource === 'rent_income'
+                        ? 'border-emerald-500 bg-emerald-500/15 text-white font-bold shadow-glow-sm'
+                        : 'border-brand-border bg-brand-surface text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 text-emerald-400">
+                      <Coins className="w-3.5 h-3.5" /> Paid from Rent Income
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">Deducted from trip rent cash</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExpenseSource('general_fleet')}
+                    className={`p-2.5 rounded-xl border text-left transition-all ${
+                      expenseSource === 'general_fleet'
+                        ? 'border-brand-orange bg-brand-orange/15 text-white font-bold shadow-glow-sm'
+                        : 'border-brand-border bg-brand-surface text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 text-brand-orange">
+                      <Receipt className="w-3.5 h-3.5" /> Fleet Capital Expense
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">Paid from partner capital</div>
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="text-xs font-semibold text-slate-300 block mb-1">
                   Category *

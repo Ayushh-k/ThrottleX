@@ -149,8 +149,8 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
         </div>
       </div>
 
-      {/* Top 7 Financial Summary Metrics (Spacious responsive grid preventing any truncation on laptops) */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4">
+      {/* Primary Financial Performance (Spacious 4-column layout preventing truncation on laptops) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard
           title="Total Revenue"
           value={formatINR(summary.totalRevenue)}
@@ -161,7 +161,7 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
         <MetricCard
           title="Total Expenses"
           value={formatINR(summary.totalExpenses)}
-          subtitle="Fuel, service, parts"
+          subtitle="Fleet & maintenance"
           icon={Receipt}
           accent="rose"
         />
@@ -177,10 +177,14 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
         <MetricCard
           title="Receivable"
           value={formatINR(summary.totalReceivable)}
-          subtitle="Customer balance"
+          subtitle="Customer pending"
           icon={IndianRupee}
           accent="blue"
         />
+      </div>
+
+      {/* Fleet Operations & Settlement Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <MetricCard
           title="Partner Debt"
           value={formatINR(summary.amountPayable)}
@@ -207,7 +211,7 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
         />
       </div>
 
-      {/* Bike Kamayi vs Kharcha Hisab (Earnings, Expenses & Remaining Cash Tracker) */}
+      {/* Rent Income vs Spending Tracker (Tracks operating disbursements paid from collected rent) */}
       <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-brand-card to-brand-card border border-emerald-500/30 shadow-card-dark space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-brand-border/60">
           <div className="flex items-center gap-3">
@@ -217,14 +221,14 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-bold font-display text-white">
-                  Bike Kamayi vs Kharcha Hisab (Net Cash Balance)
+                  Rental Cash & Expense Tracker
                 </h3>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold uppercase">
-                  LIVE BALANCE
+                  RENT CASH FLOW
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Bike se total kamaye hue paise, usme se kiye gaye kharche, aur bache hue paise ka pura hisab
+                Track operating disbursements paid directly from collected rent and monitor remaining net cash
               </p>
             </div>
           </div>
@@ -235,65 +239,65 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
               onClick={() => onTriggerAction('add_expense')}
               className="px-3.5 py-2 text-xs font-bold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded-xl border border-rose-500/30 flex items-center gap-1.5 transition-all shadow-glow-sm"
             >
-              <Receipt className="w-4 h-4 text-rose-400" /> + Kharcha Daalein
+              <Receipt className="w-4 h-4 text-rose-400" /> + Record Rent Expense
             </button>
             <button
               type="button"
               onClick={() => onNavigate('expenses')}
               className="px-3.5 py-2 text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 rounded-xl border border-brand-border transition-all"
             >
-              Kharcha History
+              Expense Log
             </button>
           </div>
         </div>
 
         {/* 3 Step Financial Ledger Breakdown */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {/* 1. Bike Kamayi */}
+          {/* 1. Collected Rent */}
           <div className="p-3.5 rounded-xl bg-brand-surface border border-brand-border/80 space-y-1">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-semibold text-emerald-400 flex items-center gap-1">
-                💰 1. Kul Bike Kamayi
+                💰 1. Collected Rent Income
               </span>
-              <span className="text-[10px] text-slate-500">Rental Revenue</span>
+              <span className="text-[10px] text-slate-500">Trip Rent</span>
             </div>
             <p className="text-2xl font-bold font-display text-white">
-              {formatINR(summary.totalRevenue || 0)}
+              {formatINR(summary.totalAmountCollected || summary.totalRevenue || 0)}
             </p>
             <p className="text-[10px] text-slate-400">
-              {summary.totalRentalCount || 0} Trips se aaya rent
+              {summary.totalRentalCount || 0} Trips rental income collected
             </p>
           </div>
 
-          {/* 2. Bike Kharcha */}
+          {/* 2. Spent from Rent */}
           <div className="p-3.5 rounded-xl bg-brand-surface border border-rose-500/20 space-y-1">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-semibold text-rose-400 flex items-center gap-1">
-                🔻 2. Bike Kharcha
+                🔻 2. Spent from Rent
               </span>
-              <span className="text-[10px] text-rose-400/80 font-mono">DEDUCTED</span>
+              <span className="text-[10px] text-rose-400/80 font-mono">DISBURSED</span>
             </div>
             <p className="text-2xl font-bold font-display text-rose-400">
-              -{formatINR(summary.totalExpenses || 0)}
+              -{formatINR(summary.totalRentExpenses || 0)}
             </p>
             <p className="text-[10px] text-slate-400">
-              Petrol, Service, Puncture, Repair, Parts
+              Trip fuel, minor repairs & cash payouts
             </p>
           </div>
 
-          {/* 3. Bacha Hua Paisa */}
+          {/* 3. Remaining Rent Cash */}
           <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-1">
             <div className="flex items-center justify-between text-xs text-slate-300">
               <span className="font-bold text-emerald-400 flex items-center gap-1">
-                ✨ 3. Bacha Hua Paisa
+                ✨ 3. Remaining Rent Cash
               </span>
-              <span className="text-[10px] text-emerald-400 font-mono font-bold">NET IN-HAND</span>
+              <span className="text-[10px] text-emerald-400 font-mono font-bold">IN HAND</span>
             </div>
             <p className="text-2xl font-extrabold font-display text-emerald-400">
-              {formatINR(summary.netProfit || 0)}
+              {formatINR((summary.totalAmountCollected || summary.totalRevenue || 0) - (summary.totalRentExpenses || 0))}
             </p>
             <p className="text-[10px] text-emerald-300/80">
-              Kharcha nikal kar bachi hui shuddh kamayi ({summary.profitMargin || 0}% margin)
+              Net unspent cash remaining from rental earnings
             </p>
           </div>
         </div>
@@ -726,31 +730,31 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
                 </div>
               </div>
 
-              {/* Financial Stats: Kamayi, Kharcha & Bacha Paisa */}
+              {/* Financial Stats: Revenue, Operating Expenses & Profit */}
               <div className="p-4 space-y-3">
                 <div className="grid grid-cols-3 gap-2 text-center p-2.5 rounded-xl bg-brand-surface border border-brand-border text-xs">
                   <div>
-                    <p className="text-[10px] text-slate-400 uppercase font-semibold">Kamayi</p>
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold">Revenue</p>
                     <p className="font-bold text-emerald-400 mt-0.5">{formatINR(bike.thisMonthRevenue)}</p>
                     <span className="text-[9px] text-slate-500 font-mono">{bike.thisMonthRentals} trips</span>
                   </div>
                   <div>
-                    <p className="text-[10px] text-rose-400 uppercase font-semibold">Kharcha</p>
+                    <p className="text-[10px] text-rose-400 uppercase font-semibold">Expenses</p>
                     <p className="font-bold text-rose-400 mt-0.5">-{formatINR(bike.thisMonthExpenses || 0)}</p>
                     <span className="text-[9px] text-slate-500 font-mono">fuel/service</span>
                   </div>
                   <div>
-                    <p className="text-[10px] text-brand-orange uppercase font-semibold">Bacha Paisa</p>
+                    <p className="text-[10px] text-brand-orange uppercase font-semibold">Net Profit</p>
                     <p className={`font-bold mt-0.5 ${(bike.thisMonthProfit ?? 0) >= 0 ? 'text-brand-orange' : 'text-rose-400'}`}>
                       {formatINR(bike.thisMonthProfit ?? (bike.thisMonthRevenue - (bike.thisMonthExpenses || 0)))}
                     </p>
-                    <span className="text-[9px] text-emerald-400/90 font-mono font-semibold">Net Profit</span>
+                    <span className="text-[9px] text-emerald-400/90 font-mono font-semibold">Margin</span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
                   <span>Odometer: <strong className="text-slate-200">{bike.currentOdometer} km</strong></span>
-                  <span>All-Time Kamayi: <strong className="text-slate-200">{formatINR(bike.allTimeRevenue || 0)}</strong></span>
+                  <span>Lifetime: <strong className="text-slate-200">{formatINR(bike.allTimeRevenue || 0)}</strong></span>
                 </div>
 
                 <div className="flex items-center gap-2 pt-1">
@@ -758,7 +762,7 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
                     onClick={() => onTriggerAction('add_expense_for_bike', bike.id)}
                     className="flex-1 py-2 text-xs font-bold text-rose-300 bg-rose-500/15 hover:bg-rose-500/25 rounded-xl border border-rose-500/30 transition-all text-center flex items-center justify-center gap-1 shadow-glow-sm"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Kharcha Daalein
+                    <Plus className="w-3.5 h-3.5" /> Log Expense
                   </button>
                   <button
                     onClick={() => onNavigate('bikes', bike.id)}

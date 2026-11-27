@@ -61,6 +61,8 @@ exports.createExpense = async (req, res) => {
       paidByPartnerId,
       paymentMethod = 'upi',
       description,
+      expenseSource = 'rent_income',
+      paidFromRent = true,
       odometer,
       receiptImage = '',
       notes = ''
@@ -110,6 +112,8 @@ exports.createExpense = async (req, res) => {
       paidByPartner: partner._id,
       paymentMethod,
       description,
+      expenseSource,
+      paidFromRent: paidFromRent !== false && expenseSource === 'rent_income',
       odometer: odometer ? Number(odometer) : undefined,
       receiptImage,
       notes,

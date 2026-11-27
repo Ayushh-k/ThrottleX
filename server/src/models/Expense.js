@@ -31,6 +31,16 @@ const expenseSchema = new mongoose.Schema({
     default: 'upi'
   },
   description: { type: String, required: true, trim: true },
+  expenseSource: {
+    type: String,
+    enum: ['rent_income', 'general_fleet'],
+    default: 'rent_income',
+    index: true
+  },
+  paidFromRent: {
+    type: Boolean,
+    default: true
+  },
   odometer: { type: Number },
   receiptImage: { type: String, default: '' },
   notes: { type: String, default: '' },
