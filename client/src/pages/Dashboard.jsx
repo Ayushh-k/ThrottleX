@@ -47,6 +47,7 @@ import { api } from '../services/api';
 import { formatINR, formatDate } from '../utils/formatters';
 import MetricCard from '../components/MetricCard';
 import StatusBadge from '../components/StatusBadge';
+import SkeletonLoader from '../components/SkeletonLoader';
 import { useAuth } from '../context/AuthContext';
 
 const PIE_COLORS = ['#FF5500', '#38BDF8', '#34D399', '#FBBF24', '#A78BFA', '#F43F5E', '#94A3B8'];
@@ -80,14 +81,7 @@ export default function Dashboard({ onNavigate, onTriggerAction, refreshKey }) {
   };
 
   if (loading && !data) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-brand-orange border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-xs text-slate-400">Loading THROTTLEX financial telemetry...</p>
-        </div>
-      </div>
-    );
+    return <SkeletonLoader type="dashboard" />;
   }
 
   if (loadError && !data) {

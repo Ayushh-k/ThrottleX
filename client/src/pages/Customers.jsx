@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { formatINR, formatDate } from '../utils/formatters';
+import SkeletonLoader from '../components/SkeletonLoader';
 
 export default function Customers({ onTriggerAction, refreshKey }) {
   const [customers, setCustomers] = useState([]);
@@ -165,10 +166,7 @@ export default function Customers({ onTriggerAction, refreshKey }) {
       {/* Customers Table */}
       <div className="p-5 rounded-2xl bg-brand-card border border-brand-border overflow-hidden">
         {loading ? (
-          <div className="py-20 text-center text-slate-400 text-xs">
-            <div className="w-8 h-8 border-2 border-brand-orange border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-            Loading KYC Vault directory...
-          </div>
+          <SkeletonLoader type="list" count={5} />
         ) : filteredCustomers.length === 0 ? (
           <div className="py-16 text-center text-slate-400 text-xs">
             <Users className="w-10 h-10 mx-auto text-slate-600 mb-2" />

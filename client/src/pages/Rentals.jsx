@@ -18,6 +18,7 @@ import { api } from '../services/api';
 import { formatINR, formatDate, formatDateTime, calculateHours } from '../utils/formatters';
 import StatusBadge from '../components/StatusBadge';
 import RentalAgreementModal from '../components/modals/RentalAgreementModal';
+import SkeletonLoader from '../components/SkeletonLoader';
 
 export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
   const [rentals, setRentals] = useState([]);
@@ -155,10 +156,7 @@ export default function Rentals({ onNavigate, onTriggerAction, refreshKey }) {
       {/* Rentals Table */}
       <div className="p-5 rounded-2xl bg-brand-card border border-brand-border overflow-hidden">
         {loading ? (
-          <div className="py-20 text-center text-slate-400 text-xs">
-            <div className="w-6 h-6 border-2 border-brand-orange border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-            Loading rentals...
-          </div>
+          <SkeletonLoader type="rentals" count={5} />
         ) : rentals.length === 0 ? (
           <div className="py-16 text-center">
             <CalendarDays className="w-12 h-12 mx-auto text-slate-600 mb-3" />

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Wrench, Plus, Search, Filter, AlertTriangle, IndianRupee } from 'lucide-react';
 import { api } from '../services/api';
 import { formatINR, formatDate, formatKm } from '../utils/formatters';
+import SkeletonLoader from '../components/SkeletonLoader';
 
 export default function Maintenance({ onTriggerAction, refreshKey }) {
   const [records, setRecords] = useState([]);
@@ -92,7 +93,7 @@ export default function Maintenance({ onTriggerAction, refreshKey }) {
       {/* Table */}
       <div className="p-5 rounded-2xl bg-brand-card border border-brand-border overflow-hidden">
         {loading ? (
-          <div className="py-20 text-center text-slate-400 text-xs">Loading maintenance history...</div>
+          <SkeletonLoader type="list" count={4} />
         ) : records.length === 0 ? (
           <div className="py-16 text-center text-slate-400 text-xs">
             <Wrench className="w-10 h-10 mx-auto text-slate-600 mb-2" />

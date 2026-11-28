@@ -16,6 +16,7 @@ import {
 import { api } from '../services/api';
 import { formatINR } from '../utils/formatters';
 import StatusBadge from '../components/StatusBadge';
+import SkeletonLoader from '../components/SkeletonLoader';
 
 export default function Bikes({ onNavigate, onTriggerAction, refreshKey }) {
   const [bikes, setBikes] = useState([]);
@@ -98,10 +99,7 @@ export default function Bikes({ onNavigate, onTriggerAction, refreshKey }) {
 
       {/* Bike Cards Grid */}
       {loading ? (
-        <div className="py-20 text-center text-slate-400 text-xs">
-          <div className="w-8 h-8 border-2 border-brand-orange border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-          Loading fleet motorcycles & health diagnostics...
-        </div>
+        <SkeletonLoader type="bikes" count={6} />
       ) : bikes.length === 0 ? (
         <div className="py-16 text-center rounded-2xl bg-brand-card border border-brand-border p-8">
           <BikeIcon className="w-12 h-12 mx-auto text-slate-600 mb-3" />

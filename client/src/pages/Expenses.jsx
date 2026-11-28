@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Receipt, Plus, Search, Filter, Trash2, IndianRupee, ArrowDownRight } from 'lucide-react';
 import { api } from '../services/api';
 import { formatINR, formatDate } from '../utils/formatters';
+import SkeletonLoader from '../components/SkeletonLoader';
 
 export default function Expenses({ onTriggerAction, refreshKey }) {
   const [expenses, setExpenses] = useState([]);
@@ -144,10 +145,7 @@ export default function Expenses({ onTriggerAction, refreshKey }) {
       {/* Expenses Table */}
       <div className="p-5 rounded-2xl bg-brand-card border border-brand-border overflow-hidden">
         {loading ? (
-          <div className="py-20 text-center text-slate-400 text-xs">
-            <div className="w-6 h-6 border-2 border-brand-orange border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-            Loading expenses...
-          </div>
+          <SkeletonLoader type="list" count={5} />
         ) : expenses.length === 0 ? (
           <div className="py-16 text-center">
             <Receipt className="w-12 h-12 mx-auto text-slate-600 mb-3" />

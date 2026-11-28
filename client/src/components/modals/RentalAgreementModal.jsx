@@ -256,8 +256,8 @@ export default function RentalAgreementModal({ isOpen, onClose, rentalId, onAgre
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/70 backdrop-blur-xl animate-fade-in overflow-y-auto">
-      <div className="relative w-full max-w-4xl bg-[#0c1322]/95 sm:bg-[#0c1322]/85 backdrop-blur-2xl border border-white/15 rounded-t-3xl sm:rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] overflow-hidden my-0 sm:my-6 flex flex-col max-h-[95vh] sm:max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/70 backdrop-blur-xl animate-modal-backdrop overflow-y-auto">
+      <div className="relative w-full max-w-4xl bg-[#0c1322]/95 sm:bg-[#0c1322]/85 backdrop-blur-2xl border border-white/15 rounded-t-3xl sm:rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] overflow-hidden my-0 sm:my-6 flex flex-col max-h-[95vh] sm:max-h-[92vh] animate-mac-modal">
         {/* Mobile Pull Indicator */}
         <div className="sm:hidden flex justify-center pt-2.5 pb-1 bg-white/[0.04]">
           <div className="w-12 h-1.5 rounded-full bg-slate-700" />

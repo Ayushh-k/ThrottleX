@@ -49,8 +49,8 @@ export default function GlobalSearchModal({ isOpen, onClose, onNavigate }) {
     results.partners.length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-20 px-3 sm:px-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-2xl bg-brand-card dark:bg-brand-card border border-brand-border rounded-2xl shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-20 px-3 sm:px-4 bg-black/80 backdrop-blur-sm animate-modal-backdrop">
+      <div className="relative w-full max-w-2xl bg-brand-card dark:bg-brand-card border border-brand-border rounded-2xl shadow-2xl overflow-hidden max-h-[85vh] flex flex-col animate-mac-modal">
         {/* Search Input Bar */}
         <div className="flex items-center px-4 py-3 sm:py-3.5 border-b border-brand-border bg-brand-surface shrink-0">
           <Search className="w-5 h-5 text-brand-orange mr-2.5 shrink-0" />

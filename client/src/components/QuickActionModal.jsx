@@ -50,8 +50,8 @@ export default function QuickActionModal({ isOpen, onClose, onSelectAction }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in overflow-hidden">
-      <div className="relative w-full max-w-xl bg-brand-card dark:bg-brand-card border-t sm:border border-brand-border rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden p-5 sm:p-6 max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-md animate-modal-backdrop overflow-hidden">
+      <div className="relative w-full max-w-xl bg-brand-card dark:bg-brand-card border-t sm:border border-brand-border rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden p-5 sm:p-6 max-h-[92vh] flex flex-col animate-mac-modal">
         {/* Mobile Handle */}
         <div className="sm:hidden w-10 h-1 bg-white/20 rounded-full mx-auto mb-3 shrink-0" />
 

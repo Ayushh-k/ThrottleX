@@ -92,8 +92,8 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess, preselecte
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in overflow-hidden">
-      <div className="relative w-full max-w-lg bg-brand-card dark:bg-brand-card border-t sm:border border-brand-border rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-md animate-modal-backdrop overflow-hidden">
+      <div className="relative w-full max-w-lg bg-brand-card dark:bg-brand-card border-t sm:border border-brand-border rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden animate-mac-modal">
         {/* Mobile Drag Indicator Handle */}
         <div className="sm:hidden w-10 h-1 bg-white/20 rounded-full mx-auto mt-2.5 mb-1" />
 
