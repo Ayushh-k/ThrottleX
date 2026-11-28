@@ -69,8 +69,8 @@ export default function AddBikeModal({ isOpen, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto animate-modal-backdrop">
-      <div className="relative w-full max-w-2xl bg-brand-card dark:bg-brand-card border border-brand-border rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] sm:max-h-[90vh] flex flex-col animate-mac-modal">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto animate-modal-backdrop">
+      <div className="relative w-full max-w-2xl bg-brand-card dark:bg-brand-card border border-brand-border rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col animate-mac-modal">
         {/* Mobile Pull/Drag Indicator */}
         <div className="sm:hidden flex justify-center pt-2.5 pb-1 bg-brand-surface">
           <div className="w-12 h-1.5 rounded-full bg-slate-700" />

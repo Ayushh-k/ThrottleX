@@ -73,25 +73,31 @@
   transform: scale(0.96) translateY(0);
 }
 
-/* macOS-Style Center Spring / Scale-Pop Animation for Modals & Dialogs */
+/* Real macOS Spring Scale-Pop Animation for Modals & Dialogs */
 @keyframes macModalEnter {
   0% {
     opacity: 0;
-    transform: scale(0.84) translateY(12px);
+    transform: scale(0.48) translateY(30px);
+    filter: blur(8px);
   }
-  65% {
+  60% {
     opacity: 1;
-    transform: scale(1.02) translateY(-2px);
+    transform: scale(1.04) translateY(-4px);
+    filter: blur(0px);
+  }
+  82% {
+    transform: scale(0.99) translateY(1px);
   }
   100% {
     opacity: 1;
     transform: scale(1) translateY(0);
+    filter: blur(0px);
   }
 }
 
 .animate-mac-modal {
-  animation: macModalEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform, opacity;
+  animation: macModalEnter 0.45s cubic-bezier(0.22, 1.25, 0.36, 1) both;
+  will-change: transform, opacity, filter;
   transform-origin: center center;
 }
 
@@ -105,7 +111,7 @@
 }
 
 .animate-modal-backdrop {
-  animation: modalBackdrop 0.2s ease-out both;
+  animation: modalBackdrop 0.35s ease-out both;
 }
 
 /* Instagram-Style Shimmer Wave Skeleton Effect */

@@ -125,8 +125,8 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, zIndex = 
   };
 
   return (
-    <div className={`fixed inset-0 ${zIndex} flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-md overflow-hidden animate-modal-backdrop`}>
-      <div className="relative w-full max-w-2xl bg-brand-card border-t sm:border border-brand-border rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[94vh] sm:max-h-[92vh] overflow-hidden animate-mac-modal">
+    <div className={`fixed inset-0 ${zIndex} flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-hidden animate-modal-backdrop`}>
+      <div className="relative w-full max-w-2xl bg-brand-card border border-brand-border rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden animate-mac-modal">
         {/* Mobile Handle */}
         <div className="sm:hidden w-10 h-1 bg-white/20 rounded-full mx-auto mt-2.5 mb-1 shrink-0" />
 
