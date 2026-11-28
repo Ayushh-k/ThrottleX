@@ -64,8 +64,10 @@ async function connectDB() {
   const isAtlas = uri.includes('mongodb+srv://') || uri.includes('@');
 
   const options = {
-    serverSelectionTimeoutMS: 8000,
-    connectTimeoutMS: 10000
+    serverSelectionTimeoutMS: 5000,
+    connectTimeoutMS: 10000,
+    maxPoolSize: 10,
+    socketTimeoutMS: 45000
   };
 
   if (!cached.promise) {

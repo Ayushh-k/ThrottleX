@@ -31,7 +31,7 @@ export default function MetricCard({
     <div
       onClick={onClick}
       title={valStr}
-      className={`group relative bg-brand-card dark:bg-brand-card border border-brand-border/60 rounded-xl p-3 sm:p-4 lg:p-5 shadow-card-dark transition-all duration-200 min-w-0 overflow-hidden ${
+      className={`group relative bg-brand-card dark:bg-brand-card border border-brand-border/60 rounded-xl p-3 sm:p-4 lg:p-5 shadow-card-dark transition-all duration-200 min-w-0 overflow-hidden card-pressable ${
         onClick ? 'cursor-pointer hover:-translate-y-0.5' : ''
       } ${accentGlow}`}
     >

@@ -140,5 +140,7 @@ const rentalSchema = new mongoose.Schema({
 });
 
 rentalSchema.index({ startDate: 1, expectedEndDate: 1, status: 1 });
+rentalSchema.index({ createdAt: -1 });
+rentalSchema.index({ status: 1, paymentStatus: 1 });
 
 module.exports = mongoose.model('Rental', rentalSchema);

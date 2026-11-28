@@ -49,4 +49,7 @@ const expenseSchema = new mongoose.Schema({
   timestamps: true
 });
 
+expenseSchema.index({ expenseDate: -1 });
+expenseSchema.index({ expenseSource: 1, expenseDate: -1 });
+
 module.exports = mongoose.model('Expense', expenseSchema);
