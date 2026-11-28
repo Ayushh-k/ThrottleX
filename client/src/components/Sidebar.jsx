@@ -68,10 +68,10 @@ export default function Sidebar({ currentTab, onSelectTab, isMobileOpen, onClose
                 onSelectTab(item.id);
                 if (isMobileOpen && onCloseMobile) onCloseMobile();
               }}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 active:scale-95 ${
                 isActive
-                  ? 'bg-brand-orange text-white shadow-glow-sm'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-brand-orange text-white shadow-glow-sm translate-x-1'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5 hover:translate-x-1'
               }`}
             >
               <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />

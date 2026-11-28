@@ -397,139 +397,137 @@ export default function App() {
 
         {/* Dynamic Page Routing with Keep-Alive for Instant 0ms Back Navigation */}
         <main className="flex-1 overflow-y-auto overscroll-contain p-3.5 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 lg:pb-8">
-          {visitedTabs.has('dashboard') && (
-            <div className={currentTab === 'dashboard' ? 'block animate-page-enter' : 'hidden'}>
-              <Dashboard
-                onNavigate={handleNavigate}
-                onTriggerAction={handleTriggerAction}
-                refreshKey={refreshKey}
-              />
-            </div>
-          )}
+          <div key={currentTab} className="animate-page-enter">
+            {visitedTabs.has('dashboard') && (
+              <div className={currentTab === 'dashboard' ? 'block' : 'hidden'}>
+                <Dashboard
+                  onNavigate={handleNavigate}
+                  onTriggerAction={handleTriggerAction}
+                  refreshKey={refreshKey}
+                />
+              </div>
+            )}
 
-          {visitedTabs.has('bikes') && (
-            <div className={currentTab === 'bikes' ? 'block animate-page-enter' : 'hidden'}>
-              <Bikes
-                onNavigate={handleNavigate}
-                onTriggerAction={handleTriggerAction}
-                refreshKey={refreshKey}
-              />
-            </div>
-          )}
+            {visitedTabs.has('bikes') && (
+              <div className={currentTab === 'bikes' ? 'block' : 'hidden'}>
+                <Bikes
+                  onNavigate={handleNavigate}
+                  onTriggerAction={handleTriggerAction}
+                  refreshKey={refreshKey}
+                />
+              </div>
+            )}
 
-          {currentTab === 'bike-profile' && (
-            <div className="animate-page-enter">
+            {currentTab === 'bike-profile' && (
               <BikeProfile
                 bikeId={selectedBikeId}
                 onBack={() => setCurrentTab('bikes')}
                 onTriggerAction={handleTriggerAction}
                 refreshKey={refreshKey}
               />
-            </div>
-          )}
+            )}
 
-          {visitedTabs.has('rentals') && (
-            <div className={currentTab === 'rentals' ? 'block animate-page-enter' : 'hidden'}>
-              <Rentals
-                onNavigate={handleNavigate}
-                onTriggerAction={handleTriggerAction}
-                refreshKey={refreshKey}
-              />
-            </div>
-          )}
+            {visitedTabs.has('rentals') && (
+              <div className={currentTab === 'rentals' ? 'block' : 'hidden'}>
+                <Rentals
+                  onNavigate={handleNavigate}
+                  onTriggerAction={handleTriggerAction}
+                  refreshKey={refreshKey}
+                />
+              </div>
+            )}
 
-          {currentTab === 'rental-detail' && (
-            <div className="animate-page-enter">
+            {currentTab === 'rental-detail' && (
               <RentalDetail
                 rentalId={selectedRentalId}
                 onBack={() => setCurrentTab('rentals')}
                 onTriggerAction={handleTriggerAction}
                 refreshKey={refreshKey}
               />
-            </div>
-          )}
+            )}
 
-          {visitedTabs.has('customers') && (
-            <div className={currentTab === 'customers' ? 'block animate-page-enter' : 'hidden'}>
-              <Customers
-                onTriggerAction={handleTriggerAction}
-                refreshKey={refreshKey}
-              />
-            </div>
-          )}
+            {visitedTabs.has('customers') && (
+              <div className={currentTab === 'customers' ? 'block' : 'hidden'}>
+                <Customers
+                  onTriggerAction={handleTriggerAction}
+                  refreshKey={refreshKey}
+                />
+              </div>
+            )}
 
-          {visitedTabs.has('expenses') && (
-            <div className={currentTab === 'expenses' ? 'block animate-page-enter' : 'hidden'}>
-              <Expenses
-                onTriggerAction={handleTriggerAction}
-                refreshKey={refreshKey}
-              />
-            </div>
-          )}
+            {visitedTabs.has('expenses') && (
+              <div className={currentTab === 'expenses' ? 'block' : 'hidden'}>
+                <Expenses
+                  onTriggerAction={handleTriggerAction}
+                  refreshKey={refreshKey}
+                />
+              </div>
+            )}
 
-          {visitedTabs.has('maintenance') && (
-            <div className={currentTab === 'maintenance' ? 'block animate-page-enter' : 'hidden'}>
-              <Maintenance
-                onTriggerAction={handleTriggerAction}
-                refreshKey={refreshKey}
-              />
-            </div>
-          )}
+            {visitedTabs.has('maintenance') && (
+              <div className={currentTab === 'maintenance' ? 'block' : 'hidden'}>
+                <Maintenance
+                  onTriggerAction={handleTriggerAction}
+                  refreshKey={refreshKey}
+                />
+              </div>
+            )}
 
-          {visitedTabs.has('fuel') && (
-            <div className={currentTab === 'fuel' ? 'block animate-page-enter' : 'hidden'}>
-              <FuelPage
-                onTriggerAction={handleTriggerAction}
-                refreshKey={refreshKey}
-              />
-            </div>
-          )}
+            {visitedTabs.has('fuel') && (
+              <div className={currentTab === 'fuel' ? 'block' : 'hidden'}>
+                <FuelPage
+                  onTriggerAction={handleTriggerAction}
+                  refreshKey={refreshKey}
+                />
+              </div>
+            )}
 
-          {visitedTabs.has('partners') && (
-            <div className={currentTab === 'partners' ? 'block animate-page-enter' : 'hidden'}>
-              <Partners
-                onNavigate={handleNavigate}
-                onTriggerAction={handleTriggerAction}
-                refreshKey={refreshKey}
-              />
-            </div>
-          )}
+            {visitedTabs.has('partners') && (
+              <div className={currentTab === 'partners' ? 'block' : 'hidden'}>
+                <Partners
+                  onNavigate={handleNavigate}
+                  onTriggerAction={handleTriggerAction}
+                  refreshKey={refreshKey}
+                />
+              </div>
+            )}
 
-          {visitedTabs.has('settlements') && (
-            <div className={currentTab === 'settlements' ? 'block animate-page-enter' : 'hidden'}>
-              <Settlements
-                onTriggerAction={handleTriggerAction}
-                refreshKey={refreshKey}
-              />
-            </div>
-          )}
+            {visitedTabs.has('settlements') && (
+              <div className={currentTab === 'settlements' ? 'block' : 'hidden'}>
+                <Settlements
+                  onTriggerAction={handleTriggerAction}
+                  refreshKey={refreshKey}
+                />
+              </div>
+            )}
 
-          {visitedTabs.has('ledger') && (
-            <div className={currentTab === 'ledger' ? 'block animate-page-enter' : 'hidden'}>
-              <Ledger refreshKey={refreshKey} />
-            </div>
-          )}
+            {visitedTabs.has('ledger') && (
+              <div className={currentTab === 'ledger' ? 'block' : 'hidden'}>
+                <Ledger refreshKey={refreshKey} />
+              </div>
+            )}
 
-          {visitedTabs.has('calendar') && (
-            <div className={currentTab === 'calendar' ? 'block animate-page-enter' : 'hidden'}>
-              <RentalCalendar
-                onNavigate={handleNavigate}
-                refreshKey={refreshKey}
-              />
-            </div>
-          )}
+            {visitedTabs.has('calendar') && (
+              <div className={currentTab === 'calendar' ? 'block' : 'hidden'}>
+                <RentalCalendar
+                  onNavigate={handleNavigate}
+                  refreshKey={refreshKey}
+                />
+              </div>
+            )}
 
-          {visitedTabs.has('reports') && (
-            <div className={currentTab === 'reports' ? 'block animate-page-enter' : 'hidden'}>
-              <Reports refreshKey={refreshKey} />
-            </div>
-          )}
+            {visitedTabs.has('reports') && (
+              <div className={currentTab === 'reports' ? 'block' : 'hidden'}>
+                <Reports refreshKey={refreshKey} />
+              </div>
+            )}
 
-          {visitedTabs.has('settings') && (
-            <div className={currentTab === 'settings' ? 'block animate-page-enter' : 'hidden'}>
-              <SettingsPage refreshKey={refreshKey} />
-            </div>
-          )}
+            {visitedTabs.has('settings') && (
+              <div className={currentTab === 'settings' ? 'block' : 'hidden'}>
+                <SettingsPage refreshKey={refreshKey} />
+              </div>
+            )}
+          </div>
         </main>
 
         {/* Mobile Sticky Bottom Navigation Bar */}

@@ -46,27 +46,31 @@
 @keyframes pageEnter {
   0% {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(14px) scale(0.995);
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 .animate-page-enter {
-  animation: pageEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: pageEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: opacity, transform;
 }
 
-/* Micro-press on interactive cards, pills and buttons */
+/* Micro-press & subtle lift on interactive cards, pills and buttons */
 .card-pressable {
-  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease-out, border-color 0.15s ease-out;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease-out, border-color 0.2s ease-out;
   will-change: transform;
 }
 
+.card-pressable:hover {
+  transform: translateY(-2px);
+}
+
 .card-pressable:active {
-  transform: scale(0.985);
+  transform: scale(0.96) translateY(0);
 }
 
 button, a {
